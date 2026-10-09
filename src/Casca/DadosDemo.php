@@ -469,8 +469,8 @@ final class DadosDemo
      * aniversarios com cartao e comentarios (D-57), publicacoes, pesquisas
      * e celebracoes. Sem contagem de visualizacoes: isso e do RH.
      *
-     * As duas imagens vem de public/demo/ e sao artes reais da Resolutto
-     * cedidas para a casca. Aniversario so com dia e mes, de quem
+     * As duas imagens vem de public/demo/ e sao artes desenhadas para a
+     * casca, sem pessoa real e sem marca (T-49, repo-2). Aniversario so com dia e mes, de quem
      * consentiu (D-41). Comentarios sempre identificados (D-57).
      *
      * @return array<string, mixed>
@@ -507,8 +507,8 @@ final class DadosDemo
                 'rotulo'      => 'Campanha do mês · Outubro',
                 'titulo'      => 'Outubro Rosa',
                 'texto'       => 'Na quinta, 16/10, às 10h, roda de conversa com a enfermeira do convênio na copa da sede, aberta a todos. Use a cor rosa nas reuniões do mês.',
-                'imagem'      => 'outubro-rosa.jpg',
-                'alt'         => 'Outubro Rosa: o que você pode fazer hoje? Arte da campanha',
+                'imagem'      => 'campanha-outubro.jpg',
+                'alt'         => 'Outubro Rosa: cuidar de si também é rotina. Arte da campanha',
                 'autor'       => 'RH',
                 'periodo'     => 'de 01/10 a 31/10',
                 'fixada'      => true,
@@ -761,7 +761,7 @@ final class DadosDemo
 
         return [
             [1, 'aviso', 'destaque', '', 'Expediente no feriado de 12/10', 'Suporte N1 e Campo Norte seguem a escala de plantão publicada em 24/09. Os demais setores não têm expediente.', '2026-09-26', '2026-10-12', false, 44, $empresa, 48, 0, false, false, 'RH', '', []],
-            [2, 'campanha', 'grande', '2026-10-01 08:00', 'Outubro Rosa', 'Na quinta, 16/10, às 10h, roda de conversa com a enfermeira do convênio na copa da sede, aberta a todos. Use a cor rosa nas reuniões do mês.', '2026-10-01', '2026-10-31', false, 41, $empresa, 48, 12, true, false, 'RH', 'outubro-rosa.jpg', [
+            [2, 'campanha', 'grande', '2026-10-01 08:00', 'Outubro Rosa', 'Na quinta, 16/10, às 10h, roda de conversa com a enfermeira do convênio na copa da sede, aberta a todos. Use a cor rosa nas reuniões do mês.', '2026-10-01', '2026-10-31', false, 41, $empresa, 48, 12, true, false, 'RH', 'campanha-outubro.jpg', [
                 ['rotulo' => 'Confirmar presença na roda de conversa', 'destino' => 'enquete'],
                 ['rotulo' => 'Ler o material da campanha', 'destino' => 'documento'],
             ]],
@@ -1063,7 +1063,7 @@ final class DadosDemo
                 ['valor' => 'comunicado', 'rotulo' => 'Comunicado com ciência'],
                 ['valor' => 'link', 'rotulo' => 'Página do GLPI'],
             ],
-            'imagens'   => [['arquivo' => 'outubro-rosa.jpg', 'rotulo' => 'Arte da campanha (outubro-rosa.jpg)']],
+            'imagens'   => [['arquivo' => 'campanha-outubro.jpg', 'rotulo' => 'Arte da campanha (campanha-outubro.jpg)']],
             'fixadas'   => $fixadas,
             'destaque'  => $destaque,
             'grupos'    => $grupos,
