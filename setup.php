@@ -8,6 +8,7 @@
  * PESSOASPLUS_BUILD_BP1
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3C
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -16,6 +17,7 @@
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Pessoasplus\Casca\MenuSimplificado;
 use GlpiPlugin\Pessoasplus\Casca\MuralAba;
+use GlpiPlugin\Pessoasplus\EntradaMural;
 use GlpiPlugin\Pessoasplus\Install;
 use GlpiPlugin\Pessoasplus\Menu;
 use GlpiPlugin\Pessoasplus\PerfilDireitos;
@@ -68,6 +70,13 @@ function plugin_init_pessoasplus(): void
     // public/ e sao servidos em /plugins/pessoasplus/<arquivo> (T-22, T-35).
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['pessoasplus'] = ['aviso.js'];
     $PLUGIN_HOOKS[Hooks::ADD_CSS]['pessoasplus']        = ['aviso.css'];
+
+    // Mural do colaborador ao entrar (D-54, BP.3c): so para quem tem
+    // "Abrir o Mural ao entrar", que nasce desmarcado. O post_init roda em
+    // toda requisicao (Plugin.php:432); a decisao fica em EntradaMural.
+    if (Session::haveRight(EntradaMural::DIREITO, READ)) {
+        $PLUGIN_HOOKS[Hooks::POST_INIT]['pessoasplus'] = [EntradaMural::class, 'postInit'];
+    }
 }
 
 /**
@@ -82,7 +91,7 @@ function plugin_version_pessoasplus(): array
         'version'        => PLUGIN_PESSOASPLUS_VERSION,
         'author'         => 'Teckcomp',
         'license'        => 'GPLv2+',
-        'homepage'       => 'https://github.com/teckcomp/glpi-plugin-pessoasplus',
+        'homepage'       => 'https://github.com/teckcomp/pessoasplus',
         'requirements'   => [
             'glpi' => [
                 'min' => PLUGIN_PESSOASPLUS_MIN_GLPI,

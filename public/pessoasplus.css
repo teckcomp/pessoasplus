@@ -1,4 +1,4 @@
-/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B
+/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C
  * Tudo prefixado com pp- e escopado em .pp-casca (T-30): nada aqui
  * estiliza elemento solto do GLPI nem de outros plugins.
  * Cores de superficie e texto herdam do tema do GLPI (Tabler), para
@@ -38,7 +38,9 @@
     --pp-neutro: #3b4450;
     --pp-neutro-fundo: #eceff3;
     color: var(--pp-texto);
-    padding: 0 0 24px;
+    /* BP.3c: folga no fim para o contador fixo de ciencias (aviso.css,
+       canto inferior direito) nunca cobrir o fim do conteudo. */
+    padding: 0 0 88px;
 }
 
 /* Faixa de demonstracao */
@@ -1029,3 +1031,28 @@ body.pp-pagina-impressao { margin: 0; background: #eef1f3; font-family: system-u
 .pp-casca .pp-mc-nota-demo { margin: 2px 0 0; }
 .pp-casca .pp-mc-ouvidoria { margin: 0 0 10px; font-size: 0.9rem; color: var(--pp-texto-2); }
 .pp-casca .pp-mc-fim { display: flex; justify-content: center; margin-top: 20px; }
+
+/* BP.3c: a lateral do Mural acompanha a rolagem. O "top" padrao gruda a
+   coluna no alto; o pessoasplus.js troca por um valor negativo quando a
+   coluna e mais alta que a janela, para ela grudar pelo fim. */
+.pp-casca .pp-mural-lateral[data-pp-lateral-fixa] { position: sticky; top: 12px; align-self: start; }
+@media (max-width: 1199px) {
+    .pp-casca .pp-mural-lateral[data-pp-lateral-fixa] { position: static; }
+}
+
+/* Publicacoes no lugar "lateral" (D-59) */
+.pp-casca .pp-mc-lateral { display: flex; flex-direction: column; gap: 6px; }
+.pp-casca .pp-mc-lateral-topo { display: flex; align-items: center; gap: 10px; }
+.pp-casca .pp-mc-lateral-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--pp-acento-claro);
+    color: var(--pp-acento);
+    font-size: 1.15rem;
+}
+.pp-casca .pp-mc-lateral h3 { margin: 4px 0 0; font-size: 1rem; font-weight: 700; }
+.pp-casca .pp-mc-lateral p { margin: 0; font-size: 0.9rem; color: var(--pp-texto-2); }

@@ -1,5 +1,5 @@
 /* Pessoas+ - aviso ao entrar e lembretes durante a sessao (Tela 1, D-49).
- * PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2D
+ * PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2D PESSOASPLUS_BUILD_BP3C
  *
  * Carregado em todas as paginas, mas so para quem tem o direito do
  * Pessoas+ (o setup.php so registra o arquivo nesse caso). O servidor
@@ -12,7 +12,14 @@
 (function () {
     'use strict';
 
-    var PAGINAS_PROPRIAS = ['/plugins/pessoasplus/front/minha_area.php', '/plugins/pessoasplus/front/leitura.php'];
+    // Paginas que ja mostram as pendencias: sem aviso e sem contador.
+    // O Mural do colaborador entrou no BP.3c: ele tem prioridade na
+    // entrada (D-54) e o aviso abre na primeira pagina fora dele.
+    var PAGINAS_PROPRIAS = [
+        '/plugins/pessoasplus/front/minha_area.php',
+        '/plugins/pessoasplus/front/leitura.php',
+        '/plugins/pessoasplus/front/mural_colaborador.php'
+    ];
     var temporizador = null;
 
     function raiz() {
@@ -177,7 +184,7 @@
 
     function iniciar() {
         // Nao roda dentro de iframes/modais do GLPI nem nas paginas em que
-        // as pendencias ja estao na tela (Minha area e leitura).
+        // as pendencias ja estao na tela (Minha area, leitura e Mural).
         if (window.self !== window.top) {
             return;
         }

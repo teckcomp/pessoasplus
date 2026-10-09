@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3C
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -42,8 +43,8 @@ final class Permissoes
      */
     public const MODULOS = [
         'comunicados'   => ['pessoasplus_comunicados', 'Comunicados e normativas', true],
-        'mural'         => ['pessoasplus_mural', 'Mural e celebrações', true],
-        'pesquisas'     => ['pessoasplus_pesquisas', 'Pesquisas e quiz', true],
+        'mural'         => ['pessoasplus_mural', 'Publicações do mural', true],
+        'pesquisas'     => ['pessoasplus_pesquisas', 'Campanhas de pesquisa', true],
         'chegadas'      => ['pessoasplus_chegadas', 'Chegadas e checklists', true],
         'ferias'        => ['pessoasplus_ferias', 'Férias e ausências', true],
         'desligamentos' => ['pessoasplus_desligamentos', 'Desligamentos', true],
@@ -62,7 +63,7 @@ final class Permissoes
     public static function todosOsDireitos(): array
     {
         return array_merge(
-            [Install::RIGHT_BASE, self::GESTOR],
+            [Install::RIGHT_BASE, self::GESTOR, EntradaMural::DIREITO],
             array_column(self::MODULOS, 0),
             [Install::RIGHT_CONFIG]
         );

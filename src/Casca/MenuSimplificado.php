@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_BP1
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3C
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -16,8 +17,8 @@ use GlpiPlugin\Pessoasplus\Install;
 use Session;
 
 /**
- * Coloca "Minha area" e "Mural" no primeiro nivel do menu simplificado,
- * logo depois de "Chamados", como na Tela 1 da proposta (D-55).
+ * Coloca "Mural" e "Minha area" no primeiro nivel do menu simplificado,
+ * logo depois de "Chamados" (D-55). O Mural vem primeiro (D-62).
  *
  * O hook 'helpdesk_menu_entry' do core poria o item dentro de "Plugins" e
  * nao checa direito, por isso usamos 'redefine_menus' (Html.php:1853). O
@@ -53,16 +54,16 @@ final class MenuSimplificado
             return $menu;
         }
 
-        $menu = self::inserirDepois($menu, 'tickets', self::CHAVE, [
-            'default' => self::PAGINA,
-            'title'   => 'Minha área',
-            'icon'    => 'ti ti-user-check',
-        ]);
-
-        return self::inserirDepois($menu, self::CHAVE, self::CHAVE_MURAL, [
+        $menu = self::inserirDepois($menu, 'tickets', self::CHAVE_MURAL, [
             'default' => self::PAGINA_MURAL,
             'title'   => 'Mural',
             'icon'    => 'ti ti-layout-board',
+        ]);
+
+        return self::inserirDepois($menu, self::CHAVE_MURAL, self::CHAVE, [
+            'default' => self::PAGINA,
+            'title'   => 'Minha área',
+            'icon'    => 'ti ti-user-check',
         ]);
     }
 

@@ -1,4 +1,4 @@
-{# Pessoas+ - Mural do colaborador (quadro). PESSOASPLUS_BUILD_BP3B #}
+{# Pessoas+ - Mural do colaborador (quadro). PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C #}
 {# Usa pp.dados (Fontes::muralColaborador). Nenhuma contagem de visualizacao aqui: isso e do RH. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -187,7 +187,9 @@
             </section>
         </div>
 
-        <div class="pp-mural-lateral">
+        {# A lateral acompanha a rolagem (BP.3c): o pessoasplus.js ajusta o
+           "top" para a coluna grudar quando o fim dela fica visivel. #}
+        <div class="pp-mural-lateral" data-pp-lateral-fixa>
             <section class="pp-cartao">
                 <header class="pp-cartao-cabecalho">
                     <h2>Para você responder</h2>
@@ -216,6 +218,21 @@
                     {% endfor %}
                 </ul>
             </section>
+
+            {# Publicacoes no lugar "lateral" (D-59) #}
+            {% for l in m.laterais %}
+                <article class="pp-cartao pp-mc-lateral">
+                    <div class="pp-mc-lateral-topo">
+                        <span class="pp-mc-lateral-icone" aria-hidden="true"><i class="{{ l.icone }}"></i></span>
+                        <span class="pp-selo pp-tom-{{ l.tom }}">{{ l.categoria }}</span>
+                    </div>
+                    <h3>{{ l.titulo }}</h3>
+                    <p>{{ l.texto }}</p>
+                    <div class="pp-mural-meta">
+                        <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ l.periodo }}</span>
+                    </div>
+                </article>
+            {% endfor %}
 
             <section class="pp-cartao">
                 <header class="pp-cartao-cabecalho">

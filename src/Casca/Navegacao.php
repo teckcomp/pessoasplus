@@ -11,6 +11,7 @@
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3C
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -31,7 +32,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'bp3b-1';
+    public const BUILD = 'bp3c-1';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
@@ -48,8 +49,9 @@ final class Navegacao
             [
                 'grupo' => 'Para mim',
                 'itens' => [
-                    self::item('minha_area', 'Minha área', 'ti ti-user-check', 'minha_area.php', 'BP.1'),
+                    // D-62: o Mural vem primeiro, porque tem prioridade na entrada (D-54).
                     self::item('mural_colaborador', 'Mural', 'ti ti-layout-board', 'mural_colaborador.php', 'BP.3b'),
+                    self::item('minha_area', 'Minha área', 'ti ti-user-check', 'minha_area.php', 'BP.1'),
                     self::item('ouvidoria', 'Ouvidoria', 'ti ti-message-circle-heart', null, 'BP.3e'),
                 ],
             ],
@@ -124,7 +126,7 @@ final class Navegacao
 
     /**
      * Desde a D-55 todo colaborador tem menu lateral na interface padrao
-     * ("Para mim": Minha area, Mural, Ouvidoria). Fica sem menu so quem
+     * ("Para mim": Mural, Minha area, Ouvidoria). Fica sem menu so quem
      * nao alcanca nenhuma area, caso que o 403 do core ja barra antes.
      *
      * @param array<string, bool> $acesso

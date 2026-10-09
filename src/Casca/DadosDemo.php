@@ -521,7 +521,7 @@ final class DadosDemo
                     'quando'      => 'Hoje, 07/10',
                     'detalhe'     => 'Suporte N1 · há 1 ano na empresa',
                     'imagem'      => 'cartao-pedro.jpg',
-                    'alt'         => 'Cartão de parabéns de Pedro Henrique, 07 de outubro',
+                    'alt'         => 'Cartão de parabéns de Pedro Henrique, 07 de outubro, com ilustração',
                     'cartao'      => 'Que o seu novo ano seja cheio de boas entregas e boas risadas. Deixe sua mensagem abaixo!',
                     'curtidas'    => 23,
                     'aberto'      => true,
@@ -551,6 +551,25 @@ final class DadosDemo
             'publicacoes' => $publicacoes,
             'pesquisas'   => $mural['pesquisas'],
             'celebracoes' => $celebracoes,
+            // Publicacoes no lugar "lateral" (D-59): blocos curtos a direita.
+            'laterais'    => [
+                [
+                    'categoria' => 'Aviso',
+                    'tom'       => 'alerta',
+                    'icone'     => 'ti ti-headset',
+                    'titulo'    => 'Plantão do RH',
+                    'texto'     => 'Dúvidas sobre férias e documentos: ramal 2040, das 8h às 17h.',
+                    'periodo'   => 'até 31/12',
+                ],
+                [
+                    'categoria' => 'Treinamento',
+                    'tom'       => 'neutro',
+                    'icone'     => 'ti ti-school',
+                    'titulo'    => 'NR-35: últimas vagas',
+                    'texto'     => 'A turma de 21/10 tem 4 vagas. Inscrição pelo seu gestor.',
+                    'periodo'   => 'até 20/10',
+                ],
+            ],
             'ouvidoria'   => [
                 'texto' => 'Dúvidas, sugestões, reclamações e relatos, com opção anônima e protocolo.',
                 'bloco' => 'BP.3e',

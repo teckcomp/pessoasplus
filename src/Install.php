@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_B01
  * PESSOASPLUS_BUILD_BP0C
+ * PESSOASPLUS_BUILD_BP3C
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -67,6 +68,12 @@ final class Install
             $valor = $modulo[2] ? READ | Permissoes::GERENCIAR : READ;
             $migration->addRight($modulo[0], $valor, ['config' => READ | UPDATE]);
         }
+
+        // D-54 (BP.3c): "Abrir o Mural ao entrar" nasce 0 para TODOS os
+        // perfis, inclusive o super-admin: e opcao de perfil, nao permissao.
+        // Com valor 0 o addRight grava 0 tanto em quem atende $requiredrights
+        // quanto em quem nao atende (Migration.php:1248-1256).
+        $migration->addRight(EntradaMural::DIREITO, 0, ['config' => READ | UPDATE]);
     }
 
     /**

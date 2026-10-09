@@ -4,16 +4,18 @@
  * Pessoas+ - Mural do colaborador (casca), nas duas interfaces.
  *
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3C
  *
  * Pagina "Para mim > Mural" (D-55): o mural como quadro, visto por quem
  * entra. So exige "Usar o Pessoas+". Sem contagem de visualizacoes e sem
  * nada do RH. A area do RH continua em front/mural.php.
  *
- * O botao "Continuar para a pagina inicial" leva a home da interface
- * atual. No BP.3c (D-54) passa a voltar ao destino guardado na sessao.
- * O login do core redireciona de forma fixa para /front/central.php ou
- * /Helpdesk (Auth.php:1576-1587, T-44); para quem tem a home do Task+,
- * central.php ja desvia para a tela Hoje.
+ * O botao "Continuar para a pagina inicial" volta a pagina inicial que
+ * a pessoa ia abrir quando foi desviada para ca (D-54, EntradaMural). O
+ * destino e uma chave guardada na sessao, nunca um endereco vindo da
+ * requisicao. Sem desvio (Mural aberto pelo menu), vai para a pagina
+ * inicial da interface; para quem tem a home do Task+, central.php
+ * desvia para a tela Hoje, e o Pessoas+ nao desvia de novo.
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -24,7 +26,11 @@ use GlpiPlugin\Pessoasplus\Casca\Fontes;
 use GlpiPlugin\Pessoasplus\Casca\MenuSimplificado;
 use GlpiPlugin\Pessoasplus\Casca\Navegacao;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
+use GlpiPlugin\Pessoasplus\EntradaMural;
 use GlpiPlugin\Pessoasplus\Menu;
+
+/** @var array $CFG_GLPI */
+global $CFG_GLPI;
 
 Session::checkRight(Menu::$rightname, READ);
 
@@ -42,9 +48,11 @@ foreach ($dados['aniversarios'] as $i => $a) {
 }
 $dados['quem']           = $nome === '' ? 'você' : $nome;
 $dados['quem_iniciais']  = $nome === '' ? '?' : mb_strtoupper(mb_substr($nome, 0, 1));
-$dados['url_inicio']     = Pagina::interfaceAtual() === 'helpdesk'
-    ? Pagina::url('/Helpdesk')
-    : Pagina::url('/front/central.php');
+$dados['url_inicio']     = EntradaMural::urlContinuar(
+    $_SESSION,
+    Pagina::interfaceAtual(),
+    (string) ($CFG_GLPI['root_doc'] ?? '')
+);
 
 $pp = Pagina::contexto(
     'mural_colaborador',

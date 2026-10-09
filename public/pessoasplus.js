@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -296,12 +296,60 @@
         });
     }
 
+    /* BP.3c: lateral do Mural que acompanha a rolagem. Se a coluna cabe
+     * na janela, gruda no alto (top 12 px, do CSS). Se nao cabe, o top
+     * fica negativo na medida certa: a coluna rola junto ate o fim dela
+     * aparecer e so entao gruda, sem cortar nada. */
+    var MARGEM_LATERAL = 12;
+
+    function calcularTopoLateral(alturaJanela, alturaColuna, margem) {
+        var sobra = alturaJanela - alturaColuna - margem;
+        return sobra >= margem ? margem : sobra;
+    }
+
+    function ajustarLateral(coluna) {
+        var topo = calcularTopoLateral(window.innerHeight, coluna.offsetHeight, MARGEM_LATERAL);
+        coluna.style.top = topo + 'px';
+    }
+
+    function iniciarLateral() {
+        var colunas = [];
+        document.querySelectorAll('.pp-casca [data-pp-lateral-fixa]').forEach(function (coluna) {
+            if (!primeiraVez(coluna)) {
+                return;
+            }
+            colunas.push(coluna);
+            ajustarLateral(coluna);
+        });
+        if (colunas.length === 0) {
+            return;
+        }
+        var pendente = false;
+        var reajustar = function () {
+            if (pendente) {
+                return;
+            }
+            pendente = true;
+            window.requestAnimationFrame(function () {
+                pendente = false;
+                colunas.forEach(ajustarLateral);
+            });
+        };
+        window.addEventListener('resize', reajustar);
+        // Imagens e comentarios novos mudam a altura da coluna.
+        window.addEventListener('load', reajustar);
+        colunas.forEach(function (coluna) {
+            coluna.addEventListener('click', reajustar);
+        });
+    }
+
     function tudo() {
         iniciar();
         iniciarFiltros();
         iniciarCiencia();
         iniciarNovo();
         iniciarMural();
+        iniciarLateral();
     }
 
     if (document.readyState === 'loading') {

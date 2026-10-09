@@ -7,6 +7,7 @@
  * PESSOASPLUS_BUILD_BP1
  * PESSOASPLUS_BUILD_BP2C
  * PESSOASPLUS_BUILD_BP0C
+ * PESSOASPLUS_BUILD_BP3C
  *
  * No GLPI 11 o kernel ja esta carregado quando este arquivo e incluido
  * pelo roteador legado, entao nao se inclui inc/includes.php (T-24).
@@ -26,9 +27,9 @@ Session::checkRight(Menu::$rightname, READ);
 
 // O Painel do RH e de quem le pelo menos um modulo, na interface padrao
 // (D-51). Quem so usa o Pessoas+ chega aqui pelo menu Ferramentas e vai
-// para a Minha area, em vez de receber um 403.
+// para o Mural, o primeiro item de "Para mim" (D-62), em vez de um 403.
 if (!Permissoes::rh()) {
-    Html::redirect(Pagina::url(MenuSimplificado::PAGINA));
+    Html::redirect(Pagina::url(MenuSimplificado::PAGINA_MURAL));
 }
 
 $dados = Permissoes::filtrarPainel(Fontes::painelRh(), Permissoes::mapa());
