@@ -1,0 +1,262 @@
+{# Pessoas+ - "Chegadas e checklists", area do RH. PESSOASPLUS_BUILD_BP4A #}
+{# Usa pp.dados (Fontes::chegadas). Aba escolhida no servidor (pp.dados.aba). #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    {% if pp.pode.chegadas.gerenciar %}
+        {% if pp.dados.aba == 'modelos' %}
+            <button type="button" class="pp-botao is-primario" data-pp-demo="Novo modelo de checklist: itens, responsáveis, prazos e regra de distribuição. Grava na mobília (B4.1 e B4.2).">
+                <i class="ti ti-plus" aria-hidden="true"></i><span>Novo modelo</span>
+            </button>
+        {% else %}
+            <button type="button" class="pp-botao is-primario" data-pp-demo="Nova chegada: assistente em 6 etapas (dados, vínculo, TI, foto, vaga, documentos). Chega no bloco BP.4b.">
+                <i class="ti ti-door-enter" aria-hidden="true"></i><span>Nova chegada</span>
+            </button>
+            <button type="button" class="pp-botao" data-pp-demo="Nova transferência: troca de setor ou de gestor com data em que vale. Chega no bloco BP.4c.">
+                <i class="ti ti-arrows-exchange" aria-hidden="true"></i><span>Nova transferência</span>
+            </button>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set gerencia = pp.pode.chegadas.gerenciar %}
+
+    <nav class="pp-cheg-abas" aria-label="Seções de chegadas e checklists">
+        <a class="pp-cheg-aba{% if d.aba == 'movimentacoes' %} is-ativa{% endif %}" href="{{ d.url_aba.movimentacoes }}"{% if d.aba == 'movimentacoes' %} aria-current="page"{% endif %}>
+            <i class="ti ti-route" aria-hidden="true"></i> Movimentações <span class="pp-contagem">{{ d.movimentacoes|length }}</span>
+        </a>
+        <a class="pp-cheg-aba{% if d.aba == 'modelos' %} is-ativa{% endif %}" href="{{ d.url_aba.modelos }}"{% if d.aba == 'modelos' %} aria-current="page"{% endif %}>
+            <i class="ti ti-list-check" aria-hidden="true"></i> Modelos de checklist <span class="pp-contagem">{{ d.modelos|length }}</span>
+        </a>
+    </nav>
+
+    {% if d.aba == 'movimentacoes' %}
+        <div class="pp-pub-resumo" aria-label="Resumo em {{ d.referencia }}">
+            <span class="pp-pub-chip"><strong>{{ d.resumo.chegadas }}</strong> {{ d.resumo.chegadas == 1 ? 'chegada' : 'chegadas' }} em andamento{% if d.resumo.rascunhos > 0 %} ({{ d.resumo.rascunhos }} em rascunho){% endif %}</span>
+            <span class="pp-pub-chip"><strong>{{ d.resumo.transferencias }}</strong> {{ d.resumo.transferencias == 1 ? 'transferência' : 'transferências' }}</span>
+            <span class="pp-pub-chip{% if d.resumo.atrasados > 0 %} pp-cheg-chip-atraso{% endif %}"><strong>{{ d.resumo.atrasados }}</strong> {{ d.resumo.atrasados == 1 ? 'tarefa atrasada' : 'tarefas atrasadas' }}</span>
+            <span class="pp-pub-chip"><strong>{{ d.resumo.em_breve }}</strong> {{ d.resumo.em_breve == 1 ? 'vence' : 'vencem' }} em {{ d.janela }} dias</span>
+            <span class="pp-referencia">situação em {{ d.referencia }}</span>
+        </div>
+
+        <div class="pp-cheg-grade">
+            <section class="pp-cartao" data-pp-filtravel>
+                <header class="pp-cartao-cabecalho">
+                    <h2>Movimentações</h2>
+                </header>
+                <div class="pp-filtros" role="group" aria-label="Filtrar movimentações">
+                    {% for f in d.filtros %}
+                        <button type="button" class="pp-chip{% if loop.first %} is-ativo{% endif %}" data-pp-filtro="{{ f.chave }}" aria-pressed="{{ loop.first ? 'true' : 'false' }}">{{ f.rotulo }} <strong>{{ f.total }}</strong></button>
+                    {% endfor %}
+                    <label class="pp-busca">
+                        <i class="ti ti-search" aria-hidden="true"></i>
+                        <span class="pp-oculto">Buscar pessoa ou setor</span>
+                        <input type="search" data-pp-busca placeholder="Pessoa, setor ou tipo">
+                    </label>
+                </div>
+                <div class="pp-tabela-rolagem">
+                    <table class="pp-tabela pp-cheg-tabela">
+                        <thead>
+                            <tr>
+                                <th scope="col">Pessoa</th>
+                                <th scope="col">Movimentação</th>
+                                <th scope="col">Checklist</th>
+                                <th scope="col">Próximo prazo</th>
+                                <th scope="col">Situação</th>
+                                <th scope="col"><span class="pp-oculto">Ações</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in d.movimentacoes %}
+                                <tr data-pp-item data-pp-situacao="{{ m.filtro }}">
+                                    <td>
+                                        <div class="pp-pessoa">
+                                            <span class="pp-avatar" aria-hidden="true">{{ m.iniciais }}</span>
+                                            <div>
+                                                {% if m.fase != 'rascunho' %}
+                                                    <a class="pp-link-forte" href="{{ d.url_checklist }}{{ m.id }}">{{ m.pessoa }}</a>
+                                                {% else %}
+                                                    <strong>{{ m.pessoa }}</strong>
+                                                {% endif %}
+                                                <small>{{ m.contexto }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="pp-cheg-tipo"><i class="{{ m.icone }}" aria-hidden="true"></i> {{ m.tipo_rotulo }}</span>
+                                        <small class="pp-sub">{{ m.vinculo }} · {{ m.data_rotulo }}</small>
+                                    </td>
+                                    <td>
+                                        {% if m.fase == 'rascunho' %}
+                                            <div class="pp-progresso" role="img" aria-label="assistente na etapa {{ m.etapa }} de 6">
+                                                <div class="pp-progresso-barra" style="width: {{ (m.etapa * 100 / 6)|round }}%"></div>
+                                            </div>
+                                            <small class="pp-progresso-texto">assistente · etapa {{ m.etapa }} de 6</small>
+                                        {% else %}
+                                            <div class="pp-progresso" role="img" aria-label="{{ m.feitos }} de {{ m.total }} itens concluídos">
+                                                <div class="pp-progresso-barra pp-tom-{{ m.tom }}" style="width: {{ m.percentual }}%"></div>
+                                            </div>
+                                            <small class="pp-progresso-texto">{{ m.feitos }} de {{ m.total }} itens{% if m.atrasados > 0 %} · {{ m.atrasados }} {{ m.atrasados == 1 ? 'atrasado' : 'atrasados' }}{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if m.fase == 'rascunho' %}
+                                            <span>Concluir o assistente</span>
+                                            <small class="pp-sub">parado há {{ m.parado }} dias</small>
+                                        {% elseif m.proximo.titulo != '' %}
+                                            <span>{{ m.proximo.titulo }}</span>
+                                            <small class="pp-sub pp-cheg-prazo-{{ m.proximo.tom }}">{{ m.proximo.tom == 'atraso' ? 'venceu em' : 'até' }} {{ m.proximo.data }}</small>
+                                        {% else %}
+                                            <small class="pp-sub">{{ m.fase == 'concluida' ? 'tudo concluído' : 'só itens automáticos' }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="pp-selo pp-tom-{{ m.tom }}">{{ m.situacao }}</span></td>
+                                    <td class="pp-acoes-linha">
+                                        {% if m.fase == 'rascunho' %}
+                                            {% if gerencia %}
+                                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Continuar o assistente de chegada de {{ m.pessoa }} na etapa {{ m.etapa }}: chega no bloco BP.4b.">
+                                                    <i class="ti ti-player-play" aria-hidden="true"></i><span>Continuar</span>
+                                                </button>
+                                            {% endif %}
+                                        {% else %}
+                                            <a class="pp-botao is-compacto is-icone" href="{{ d.url_checklist }}{{ m.id }}" title="Abrir o checklist" aria-label="Abrir o checklist de {{ m.pessoa }}"><i class="ti ti-list-check" aria-hidden="true"></i></a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="pp-vazio" data-pp-vazio hidden>Nenhuma movimentação com esse filtro.</p>
+                <p class="pp-nota pp-pub-nota">
+                    <i class="ti ti-info-circle" aria-hidden="true"></i>
+                    Desligamentos seguem a mesma lógica de checklist, com o nada consta por setor, na área Desligamentos.
+                </p>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Prazos</h2>
+                    <span class="pp-contagem">{{ d.prazos|length }}</span>
+                </header>
+                <ul class="pp-alertas">
+                    {% for p in d.prazos %}
+                        <li class="pp-alerta pp-tom-{{ p.tom }}">
+                            <i class="ti {{ p.tom == 'atraso' ? 'ti-alert-triangle' : (p.tom == 'info' ? 'ti-info-circle' : 'ti-clock') }}" aria-hidden="true"></i>
+                            <div class="pp-alerta-texto">
+                                <strong>{{ p.titulo }}</strong>
+                                <span>{{ p.tipo }} · {{ p.pessoa }}</span>
+                                <span>{{ p.responsavel }}</span>
+                                {% if gerencia and p.mov > 0 %}
+                                    <button type="button" class="pp-cheg-lembrar" data-pp-demo="Lembrar {{ p.responsavel }} de “{{ p.titulo }}”: aviso no GLPI e, com o SMTP ligado, por e-mail. Chega na mobília (B4.4).">
+                                        <i class="ti ti-bell-ringing" aria-hidden="true"></i> Lembrar o responsável
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.selo }}</span>
+                        </li>
+                    {% else %}
+                        <li class="pp-vazio">Nenhuma tarefa aberta.</li>
+                    {% endfor %}
+                </ul>
+                <p class="pp-nota pp-cheg-nota-prazos">Itens automáticos não aparecem aqui: concluem sozinhos quando o chamado é solucionado ou as ciências são confirmadas.</p>
+            </section>
+        </div>
+    {% else %}
+        <p class="pp-cheg-explica">
+            <i class="ti ti-info-circle" aria-hidden="true"></i>
+            Cada movimentação recebe <strong>todos os modelos cuja regra casa com a pessoa</strong> (vínculo, setor, empregador, entidade, cargo).
+            As necessidades de TI marcadas no assistente entram como itens a mais, que se concluem quando o chamado é solucionado.
+            O prazo conta da data de início, ou da data em que a transferência vale.
+        </p>
+
+        <div class="pp-cheg-modelos">
+            {% for m in d.modelos %}
+                <details class="pp-cartao pp-cheg-modelo"{% if loop.first %} open{% endif %}>
+                    <summary>
+                        <span class="pp-cheg-modelo-nome">
+                            <strong>{{ m.nome }}</strong>
+                            <small class="pp-sub">{{ m.tipo }} · {{ m.itens|length }} {{ m.itens|length == 1 ? 'item' : 'itens' }} · {{ m.uso > 0 ? 'aplicado em ' ~ m.uso ~ ' movimentações' : 'nunca aplicado' }}</small>
+                        </span>
+                        <span class="pp-cheg-regra" aria-label="Regra">
+                            {% for r in m.regra %}
+                                <span class="pp-cheg-regra-chip"><em>{{ r.campo }}</em> {{ r.valor }}</span>
+                            {% else %}
+                                <span class="pp-cheg-regra-chip is-vazia">sem regra</span>
+                            {% endfor %}
+                        </span>
+                        <span class="pp-selo pp-tom-{{ m.ativo ? 'ok' : 'neutro' }}">{{ m.ativo ? 'Ativo' : 'Rascunho' }}</span>
+                    </summary>
+                    <div class="pp-cheg-modelo-corpo">
+                        {% if m.nota != '' %}<p class="pp-nota">{{ m.nota }}</p>{% endif %}
+                        <div class="pp-tabela-rolagem">
+                            <table class="pp-tabela">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Item</th>
+                                        <th scope="col">Responsável</th>
+                                        <th scope="col">Prazo</th>
+                                        <th scope="col">Obrigatório</th>
+                                        <th scope="col">Evidência</th>
+                                        <th scope="col">Conclusão</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in m.itens %}
+                                        <tr>
+                                            <td><strong>{{ i.titulo }}</strong></td>
+                                            <td>{{ i.responsavel }}</td>
+                                            <td>{{ i.prazo }}</td>
+                                            <td>{{ i.obrigatorio ? 'Sim' : 'Não' }}</td>
+                                            <td>{{ i.evidencia != '' ? i.evidencia : '—' }}</td>
+                                            <td><small>{{ i.conclusao }}</small></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if gerencia %}
+                            <div class="pp-cheg-modelo-acoes">
+                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Editar “{{ m.nome }}”: itens, responsáveis, prazos e regra. Movimentações já abertas mantêm os itens que receberam. Grava na mobília (B4.1).">
+                                    <i class="ti ti-pencil" aria-hidden="true"></i><span>Editar</span>
+                                </button>
+                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Duplicar “{{ m.nome }}”: nasce uma cópia em rascunho, sem regra. Grava na mobília (B4.1).">
+                                    <i class="ti ti-copy" aria-hidden="true"></i><span>Duplicar</span>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </details>
+            {% endfor %}
+        </div>
+
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho">
+                <h2>Quem recebe o quê</h2>
+                <span class="pp-referencia">exemplos da regra em vigor</span>
+            </header>
+            <div class="pp-tabela-rolagem">
+                <table class="pp-tabela">
+                    <thead>
+                        <tr>
+                            <th scope="col">Pessoa com</th>
+                            <th scope="col">Modelos aplicados</th>
+                            <th scope="col">Itens</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in d.exemplos %}
+                            <tr>
+                                <td><strong>{{ e.perfil }}</strong></td>
+                                <td>{{ e.modelos|join(' + ') }}</td>
+                                <td>{{ e.itens }}{% if e.extra != '' %} <small class="pp-sub">{{ e.extra }}</small>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}

@@ -12,6 +12,7 @@
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3D
  * PESSOASPLUS_BUILD_BP3E
+ * PESSOASPLUS_BUILD_BP4A
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -167,6 +168,29 @@ final class Fontes
     public static function ouvidoria(): array
     {
         return DadosDemo::ouvidoria();
+    }
+
+    /**
+     * Chegadas e checklists (BP.4a): movimentacoes, prazos e modelos de
+     * checklist. Na mobilia: B4.1 a B4.4 (modelos, regras, instancias e
+     * alertas) e B4.9 (transferencia).
+     *
+     * @return array<string, mixed>
+     */
+    public static function chegadas(): array
+    {
+        return DemoChegadas::area();
+    }
+
+    /**
+     * Checklist de uma movimentacao (Tela 5). null para id desconhecido ou
+     * rascunho, que ainda nao tem checklist.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function movimentacao(int $id): ?array
+    {
+        return DemoChegadas::movimentacao($id);
     }
 
     /**

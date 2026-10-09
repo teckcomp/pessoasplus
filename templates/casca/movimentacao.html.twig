@@ -1,0 +1,150 @@
+{# Pessoas+ - checklist de uma movimentacao (Tela 5 da proposta). PESSOASPLUS_BUILD_BP4A #}
+{# Usa pp.dados (Fontes::movimentacao). Nenhum item guarda dado de saude. #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Chegadas e checklists</span>
+    </a>
+    <button type="button" class="pp-botao" data-pp-demo="Pasta de {{ pp.dados.pessoa }} no Fichário, com a aba Checklists: chega no bloco BP.6.">
+        <i class="ti ti-folder" aria-hidden="true"></i><span>Pasta no Fichário</span>
+    </button>
+    {% if pp.pode.chegadas.gerenciar and pp.dados.fase != 'concluida' %}
+        <button type="button" class="pp-botao" data-pp-demo="Adicionar item só a esta movimentação, com responsável e prazo. Fica no histórico. Grava na mobília (B4.3).">
+            <i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar item</span>
+        </button>
+    {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set gerencia = pp.pode.chegadas.gerenciar %}
+
+    <div class="pp-emissor-topo">
+        <span class="pp-rotulo-tela"><i class="{{ d.icone }}" aria-hidden="true"></i> Checklist de {{ d.tipo == 'chegada' ? 'chegada' : 'transferência' }}</span>
+        <span class="pp-selo pp-tom-{{ d.tom }}">{{ d.situacao }}</span>
+        <span class="pp-referencia">situação em {{ d.referencia }}</span>
+    </div>
+
+    <div class="pp-cheg-detalhe">
+        <section class="pp-cartao pp-cheg-checklist">
+            <header class="pp-cartao-cabecalho">
+                <h2>{{ d.tipo_rotulo }} · {{ d.pessoa }}</h2>
+                <span class="pp-referencia">{{ d.data_rotulo }}</span>
+            </header>
+            <div class="pp-progresso is-largo pp-cheg-barra" role="img" aria-label="{{ d.feitos }} de {{ d.total }} itens concluídos">
+                <div class="pp-progresso-barra pp-tom-{{ d.tom }}" style="width: {{ d.percentual }}%"></div>
+            </div>
+            <p class="pp-progresso-texto">{{ d.feitos }} de {{ d.total }} itens{% if d.atrasados > 0 %} · {{ d.atrasados }} {{ d.atrasados == 1 ? 'atrasado' : 'atrasados' }}{% endif %}</p>
+
+            <ul class="pp-cheg-itens">
+                {% for i in d.itens %}
+                    <li class="pp-cheg-item is-{{ i.situacao }}">
+                        <span class="pp-cheg-ponto is-{{ i.situacao }}" aria-hidden="true"></span>
+                        <div class="pp-cheg-item-texto">
+                            <strong>{{ i.titulo }}</strong>
+                            <span>{{ i.responsavel }} · {{ i.relativo }} ({{ i.data }}){% if i.automatico %} · automático{% endif %}</span>
+                            <small>
+                                {% if i.quando != '' %}{{ i.situacao == 'feito' ? 'Concluído em ' : '' }}{{ i.quando }} · {% endif %}{{ i.origem }}{% if i.evidencia != '' %} · evidência: {{ i.evidencia }}{% endif %}
+                            </small>
+                        </div>
+                        <span class="pp-selo pp-tom-{{ i.tom }}">{{ i.selo }}</span>
+                        {% if gerencia and not i.automatico %}
+                            {% if i.situacao == 'feito' %}
+                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Reabrir “{{ i.titulo }}”: exige motivo e fica no histórico. Grava na mobília (B4.3).">Reabrir</button>
+                            {% else %}
+                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Concluir “{{ i.titulo }}”{% if i.evidencia != '' %} com a evidência ({{ i.evidencia }}){% endif %}. O responsável também conclui pela Minha área. Grava na mobília (B4.3).">Concluir</button>
+                            {% endif %}
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="pp-nota pp-pub-nota">
+                <i class="ti ti-info-circle" aria-hidden="true"></i>
+                Itens automáticos não têm botão: concluem sozinhos quando o chamado é solucionado ou quando todas as ciências são confirmadas.
+            </p>
+        </section>
+
+        <div class="pp-cheg-lateral">
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Movimentação</h2></header>
+                <dl class="pp-cheg-dados">
+                    <dt>Cargo</dt><dd>{{ d.cargo }}</dd>
+                    <dt>{{ d.tipo == 'chegada' ? 'Setor' : 'Setor de destino' }}</dt><dd>{{ d.setor }}</dd>
+                    {% if d.origem != '' %}<dt>Setor de origem</dt><dd>{{ d.origem }}</dd>{% endif %}
+                    <dt>Vínculo</dt><dd>{{ d.vinculo }} · {{ d.empregador }}</dd>
+                    <dt>Gestor</dt><dd>{{ d.gestor }}</dd>
+                    <dt>Modelos aplicados</dt>
+                    <dd>
+                        {% for nome in d.modelos_nomes %}<a href="{{ d.url_modelos }}">{{ nome }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}
+                        {% if d.tem_ti %}<br><small class="pp-sub">+ itens das necessidades de TI</small>{% endif %}
+                    </dd>
+                </dl>
+            </section>
+
+            {% if d.muda|length > 0 %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho">
+                        <h2>O que muda em {{ d.data }}</h2>
+                    </header>
+                    <ul class="pp-cheg-muda">
+                        {% for x in d.muda %}
+                            <li><span>{{ x.rotulo }}</span><span><s>{{ x.de }}</s> <i class="ti ti-arrow-right" aria-hidden="true"></i> <strong>{{ x.para }}</strong></span></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if d.chamados|length > 0 %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho">
+                        <h2>Chamados de TI</h2>
+                        <span class="pp-contagem">{{ d.chamados|length }}</span>
+                    </header>
+                    <ul class="pp-lista is-compacta">
+                        {% for c in d.chamados %}
+                            <li>
+                                <div class="pp-lista-texto">
+                                    <strong>#{{ c.numero }} · {{ c.titulo }}</strong>
+                                    <span>{{ c.categoria }}</span>
+                                </div>
+                                <span class="pp-selo pp-tom-ok">{{ c.situacao }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="pp-nota">Abertos pelo assistente, um por necessidade marcada (Tela 4).</p>
+                </section>
+            {% endif %}
+
+            {% if d.normativas|length > 0 %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho">
+                        <h2>{{ d.tipo == 'chegada' ? 'Normativas de admissão' : 'Normas do novo setor' }}</h2>
+                    </header>
+                    <ul class="pp-lista is-compacta">
+                        {% for n in d.normativas %}
+                            <li>
+                                <div class="pp-lista-texto">
+                                    <strong>{{ n.codigo }} · {{ n.titulo }}</strong>
+                                    <span>{{ n.confirmada != '' ? 'ciência em ' ~ n.confirmada : 'aguardando ciência' }}{% if n.nota != '' %} · {{ n.nota }}{% endif %}</span>
+                                </div>
+                                <span class="pp-selo pp-tom-{{ n.confirmada != '' ? 'ok' : 'alerta' }}">{{ n.confirmada != '' ? 'Ciente' : 'Pendente' }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Histórico</h2></header>
+                <ul class="pp-cheg-historico">
+                    {% for h in d.historico %}
+                        <li><small>{{ h.quando }}</small><span>{{ h.texto }}</span></li>
+                    {% else %}
+                        <li class="pp-vazio">Nada concluído ainda.</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </div>
+{% endblock %}

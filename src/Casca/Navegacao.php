@@ -14,6 +14,7 @@
  * PESSOASPLUS_BUILD_BP3C
  * PESSOASPLUS_BUILD_BP3D
  * PESSOASPLUS_BUILD_BP3E
+ * PESSOASPLUS_BUILD_BP4A
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -34,7 +35,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'bp3e-1';
+    public const BUILD = 'bp4a-1';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
@@ -70,7 +71,7 @@ final class Navegacao
                     self::item('comunicados', 'Comunicados e normativas', 'ti ti-speakerphone', 'comunicados.php', 'BP.2'),
                     self::item('mural', 'Publicações do mural', 'ti ti-news', 'mural.php', 'BP.3'),
                     self::item('pesquisas', 'Campanhas de pesquisa', 'ti ti-chart-bar', null, 'BP.7'),
-                    self::item('chegadas', 'Chegadas e checklists', 'ti ti-door-enter', null, 'BP.4'),
+                    self::item('chegadas', 'Chegadas e checklists', 'ti ti-door-enter', 'chegadas.php', 'BP.4a'),
                     self::item('ferias', 'Férias e ausências', 'ti ti-beach', null, 'BP.5'),
                     self::item('desligamentos', 'Desligamentos', 'ti ti-door-exit', null, 'BP.8'),
                     self::item('cautela', 'Itens em cautela', 'ti ti-tool', null, 'BP.10'),
