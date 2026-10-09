@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -55,12 +55,17 @@
         var filtro = ativo ? ativo.getAttribute('data-pp-filtro') : 'todos';
         var campo = bloco.querySelector('[data-pp-busca]');
         var busca = normalizar(campo ? campo.value : '').trim();
+        var periodo = bloco.querySelector('[data-pp-periodo]');
+        var mes = periodo ? periodo.value : 'todos';
         var visiveis = 0;
         bloco.querySelectorAll('[data-pp-item]').forEach(function (item) {
             var tokens = (item.getAttribute('data-pp-situacao') || '').split(/\s+/);
             var ok = filtro === 'todos' || tokens.indexOf(filtro) !== -1;
             if (ok && busca !== '') {
                 ok = normalizar(item.textContent).indexOf(busca) !== -1;
+            }
+            if (ok && mes !== 'todos') {
+                ok = (item.getAttribute('data-pp-meses') || '').split(/\s+/).indexOf(mes) !== -1;
             }
             item.hidden = !ok;
             if (ok) {
@@ -95,6 +100,10 @@
             var campo = bloco.querySelector('[data-pp-busca]');
             if (campo) {
                 campo.addEventListener('input', function () { aplicarFiltro(bloco); });
+            }
+            var periodo = bloco.querySelector('[data-pp-periodo]');
+            if (periodo) {
+                periodo.addEventListener('change', function () { aplicarFiltro(bloco); });
             }
             aplicarFiltro(bloco);
         });
@@ -138,12 +147,28 @@
      * a pre-visualizacao acompanha o que e digitado e o publico e contado
      * ao vivo. Publico vazio nunca vira "todos": mostra zero e trava
      * o botao Publicar. Nada e enviado ao servidor na casca. */
+    /* Soma o publico dos grupos marcados, conforme o vinculo escolhido.
+     * Usado no novo comunicado (BP.2c) e na nova publicacao (BP.3d). */
+    function totalPublico(raiz) {
+        var vinculo = raiz.querySelector('[data-pp-vinculo]');
+        var modo = vinculo ? vinculo.value : 'todos';
+        var total = 0;
+        raiz.querySelectorAll('[data-pp-grupo]').forEach(function (g) {
+            if (!g.checked) {
+                return;
+            }
+            var clt = parseInt(g.getAttribute('data-pp-clt'), 10) || 0;
+            var pj = parseInt(g.getAttribute('data-pp-pj'), 10) || 0;
+            total += modo === 'clt' ? clt : (modo === 'pj' ? pj : clt + pj);
+        });
+        return total;
+    }
+
     function iniciarNovo() {
         document.querySelectorAll('.pp-casca [data-pp-novo]').forEach(function (raiz) {
             var q = function (sel) { return raiz.querySelector(sel); };
             var titulo = q('[data-pp-titulo]');
             var texto = q('[data-pp-texto]');
-            var vinculo = q('[data-pp-vinculo]');
             var publicar = q('[data-pp-publicar]');
 
             function tipoAtual() {
@@ -169,16 +194,7 @@
             }
 
             function contarPublico() {
-                var modo = vinculo ? vinculo.value : 'todos';
-                var total = 0;
-                raiz.querySelectorAll('[data-pp-grupo]').forEach(function (g) {
-                    if (!g.checked) {
-                        return;
-                    }
-                    var clt = parseInt(g.getAttribute('data-pp-clt'), 10) || 0;
-                    var pj = parseInt(g.getAttribute('data-pp-pj'), 10) || 0;
-                    total += modo === 'clt' ? clt : (modo === 'pj' ? pj : clt + pj);
-                });
+                var total = totalPublico(raiz);
                 q('[data-pp-total]').textContent = String(total);
                 q('[data-pp-prev-total]').textContent = String(total);
                 q('[data-pp-zero]').hidden = total !== 0;
@@ -195,6 +211,271 @@
             raiz.addEventListener('input', atualizarPrevia);
             atualizarPrevia();
             contarPublico();
+        });
+    }
+
+    /* BP.3d: "Trazer ao topo" na lista de publicacoes. A linha passa a ser
+     * a primeira fixada do seu lugar e as posicoes sao renumeradas na tela.
+     * Nada e gravado na casca: o aviso de demonstracao sai pelo data-pp-demo
+     * do proprio botao (iniciar). Na mobilia so o carimbo de fixacao muda. */
+    function renumerarFixadas(corpo, lugar) {
+        var linhas = corpo.querySelectorAll('[data-pp-ordem-grupo="' + lugar + '"]');
+        Array.prototype.forEach.call(linhas, function (linha, i) {
+            var ordem = linha.querySelector('[data-pp-ordem]');
+            if (ordem) {
+                ordem.textContent = (i + 1) + 'º';
+            }
+            var botao = linha.querySelector('[data-pp-topo]');
+            if (botao) {
+                botao.disabled = i === 0;
+                botao.title = i === 0 ? 'Já é a primeira fixada deste lugar' : 'Trazer ao topo';
+            }
+        });
+    }
+
+    function iniciarTopo() {
+        document.querySelectorAll('.pp-casca [data-pp-publicacoes]').forEach(function (bloco) {
+            if (bloco.hasAttribute('data-pp-topo-pronto')) {
+                return;
+            }
+            bloco.setAttribute('data-pp-topo-pronto', '');
+            bloco.addEventListener('click', function (evento) {
+                var botao = evento.target.closest('[data-pp-topo]');
+                if (!botao || botao.disabled || !bloco.contains(botao)) {
+                    return;
+                }
+                var linha = botao.closest('tr');
+                var lugar = linha ? linha.getAttribute('data-pp-ordem-grupo') : null;
+                if (!linha || !lugar) {
+                    return;
+                }
+                var corpo = linha.parentNode;
+                var primeira = corpo.querySelector('[data-pp-ordem-grupo="' + lugar + '"]');
+                if (primeira && primeira !== linha) {
+                    corpo.insertBefore(linha, primeira);
+                }
+                renumerarFixadas(corpo, lugar);
+            });
+        });
+    }
+
+    /* BP.3d: nova publicacao. A previa acompanha tipo, lugar, texto,
+     * imagem, botoes, periodo e comentarios; campos que nao valem para o
+     * lugar ou o tipo escolhido somem. Publicar fica travado enquanto houver
+     * pendencia: titulo, periodo valido, publico maior que zero e, em
+     * reconhecimento, a concordancia da pessoa (I-10). Todo texto entra por
+     * textContent. Nada e enviado ao servidor na casca. */
+    function dataCurta(iso) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
+    }
+
+    function lerJson(raiz, seletor) {
+        var no = raiz.querySelector(seletor);
+        if (!no) {
+            return {};
+        }
+        try {
+            var dados = JSON.parse(no.textContent || '{}');
+            return dados && typeof dados === 'object' && !Array.isArray(dados) ? dados : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function pendenciasPublicacao(estado) {
+        var lista = [];
+        if (estado.titulo === '') {
+            lista.push('Escreva o título.');
+        }
+        if (estado.inicio === '' || estado.fim === '') {
+            lista.push('Informe o período de exibição.');
+        } else if (estado.fim < estado.inicio) {
+            lista.push('O fim do período vem antes do início.');
+        }
+        if (estado.publico === 0) {
+            lista.push('Escolha pelo menos um grupo do público.');
+        }
+        if (estado.tipo === 'reconhecimento' && !estado.concordancia) {
+            lista.push('Confirme a concordância da pessoa reconhecida.');
+        }
+        return lista;
+    }
+
+    function textoFixadas(lugarRotulo, fixadas, fixar) {
+        var nomes = Array.isArray(fixadas) ? fixadas : [];
+        if (nomes.length === 0) {
+            return fixar
+                ? 'Nenhuma publicação fixada em ' + lugarRotulo + ' agora: esta fica em 1º.'
+                : 'Nenhuma publicação fixada em ' + lugarRotulo + ' agora.';
+        }
+        var hoje = nomes.map(function (n, i) { return (i + 1) + 'º ' + n; }).join(', ');
+        var texto = 'Fixadas agora em ' + lugarRotulo + ': ' + hoje + '.';
+        if (fixar) {
+            texto += ' Ao publicar, esta fica em 1º e “' + nomes[0] + '” passa a 2º.';
+        }
+        return texto;
+    }
+
+    function iniciarPublicacao() {
+        document.querySelectorAll('.pp-casca [data-pp-pubform]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var casca = raiz.closest('.pp-casca') || document;
+            var fixadasPorLugar = lerJson(casca, '[data-pp-fixadas-json]');
+            var q = function (sel) { return raiz.querySelector(sel); };
+            var hoje = raiz.getAttribute('data-pp-hoje') || '';
+            var titulo = q('[data-pp-titulo]');
+            var chamada = q('[data-pp-chamada]');
+            var inicio = q('[data-pp-inicio]');
+            var fim = q('[data-pp-fim]');
+            var fixar = q('[data-pp-fixar]');
+            var comentarios = q('[data-pp-comentarios]');
+            var concordancia = q('[data-pp-concordancia]');
+            var publicar = q('[data-pp-publicar]');
+            var pv = q('[data-pp-pv]');
+
+            function marcado(nome) {
+                return raiz.querySelector('input[name="' + nome + '"]:checked');
+            }
+
+            function definir(sel, texto) {
+                var no = q(sel);
+                if (no) {
+                    no.textContent = texto;
+                }
+            }
+
+            function atualizar() {
+                var tipoEl = marcado('pp_pub_tipo');
+                var lugarEl = marcado('pp_pub_lugar');
+                var imagemEl = marcado('pp_pub_imagem');
+                var tipo = tipoEl ? tipoEl.value : '';
+                var lugar = lugarEl ? lugarEl.value : 'cartao';
+                var lugarRotulo = lugarEl ? lugarEl.getAttribute('data-pp-rotulo') : '';
+                var fixada = !!(fixar && fixar.checked) && lugar !== 'destaque';
+                var comImagem = lugar === 'grande' || lugar === 'cartao';
+                var urlImagem = imagemEl && imagemEl.value !== '' ? (imagemEl.getAttribute('data-pp-url') || '') : '';
+
+                raiz.querySelectorAll('[data-pp-so-lugar]').forEach(function (no) {
+                    no.hidden = no.getAttribute('data-pp-so-lugar') !== lugar;
+                });
+                raiz.querySelectorAll('[data-pp-so-tipo]').forEach(function (no) {
+                    no.hidden = no.getAttribute('data-pp-so-tipo') !== tipo;
+                });
+                var blocoImagem = q('[data-pp-com-imagem]');
+                if (blocoImagem) {
+                    blocoImagem.hidden = !comImagem;
+                }
+                var blocoFixar = q('[data-pp-fixar-bloco]');
+                if (blocoFixar) {
+                    blocoFixar.hidden = lugar === 'destaque';
+                }
+                definir('[data-pp-fixadas-info]', textoFixadas(lugarRotulo, fixadasPorLugar[lugar], fixada));
+
+                var ligados = !!(comentarios && comentarios.checked);
+                raiz.querySelectorAll('[data-pp-depende-comentarios]').forEach(function (no) {
+                    no.disabled = !ligados;
+                });
+
+                var corpo = chamada ? chamada.value.trim() : '';
+                definir('[data-pp-contador]', String(chamada ? chamada.value.length : 0));
+
+                // Mapa e previa
+                raiz.querySelectorAll('[data-pp-zona]').forEach(function (zona) {
+                    zona.classList.toggle('is-alvo', zona.getAttribute('data-pp-zona') === lugar);
+                });
+                if (pv) {
+                    pv.className = 'pp-pv is-' + lugar + ' pp-pv-tipo-' + tipo;
+                    var img = q('[data-pp-pv-imagem]');
+                    var capa = q('[data-pp-pv-capa]');
+                    var mostraImagem = comImagem && urlImagem !== '';
+                    if (img) {
+                        img.hidden = !mostraImagem;
+                        if (mostraImagem && img.getAttribute('src') !== urlImagem) {
+                            img.setAttribute('src', urlImagem);
+                        }
+                    }
+                    if (capa) {
+                        capa.hidden = mostraImagem || !comImagem;
+                    }
+                    var icone = q('[data-pp-pv-icone]');
+                    if (icone && tipoEl) {
+                        icone.className = tipoEl.getAttribute('data-pp-icone') || '';
+                    }
+                    var rotulo = tipoEl ? tipoEl.getAttribute('data-pp-rotulo') : '';
+                    if (lugar === 'destaque') {
+                        rotulo = 'Destaque fixo · ' + rotulo;
+                    } else if (fixada) {
+                        rotulo += ' · Fixada no topo';
+                    }
+                    definir('[data-pp-pv-rotulo]', rotulo);
+                    definir('[data-pp-pv-titulo]', (titulo && titulo.value.trim()) || 'Sem título');
+                    var limite = lugar === 'grande' || lugar === 'destaque' ? 240 : 120;
+                    definir('[data-pp-pv-chamada]', corpo.length > limite ? corpo.slice(0, limite) + '…' : corpo);
+
+                    var botoes = q('[data-pp-pv-botoes]');
+                    if (botoes) {
+                        while (botoes.firstChild) {
+                            botoes.removeChild(botoes.firstChild);
+                        }
+                        if (lugar === 'grande') {
+                            raiz.querySelectorAll('[data-pp-botao-rotulo]').forEach(function (campo, i) {
+                                var texto = campo.value.trim();
+                                if (texto !== '') {
+                                    botoes.appendChild(el('span', 'pp-pv-botao' + (i === 0 ? ' is-primario' : ''), texto));
+                                }
+                            });
+                        }
+                        botoes.hidden = botoes.childNodes.length === 0;
+                    }
+                    var periodo = inicio && fim && inicio.value && fim.value
+                        ? (inicio.value === fim.value ? 'em ' + dataCurta(inicio.value) : 'de ' + dataCurta(inicio.value) + ' a ' + dataCurta(fim.value))
+                        : 'sem período';
+                    definir('[data-pp-pv-meta]', 'RH · ' + periodo + ' · ' + (ligados ? 'comentários ligados' : 'comentários desligados'));
+                }
+
+                // Publico e pendencias
+                var total = totalPublico(raiz);
+                definir('[data-pp-total]', String(total));
+                definir('[data-pp-prev-total]', String(total));
+                var zero = q('[data-pp-zero]');
+                var resultado = q('[data-pp-resultado]');
+                if (zero) {
+                    zero.hidden = total !== 0;
+                }
+                if (resultado) {
+                    resultado.hidden = total === 0;
+                }
+
+                var pendencias = pendenciasPublicacao({
+                    titulo: titulo ? titulo.value.trim() : '',
+                    inicio: inicio ? inicio.value : '',
+                    fim: fim ? fim.value : '',
+                    publico: total,
+                    tipo: tipo,
+                    concordancia: !!(concordancia && concordancia.checked)
+                });
+                var lista = q('[data-pp-pendencias]');
+                if (lista) {
+                    while (lista.firstChild) {
+                        lista.removeChild(lista.firstChild);
+                    }
+                    pendencias.forEach(function (p) { lista.appendChild(el('li', null, p)); });
+                    lista.hidden = pendencias.length === 0;
+                }
+                if (publicar) {
+                    publicar.disabled = pendencias.length > 0;
+                    if (!publicar.hasAttribute('data-pp-rotulo-fixo')) {
+                        var agendar = inicio && inicio.value !== '' && hoje !== '' && inicio.value > hoje;
+                        definir('[data-pp-publicar-rotulo]', agendar ? 'Agendar para ' + dataCurta(inicio.value) : 'Publicar');
+                    }
+                }
+            }
+
+            raiz.addEventListener('change', atualizar);
+            raiz.addEventListener('input', atualizar);
+            atualizar();
         });
     }
 
@@ -348,6 +629,8 @@
         iniciarFiltros();
         iniciarCiencia();
         iniciarNovo();
+        iniciarTopo();
+        iniciarPublicacao();
         iniciarMural();
         iniciarLateral();
     }

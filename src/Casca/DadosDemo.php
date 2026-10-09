@@ -11,6 +11,7 @@
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP0C
+ * PESSOASPLUS_BUILD_BP3D
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -75,6 +76,7 @@ final class DadosDemo
             ],
             'atalhos' => [
                 self::atalho('comunicados', 'Novo comunicado', 'ti ti-speakerphone', 'BP.2c', 'comunicado_novo.php'),
+                self::atalho('mural', 'Nova publicação', 'ti ti-news', 'BP.3d', 'publicacao_nova.php'),
                 self::atalho('chegadas', 'Nova chegada', 'ti ti-door-enter', 'BP.4'),
                 self::atalho('desligamentos', 'Declarar desligamento', 'ti ti-door-exit', 'BP.8'),
                 self::atalho('pesquisas', 'Nova pesquisa', 'ti ti-chart-bar', 'BP.7'),
@@ -511,7 +513,7 @@ final class DadosDemo
                 'curtidas'    => 48,
                 'acoes'       => [
                     ['rotulo' => 'Confirmar presença na roda de conversa', 'primario' => true, 'bloco' => 'BP.7', 'acao' => 'Confirmar presença (enquete ligada à publicação)'],
-                    ['rotulo' => 'Ler o material da campanha', 'primario' => false, 'bloco' => 'BP.3d', 'acao' => 'Abrir o material da campanha (documento anexo)'],
+                    ['rotulo' => 'Ler o material da campanha', 'primario' => false, 'bloco' => 'B3.1', 'acao' => 'Abrir o material da campanha (documento anexo)'],
                 ],
             ],
             'aniversarios' => [
@@ -574,6 +576,359 @@ final class DadosDemo
                 'texto' => 'Dúvidas, sugestões, reclamações e relatos, com opção anônima e protocolo.',
                 'bloco' => 'BP.3e',
             ],
+        ];
+    }
+
+    /**
+     * Data de referencia da demonstracao do mural (BP.3d). A situacao de
+     * cada publicacao (agendada, publicada, encerrada) sai das datas contra
+     * este dia, para a casca contar a mesma historia em qualquer data.
+     */
+    public const HOJE = '2026-10-08';
+
+    /**
+     * Tipos de publicacao (D-59): chave => [rotulo, tom do selo, icone, descricao].
+     */
+    public const TIPOS_PUBLICACAO = [
+        'aviso'          => ['Aviso', 'alerta', 'ti ti-bell', 'Informação da empresa ou de um setor.'],
+        'evento'         => ['Evento', 'info', 'ti ti-calendar-event', 'Data, hora e local de algo que vai acontecer.'],
+        'reconhecimento' => ['Reconhecimento', 'ok', 'ti ti-award', 'Elogio a uma pessoa, só com a concordância dela.'],
+        'treinamento'    => ['Treinamento', 'neutro', 'ti ti-school', 'Turmas, inscrições e requisitos.'],
+        'campanha'       => ['Campanha do mês', 'atraso', 'ti ti-ribbon-health', 'Tema do mês, com arte e ações.'],
+        'celebracao'     => ['Celebração', 'alerta', 'ti ti-confetti', 'Data comemorativa. Sem arte, entra o cartão automático.'],
+    ];
+
+    /**
+     * Lugares no mural (D-59): chave => [rotulo, descricao].
+     */
+    public const LUGARES = [
+        'destaque' => ['Destaque fixo', 'Faixa no topo, acima de tudo. Um por vez.'],
+        'grande'   => ['Grande', 'Largura da coluna principal, com capa e até 2 botões.'],
+        'cartao'   => ['Cartão', 'Grade de publicações. Padrão.'],
+        'lateral'  => ['Lateral', 'Bloco curto na coluna da direita.'],
+    ];
+
+    /**
+     * Publicacoes da gestao do mural (BP.3d). Cada linha:
+     * [id, tipo, lugar, fixada_em ('' = nao fixada), titulo, chamada, inicio, fim,
+     *  rascunho, visualizacoes, publico, total do publico, comentarios, comentarios ligados,
+     *  aprovacao previa, autor, imagem, botoes]
+     *
+     * @return array<int, array<int, mixed>>
+     */
+    private static function linhasPublicacoes(): array
+    {
+        $empresa = 'Toda a empresa';
+
+        return [
+            [1, 'aviso', 'destaque', '', 'Expediente no feriado de 12/10', 'Suporte N1 e Campo Norte seguem a escala de plantão publicada em 24/09. Os demais setores não têm expediente.', '2026-09-26', '2026-10-12', false, 44, $empresa, 48, 0, false, false, 'RH', '', []],
+            [2, 'campanha', 'grande', '2026-10-01 08:00', 'Outubro Rosa', 'Na quinta, 16/10, às 10h, roda de conversa com a enfermeira do convênio na copa da sede, aberta a todos. Use a cor rosa nas reuniões do mês.', '2026-10-01', '2026-10-31', false, 41, $empresa, 48, 12, true, false, 'RH', 'outubro-rosa.jpg', [
+                ['rotulo' => 'Confirmar presença na roda de conversa', 'destino' => 'enquete'],
+                ['rotulo' => 'Ler o material da campanha', 'destino' => 'documento'],
+            ]],
+            [3, 'reconhecimento', 'cartao', '', 'Elogio de cliente para Juliana Prado', 'Avaliação máxima na pesquisa de satisfação do chamado 4821, com o comentário "resolveu no primeiro contato e explicou tudo".', '2026-10-03', '2026-10-10', false, 39, $empresa, 48, 5, true, false, 'RH', '', []],
+            [4, 'aviso', 'cartao', '', 'Novo horário do almoxarifado', 'A partir de 15/09 o almoxarifado atende das 7h30 às 16h30, com retirada de EPI só até as 16h.', '2026-09-15', '2026-10-15', false, 46, $empresa, 48, 3, true, false, 'Almoxarifado', '', []],
+            [5, 'treinamento', 'cartao', '', 'Direção defensiva: inscrições abertas', 'Turmas em 14/10 e 21/10 para quem dirige veículo da frota. Conta como requisito da política de uso de veículos.', '2026-09-22', '2026-10-13', false, 15, 'Campo Norte, Campo Sul · CLT', 18, 2, true, false, 'Frota', '', []],
+            [6, 'celebracao', 'cartao', '', 'Ana Ribeiro completa 1 ano de casa', 'Cartão automático de tempo de casa, gerado pela data de admissão.', '2026-10-08', '2026-10-08', false, 12, $empresa, 48, 4, true, false, 'Automática', '', []],
+            [7, 'aviso', 'lateral', '2026-10-07 09:00', 'Plantão do RH', 'Dúvidas sobre férias e documentos: ramal 2040, das 8h às 17h.', '2026-09-01', '2026-12-31', false, 45, $empresa, 48, 0, false, false, 'RH', '', []],
+            [8, 'treinamento', 'lateral', '2026-10-06 14:00', 'NR-35: últimas vagas', 'A turma de 21/10 tem 4 vagas. Inscrição pelo seu gestor.', '2026-10-06', '2026-10-20', false, 17, 'Campo Norte, Campo Sul', 22, 0, false, false, 'Segurança do trabalho', '', []],
+            [9, 'evento', 'grande', '2026-10-07 10:00', 'SIPAT 2026: semana da segurança no trabalho', 'De 03/11 a 07/11, palestras de 30 minutos às 9h, na sala de treinamento e por vídeo para quem está em campo.', '2026-11-03', '2026-11-07', false, null, $empresa, 48, 0, true, true, 'Segurança do trabalho', '', []],
+            [10, 'aviso', 'destaque', '', 'Recesso de fim de ano', 'De 24/12 a 01/01 o expediente é reduzido. A escala de plantão sai até 10/12.', '2026-12-15', '2027-01-02', false, null, $empresa, 48, 0, false, false, 'RH', '', []],
+            [11, 'evento', 'cartao', '', 'Confraternização de fim de ano', 'Local e horário a confirmar. Inscrições pelo Mural a partir de dezembro.', '2026-12-01', '2026-12-19', true, null, $empresa, 48, 0, true, false, 'RH', '', []],
+            [12, 'evento', 'cartao', '', 'Café de boas-vindas aos novos colegas', 'Quarta, 01/10, às 9h, na copa da sede. Venha conhecer quem está chegando ao Campo Norte.', '2026-09-25', '2026-10-01', false, 31, $empresa, 48, 0, false, false, 'RH', '', []],
+        ];
+    }
+
+    /**
+     * Situacao pela data de referencia: rascunho, agendada, publicada ou encerrada.
+     */
+    public static function situacaoPublicacao(bool $rascunho, string $inicio, string $fim, string $hoje = self::HOJE): string
+    {
+        if ($rascunho) {
+            return 'rascunho';
+        }
+        if ($hoje < $inicio) {
+            return 'agendada';
+        }
+
+        return $hoje > $fim ? 'encerrada' : 'publicada';
+    }
+
+    /**
+     * "de 26/09 a 12/10"; com o ano quando o periodo atravessa o ano.
+     */
+    public static function periodoTexto(string $inicio, string $fim): string
+    {
+        $fmt = static fn (string $data, bool $ano): string => substr($data, 8, 2) . '/' . substr($data, 5, 2) . ($ano ? '/' . substr($data, 0, 4) : '');
+        $anos = substr($inicio, 0, 4) !== substr($fim, 0, 4);
+        if ($inicio === $fim) {
+            return 'em ' . $fmt($inicio, false);
+        }
+
+        return 'de ' . $fmt($inicio, $anos) . ' a ' . $fmt($fim, $anos);
+    }
+
+    /**
+     * Meses (AAAA-MM) cobertos pelo periodo, para o filtro por periodo.
+     *
+     * @return string[]
+     */
+    public static function mesesDoPeriodo(string $inicio, string $fim): array
+    {
+        $meses = [];
+        $mes   = substr($inicio, 0, 7);
+        $ultimo = substr($fim, 0, 7);
+        while ($mes <= $ultimo && count($meses) < 36) {
+            $meses[] = $mes;
+            [$a, $m] = array_map('intval', explode('-', $mes));
+            $m++;
+            if ($m > 12) {
+                $m = 1;
+                $a++;
+            }
+            $mes = sprintf('%04d-%02d', $a, $m);
+        }
+
+        return $meses;
+    }
+
+    /**
+     * Ordem entre as publicacoes fixadas e no ar de cada lugar: a fixada
+     * mais recentemente vem primeiro (D-59). "Trazer ao topo" so atualiza
+     * o carimbo de fixacao.
+     *
+     * @param array<int, array<string, mixed>> $publicacoes
+     *
+     * @return array<string, array<int, int>> lugar => [id, ...] na ordem
+     */
+    public static function ordemFixadas(array $publicacoes): array
+    {
+        $porLugar = [];
+        foreach ($publicacoes as $p) {
+            if ($p['fixada'] && $p['situacao_chave'] === 'publicada') {
+                $porLugar[$p['lugar_chave']][] = $p;
+            }
+        }
+        $saida = [];
+        foreach ($porLugar as $lugar => $lista) {
+            usort($lista, static fn (array $a, array $b): int => strcmp($b['fixada_em'], $a['fixada_em']));
+            $saida[$lugar] = array_column($lista, 'id');
+        }
+
+        return $saida;
+    }
+
+    /**
+     * Gestao das publicacoes do mural (BP.3d): lista por periodo e situacao.
+     *
+     * @return array<string, mixed>
+     */
+    public static function publicacoesGestao(): array
+    {
+        $situacoes = [
+            'publicada' => ['Publicada', 'ok'],
+            'agendada'  => ['Agendada', 'info'],
+            'rascunho'  => ['Rascunho', 'neutro'],
+            'encerrada' => ['Encerrada', 'neutro'],
+        ];
+        $nomesMes = ['01' => 'janeiro', '02' => 'fevereiro', '03' => 'março', '04' => 'abril', '05' => 'maio', '06' => 'junho',
+            '07' => 'julho', '08' => 'agosto', '09' => 'setembro', '10' => 'outubro', '11' => 'novembro', '12' => 'dezembro'];
+
+        $publicacoes = [];
+        foreach (self::linhasPublicacoes() as $l) {
+            [$id, $tipo, $lugar, $fixadaEm, $titulo, $chamada, $inicio, $fim, $rascunho, $vistas, $publico, $total, $comentarios, $ligados, $aprovacao, $autor] = $l;
+            $situacao = self::situacaoPublicacao($rascunho, $inicio, $fim);
+            $t        = self::TIPOS_PUBLICACAO[$tipo];
+            $publicacoes[] = [
+                'id'                  => $id,
+                'tipo_chave'          => $tipo,
+                'tipo'                => $t[0],
+                'tom'                 => $t[1],
+                'icone'               => $t[2],
+                'lugar_chave'         => $lugar,
+                'lugar'               => self::LUGARES[$lugar][0],
+                'fixada'              => $fixadaEm !== '',
+                'fixada_em'           => $fixadaEm,
+                'ordem'               => 0,
+                'titulo'              => $titulo,
+                'chamada'             => $chamada,
+                'inicio'              => $inicio,
+                'fim'                 => $fim,
+                'periodo'             => self::periodoTexto($inicio, $fim),
+                'meses'               => implode(' ', self::mesesDoPeriodo($inicio, $fim)),
+                'situacao_chave'      => $situacao,
+                'situacao'            => $situacoes[$situacao][0],
+                'situacao_tom'        => $situacoes[$situacao][1],
+                'publico'             => $publico,
+                'publico_total'       => $total,
+                'visualizacoes'       => $vistas === null ? -1 : (int) $vistas,
+                'percentual'          => $vistas === null || $total === 0 ? 0 : (int) round($vistas * 100 / $total),
+                'comentarios'         => $comentarios,
+                'comentarios_ligados' => $ligados,
+                'aprovacao_previa'    => $aprovacao,
+                'autor'               => $autor,
+                'automatica'          => $autor === 'Automática',
+            ];
+        }
+
+        // Ordem da lista: o que esta no ar primeiro, na ordem do mural
+        // (lugar, fixadas pela fixacao mais recente, depois inicio mais recente).
+        $pesoSituacao = ['publicada' => 0, 'agendada' => 1, 'rascunho' => 2, 'encerrada' => 3];
+        $pesoLugar    = array_flip(array_keys(self::LUGARES));
+        usort($publicacoes, static function (array $a, array $b) use ($pesoSituacao, $pesoLugar): int {
+            return [$pesoSituacao[$a['situacao_chave']], $pesoLugar[$a['lugar_chave']], $a['fixada'] ? 0 : 1, $b['fixada_em'], $b['inicio']]
+                <=> [$pesoSituacao[$b['situacao_chave']], $pesoLugar[$b['lugar_chave']], $b['fixada'] ? 0 : 1, $a['fixada_em'], $a['inicio']];
+        });
+
+        $ordem = self::ordemFixadas($publicacoes);
+        foreach ($publicacoes as $i => $p) {
+            $posicao = array_search($p['id'], $ordem[$p['lugar_chave']] ?? [], true);
+            $publicacoes[$i]['ordem'] = $posicao === false ? 0 : $posicao + 1;
+        }
+
+        $contagem = array_fill_keys(array_keys($situacoes), 0);
+        $meses    = [];
+        $fixadasNoAr = 0;
+        foreach ($publicacoes as $p) {
+            $contagem[$p['situacao_chave']]++;
+            foreach (explode(' ', $p['meses']) as $mes) {
+                $meses[$mes] = true;
+            }
+            if ($p['ordem'] > 0) {
+                $fixadasNoAr++;
+            }
+        }
+        ksort($meses);
+
+        $filtros = [['chave' => 'todos', 'rotulo' => 'Todas', 'total' => count($publicacoes)]];
+        foreach ($situacoes as $chave => $s) {
+            $filtros[] = ['chave' => $chave, 'rotulo' => $s[0] . 's', 'total' => $contagem[$chave]];
+        }
+
+        $periodos = [['valor' => 'todos', 'rotulo' => 'Todos os períodos', 'atual' => false]];
+        foreach (array_keys($meses) as $mes) {
+            $periodos[] = [
+                'valor'  => $mes,
+                'rotulo' => ucfirst($nomesMes[substr($mes, 5, 2)]) . ' de ' . substr($mes, 0, 4),
+                'atual'  => $mes === substr(self::HOJE, 0, 7),
+            ];
+        }
+
+        return [
+            'referencia'  => self::periodoTexto(self::HOJE, self::HOJE),
+            'publico'     => 48,
+            'resumo'      => [
+                'no_ar'      => $contagem['publicada'],
+                'agendadas'  => $contagem['agendada'],
+                'rascunhos'  => $contagem['rascunho'],
+                'fixadas'    => $fixadasNoAr,
+            ],
+            'filtros'     => $filtros,
+            'periodos'    => $periodos,
+            'publicacoes' => $publicacoes,
+        ];
+    }
+
+    /**
+     * Formulario de publicacao (BP.3d, quadro 2 do canvas): em branco, ou
+     * preenchido com a publicacao $id para editar. Id desconhecido = nova.
+     *
+     * @return array<string, mixed>
+     */
+    public static function novaPublicacao(?int $id): array
+    {
+        $gestao = self::publicacoesGestao();
+        $linhas = [];
+        foreach (self::linhasPublicacoes() as $l) {
+            $linhas[$l[0]] = $l;
+        }
+        $editando = $id !== null && isset($linhas[$id]) ? $linhas[$id] : null;
+
+        $tipos = [];
+        foreach (self::TIPOS_PUBLICACAO as $chave => $t) {
+            $tipos[] = ['chave' => $chave, 'rotulo' => $t[0], 'icone' => $t[2], 'descricao' => $t[3]];
+        }
+        $lugares = [];
+        foreach (self::LUGARES as $chave => $l) {
+            $lugares[] = ['chave' => $chave, 'rotulo' => $l[0], 'descricao' => $l[1]];
+        }
+
+        // Fixadas no ar agora, por lugar, sem a propria publicacao em edicao.
+        $titulos = [];
+        foreach ($gestao['publicacoes'] as $p) {
+            $titulos[$p['id']] = $p['titulo'];
+        }
+        $fixadas = array_fill_keys(array_keys(self::LUGARES), []);
+        foreach (self::ordemFixadas($gestao['publicacoes']) as $lugar => $ids) {
+            foreach ($ids as $outro) {
+                if ($editando === null || $outro !== $editando[0]) {
+                    $fixadas[$lugar][] = $titulos[$outro];
+                }
+            }
+        }
+        $destaque = ['titulo' => '', 'periodo' => ''];
+        foreach ($gestao['publicacoes'] as $p) {
+            if ($p['lugar_chave'] === 'destaque' && $p['situacao_chave'] === 'publicada'
+                && ($editando === null || $p['id'] !== $editando[0])) {
+                $destaque = ['titulo' => $p['titulo'], 'periodo' => $p['periodo']];
+            }
+        }
+
+        $grupos = self::novoComunicado()['grupos'];
+
+        if ($editando === null) {
+            $form = [
+                'id'          => 0,
+                'situacao'    => '',
+                'tipo'        => 'evento',
+                'lugar'       => 'cartao',
+                'fixar'       => false,
+                'titulo'      => 'Treinamento da brigada de incêndio',
+                'chamada'     => 'Turma única em 24/10, das 8h às 12h, no pátio da sede. Inscrições até 20/10 com o seu gestor.',
+                'inicio'      => '2026-10-13',
+                'fim'         => '2026-10-24',
+                'imagem'      => '',
+                'botoes'      => [['rotulo' => '', 'destino' => 'documento'], ['rotulo' => '', 'destino' => 'link']],
+                'comentarios' => true,
+                'aprovacao'   => false,
+                'avisar'      => false,
+            ];
+        } else {
+            [$eid, $tipo, $lugar, $fixadaEm, $titulo, $chamada, $inicio, $fim, $rascunho, , , , , $ligados, $aprovacao, , $imagem, $botoes] = $editando;
+            $botoes = array_pad($botoes, 2, ['rotulo' => '', 'destino' => 'documento']);
+            $form = [
+                'id'          => $eid,
+                'situacao'    => self::situacaoPublicacao($rascunho, $inicio, $fim),
+                'tipo'        => $tipo,
+                'lugar'       => $lugar,
+                'fixar'       => $fixadaEm !== '',
+                'titulo'      => $titulo,
+                'chamada'     => $chamada,
+                'inicio'      => $inicio,
+                'fim'         => $fim,
+                'imagem'      => $imagem,
+                'botoes'      => $botoes,
+                'comentarios' => $ligados,
+                'aprovacao'   => $aprovacao,
+                'avisar'      => false,
+            ];
+        }
+
+        return [
+            'hoje'      => self::HOJE,
+            'tipos'     => $tipos,
+            'lugares'   => $lugares,
+            'destinos'  => [
+                ['valor' => 'documento', 'rotulo' => 'Documento anexo'],
+                ['valor' => 'enquete', 'rotulo' => 'Enquete'],
+                ['valor' => 'comunicado', 'rotulo' => 'Comunicado com ciência'],
+                ['valor' => 'link', 'rotulo' => 'Página do GLPI'],
+            ],
+            'imagens'   => [['arquivo' => 'outubro-rosa.jpg', 'rotulo' => 'Arte da campanha (outubro-rosa.jpg)']],
+            'fixadas'   => $fixadas,
+            'destaque'  => $destaque,
+            'grupos'    => $grupos,
+            'form'      => $form,
         ];
     }
 

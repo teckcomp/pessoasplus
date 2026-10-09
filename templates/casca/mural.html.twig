@@ -1,25 +1,134 @@
-{# Pessoas+ - area "Mural e celebracoes" do RH. PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP0C PESSOASPLUS_BUILD_BP3B #}
+{# Pessoas+ - "Publicacoes do mural", gestao do RH. PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP0C PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3D #}
+{# Usa pp.dados (Fontes::publicacoes). Visualizacao e sempre contagem agregada: nunca quem viu. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
     {% if pp.pode.mural.gerenciar %}
-    <button type="button" class="pp-botao is-primario" data-pp-demo="Nova publicação (tipo, lugar no mural, fixar no topo, comentários e prévia): disponível a partir do bloco BP.3d.">
+    <a class="pp-botao is-primario" href="{{ pp.dados.url_nova }}">
         <i class="ti ti-plus" aria-hidden="true"></i><span>Nova publicação</span>
-    </button>
+    </a>
     {% endif %}
-    <a class="pp-botao" href="{{ pp.url_mural }}">
+    <a class="pp-botao" href="{{ pp.dados.url_mural }}">
         <i class="ti ti-layout-board" aria-hidden="true"></i><span>Ver como colaborador</span>
     </a>
-    <a class="pp-botao" href="{{ pp.url_inicio }}">
+    <a class="pp-botao" href="{{ pp.dados.url_inicio }}">
         <i class="ti ti-home" aria-hidden="true"></i><span>Ver na página inicial</span>
     </a>
 {% endblock %}
 
 {% block conteudo %}
-    <p class="pp-mural-explica">
-        <i class="ti ti-info-circle" aria-hidden="true"></i>
-        O colaborador vê este conteúdo na página <strong>Mural</strong> (menu "Para mim") e na aba Mural da página inicial, nas duas interfaces.
-        Aqui o RH vê o mesmo conteúdo e quantas pessoas do público já viram cada publicação, sem saber quem.
-    </p>
-    {{ include('@pessoasplus/casca/_mural.html.twig', {modo: 'pagina'}) }}
+    {% set d = pp.dados %}
+    {% set gerencia = pp.pode.mural.gerenciar %}
+
+    <div class="pp-pub-resumo" aria-label="Resumo do mural em {{ d.referencia }}">
+        <span class="pp-pub-chip"><strong>{{ d.resumo.no_ar }}</strong> no ar</span>
+        <span class="pp-pub-chip"><strong>{{ d.resumo.fixadas }}</strong> fixadas no topo</span>
+        <span class="pp-pub-chip"><strong>{{ d.resumo.agendadas }}</strong> agendadas</span>
+        <span class="pp-pub-chip"><strong>{{ d.resumo.rascunhos }}</strong> {{ d.resumo.rascunhos == 1 ? 'rascunho' : 'rascunhos' }}</span>
+        <span class="pp-referencia">situação {{ d.referencia }} · público da empresa: {{ d.publico }} pessoas</span>
+    </div>
+
+    <section class="pp-cartao" data-pp-filtravel data-pp-publicacoes>
+        <div class="pp-filtros" role="group" aria-label="Filtrar publicações">
+            {% for f in d.filtros %}
+                <button type="button" class="pp-chip{% if loop.first %} is-ativo{% endif %}" data-pp-filtro="{{ f.chave }}" aria-pressed="{{ loop.first ? 'true' : 'false' }}">{{ f.rotulo }} · {{ f.total }}</button>
+            {% endfor %}
+            <label class="pp-pub-periodo">
+                <span class="pp-oculto">Período</span>
+                <select data-pp-periodo aria-label="Período">
+                    {% for o in d.periodos %}
+                        <option value="{{ o.valor }}">{{ o.rotulo }}{% if o.atual %} (atual){% endif %}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="pp-busca">
+                <i class="ti ti-search" aria-hidden="true"></i>
+                <span class="pp-oculto">Buscar publicação</span>
+                <input type="search" data-pp-busca placeholder="Buscar por título">
+            </label>
+        </div>
+        <div class="pp-tabela-rolagem">
+            <table class="pp-tabela pp-pub-tabela">
+                <thead>
+                    <tr>
+                        <th scope="col">Publicação</th>
+                        <th scope="col">Lugar no mural</th>
+                        <th scope="col">Período</th>
+                        <th scope="col">Público</th>
+                        <th scope="col">Visualizações</th>
+                        <th scope="col">Interação</th>
+                        <th scope="col">Situação</th>
+                        {% if gerencia %}<th scope="col"><span class="pp-oculto">Ações</span></th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in d.publicacoes %}
+                        <tr data-pp-item data-pp-situacao="{{ p.situacao_chave }}" data-pp-meses="{{ p.meses }}"{% if p.ordem > 0 %} data-pp-ordem-grupo="{{ p.lugar_chave }}"{% endif %}>
+                            <td>
+                                <span class="pp-pub-titulo">
+                                    <span class="pp-pub-tipo pp-pv-tipo-{{ p.tipo_chave }}" aria-hidden="true"><i class="{{ p.icone }}"></i></span>
+                                    <span>
+                                        {% if gerencia %}
+                                            <a class="pp-link-forte" href="{{ d.url_nova }}?id={{ p.id }}">{{ p.titulo }}</a>
+                                        {% else %}
+                                            <strong>{{ p.titulo }}</strong>
+                                        {% endif %}
+                                        <small class="pp-sub">{{ p.tipo }} · {{ p.autor }}</small>
+                                    </span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="pp-pub-lugar">{{ p.lugar }}</span>
+                                {% if p.ordem > 0 %}
+                                    <small class="pp-pub-fixada"><i class="ti ti-pin" aria-hidden="true"></i> fixada · <span data-pp-ordem>{{ p.ordem }}º</span></small>
+                                {% elseif p.fixada %}
+                                    <small class="pp-pub-fixada is-espera"><i class="ti ti-pin" aria-hidden="true"></i> fixada ao entrar no ar</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ p.periodo }}</td>
+                            <td class="pp-publico">{{ p.publico }} · {{ p.publico_total }}</td>
+                            <td>
+                                {% if p.visualizacoes >= 0 %}
+                                    <div class="pp-progresso" role="img" aria-label="vista por {{ p.visualizacoes }} de {{ p.publico_total }}">
+                                        <div class="pp-progresso-barra" style="width: {{ p.percentual }}%"></div>
+                                    </div>
+                                    <small class="pp-progresso-texto">{{ p.visualizacoes }} de {{ p.publico_total }}</small>
+                                {% else %}
+                                    <small class="pp-progresso-texto">ainda não exibida</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.comentarios_ligados %}
+                                    <span class="pp-pub-interacao"><i class="ti ti-message-circle" aria-hidden="true"></i> {{ p.comentarios }}</span>
+                                    {% if p.aprovacao_previa %}<small class="pp-sub">aprovação prévia</small>{% endif %}
+                                {% else %}
+                                    <small class="pp-sub">comentários desligados</small>
+                                {% endif %}
+                            </td>
+                            <td><span class="pp-selo pp-tom-{{ p.situacao_tom }}">{{ p.situacao }}</span></td>
+                            {% if gerencia %}
+                                <td class="pp-acoes-linha">
+                                    {% if p.ordem > 0 %}
+                                        <button type="button" class="pp-botao is-compacto" data-pp-topo{% if p.ordem == 1 %} disabled{% endif %}
+                                            title="{{ p.ordem == 1 ? 'Já é a primeira fixada deste lugar' : 'Trazer ao topo' }}"
+                                            data-pp-demo="Trazer ao topo: “{{ p.titulo }}” passa a ser a primeira fixada em {{ p.lugar }}. Só o carimbo de fixação muda: data, período e comentários ficam. Grava na mobília (B3.1).">
+                                            <i class="ti ti-arrow-bar-to-up" aria-hidden="true"></i><span>Trazer ao topo</span>
+                                        </button>
+                                    {% endif %}
+                                    <a class="pp-botao is-compacto is-icone" href="{{ d.url_nova }}?id={{ p.id }}" title="Editar" aria-label="Editar {{ p.titulo }}"><i class="ti ti-pencil" aria-hidden="true"></i></a>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="pp-vazio" data-pp-vazio hidden>Nenhuma publicação com esse filtro.</p>
+        <p class="pp-nota pp-pub-nota">
+            <i class="ti ti-info-circle" aria-hidden="true"></i>
+            A ordem segue o mural: lugar, depois as fixadas (a fixada mais recentemente primeiro), depois o início mais recente.
+            Visualização é contagem de pessoas do público que abriram o mural com a publicação no ar, sem dizer quem.
+            Celebrações automáticas (tempo de casa, boas-vindas, feriado) nascem do sistema; o RH pode trocar o cartão por uma arte.
+        </p>
+    </section>
 {% endblock %}

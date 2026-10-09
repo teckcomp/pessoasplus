@@ -1,4 +1,4 @@
-/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C
+/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D
  * Tudo prefixado com pp- e escopado em .pp-casca (T-30): nada aqui
  * estiliza elemento solto do GLPI nem de outros plugins.
  * Cores de superficie e texto herdam do tema do GLPI (Tabler), para
@@ -1056,3 +1056,129 @@ body.pp-pagina-impressao { margin: 0; background: #eef1f3; font-family: system-u
 }
 .pp-casca .pp-mc-lateral h3 { margin: 4px 0 0; font-size: 1rem; font-weight: 700; }
 .pp-casca .pp-mc-lateral p { margin: 0; font-size: 0.9rem; color: var(--pp-texto-2); }
+
+/* ---- BP.3d: gestao das publicacoes do mural (prefixos pp-pub-, pp-pv-, pp-mapa-) ---- */
+.pp-casca .pp-pub-resumo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -6px 0 16px; }
+.pp-casca .pp-pub-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--pp-borda);
+    border-radius: 999px;
+    background: var(--pp-superficie);
+    font-size: 0.86rem;
+}
+.pp-casca .pp-pub-periodo select,
+.pp-casca .pp-pub-botao select {
+    border: 1px solid var(--pp-borda);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 0.88rem;
+    background: var(--pp-superficie);
+    color: var(--pp-texto);
+}
+.pp-casca .pp-pub-tabela td { vertical-align: top; }
+.pp-casca .pp-pub-titulo { display: flex; gap: 10px; align-items: flex-start; min-width: 240px; }
+.pp-casca .pp-pub-titulo .pp-sub { display: block; }
+.pp-casca .pp-pub-tipo {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1.05rem;
+    background: var(--pp-acento);
+}
+.pp-casca .pp-pub-tipo.is-pequeno { width: 22px; height: 22px; border-radius: 6px; font-size: 0.8rem; vertical-align: -5px; }
+.pp-casca .pp-pv-tipo-aviso .pp-pv-capa, .pp-casca .pp-pub-tipo.pp-pv-tipo-aviso { background: #b86e00; }
+.pp-casca .pp-pv-tipo-evento .pp-pv-capa, .pp-casca .pp-pub-tipo.pp-pv-tipo-evento { background: var(--pp-acento); }
+.pp-casca .pp-pv-tipo-reconhecimento .pp-pv-capa, .pp-casca .pp-pub-tipo.pp-pv-tipo-reconhecimento { background: #2f8a52; }
+.pp-casca .pp-pv-tipo-treinamento .pp-pv-capa, .pp-casca .pp-pub-tipo.pp-pv-tipo-treinamento { background: #58626f; }
+.pp-casca .pp-pv-tipo-campanha .pp-pv-capa, .pp-casca .pp-pub-tipo.pp-pv-tipo-campanha { background: #a0284f; }
+.pp-casca .pp-pv-tipo-celebracao .pp-pv-capa, .pp-casca .pp-pub-tipo.pp-pv-tipo-celebracao { background: #7b4bb0; }
+.pp-casca .pp-pub-lugar { display: block; font-weight: 600; }
+.pp-casca .pp-pub-fixada { display: inline-flex; align-items: center; gap: 3px; font-size: 0.78rem; color: var(--pp-acento-escuro); font-weight: 600; }
+.pp-casca .pp-pub-fixada.is-espera { color: var(--pp-texto-2); font-weight: 400; }
+.pp-casca .pp-pub-interacao { display: inline-flex; align-items: center; gap: 4px; }
+.pp-casca .pp-pub-interacao + .pp-sub { display: block; }
+.pp-casca .pp-pub-nota { display: flex; gap: 6px; align-items: flex-start; margin: 12px 0 0; }
+.pp-casca .pp-acoes-linha .pp-botao[data-pp-topo] { white-space: nowrap; }
+
+/* Formulario */
+.pp-casca [data-pp-pubform] [hidden] { display: none !important; }
+.pp-casca .pp-pub-tipos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pp-casca .pp-lugares { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 4px; }
+@media (max-width: 991px) {
+    .pp-casca .pp-pub-tipos, .pp-casca .pp-lugares { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.pp-casca .pp-lugar-mini {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-template-rows: 7px 1fr 1fr;
+    gap: 3px;
+    height: 46px;
+    padding: 4px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: var(--pp-fundo);
+}
+.pp-casca .pp-lugar-mini span { border-radius: 2px; background: var(--pp-borda); }
+.pp-casca .pp-lugar-mini span:nth-child(1) { grid-column: 1 / 3; }
+.pp-casca .pp-lugar-mini span:nth-child(4) { grid-column: 2; grid-row: 2 / 4; }
+.pp-casca .pp-lugar-mini.is-destaque span:nth-child(1),
+.pp-casca .pp-lugar-mini.is-grande span:nth-child(2),
+.pp-casca .pp-lugar-mini.is-cartao span:nth-child(3),
+.pp-casca .pp-lugar-mini.is-lateral span:nth-child(4) { background: var(--pp-acento); }
+.pp-casca .pp-pub-fixar { margin-top: 10px; padding: 4px 14px 10px; border: 1px solid var(--pp-borda); border-radius: 8px; background: var(--pp-fundo); }
+.pp-casca .pp-pub-fixar .pp-nota { display: block; margin: 4px 0 0; }
+.pp-casca .pp-alerta-zero.is-aviso { background: var(--pp-alerta-fundo); color: var(--pp-alerta); }
+.pp-casca .pp-marcar.is-justo { margin: 4px 0; }
+.pp-casca .pp-marcar input[type="radio"] { accent-color: var(--pp-acento); }
+.pp-casca .pp-pub-botao .pp-campo { margin-bottom: 6px; }
+.pp-casca .pp-pub-concordancia { padding: 10px 12px; border-radius: 8px; background: var(--pp-ok-fundo); }
+
+/* Previa: mapa do mural e a publicacao no lugar escolhido */
+.pp-casca .pp-mapa { display: flex; flex-direction: column; gap: 4px; padding: 8px; margin-bottom: 12px; border-radius: 8px; background: var(--pp-fundo); }
+.pp-casca .pp-mapa-corpo { display: grid; grid-template-columns: 3fr 1fr; gap: 4px; }
+.pp-casca .pp-mapa-principal { display: flex; flex-direction: column; gap: 4px; }
+.pp-casca .pp-mapa-zona {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: 1px dashed var(--pp-borda);
+    border-radius: 4px;
+    background: var(--pp-superficie);
+    font-size: 0.7rem;
+    color: var(--pp-texto-2);
+    text-align: center;
+}
+.pp-casca .pp-mapa-zona.is-destaque { min-height: 22px; }
+.pp-casca .pp-mapa-zona.is-grande { min-height: 34px; }
+.pp-casca .pp-mapa-zona.is-cartao { min-height: 30px; }
+.pp-casca .pp-mapa-zona.is-lateral { min-height: 68px; }
+.pp-casca .pp-mapa-zona.is-alvo { border: 2px solid var(--pp-acento); background: var(--pp-acento-claro); color: var(--pp-acento-escuro); font-weight: 700; }
+
+.pp-casca .pp-pv { display: flex; flex-direction: column; border: 1px solid var(--pp-borda); border-radius: 10px; overflow: hidden; background: var(--pp-superficie); }
+.pp-casca .pp-pv-imagem { display: block; width: 100%; height: auto; }
+.pp-casca .pp-pv-capa { display: flex; align-items: center; justify-content: center; height: 72px; color: #ffffff; font-size: 1.9rem; background: var(--pp-acento); }
+.pp-casca .pp-pv-corpo { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px 14px; }
+.pp-casca .pp-pv-rotulo { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pp-acento-escuro); }
+.pp-casca .pp-pv-titulo { font-size: 1rem; }
+.pp-casca .pp-pv-chamada { margin: 0; font-size: 0.86rem; color: var(--pp-texto-2); line-height: 1.45; }
+.pp-casca .pp-pv-botoes { display: flex; flex-wrap: wrap; gap: 6px; }
+.pp-casca .pp-pv-botao { padding: 5px 10px; border: 1px solid var(--pp-acento); border-radius: 6px; font-size: 0.78rem; font-weight: 600; color: var(--pp-acento); }
+.pp-casca .pp-pv-botao.is-primario { background: var(--pp-acento); color: #ffffff; }
+.pp-casca .pp-pv-meta { font-size: 0.75rem; color: var(--pp-texto-2); }
+.pp-casca .pp-pv.is-grande .pp-pv-capa { height: 110px; font-size: 2.6rem; }
+.pp-casca .pp-pv.is-grande .pp-pv-titulo { font-size: 1.25rem; font-weight: 800; }
+.pp-casca .pp-pv.is-destaque { flex-direction: row; border: 2px solid var(--pp-acento); background: var(--pp-acento-claro); }
+.pp-casca .pp-pv.is-lateral .pp-pv-corpo { padding: 10px 12px; }
+.pp-casca .pp-pv.is-lateral .pp-pv-titulo { font-size: 0.92rem; }
+.pp-casca .pp-pv.pp-pv-tipo-campanha .pp-pv-rotulo { color: #a0284f; }
+.pp-casca .pp-pendencias { margin: 0 0 4px; padding: 10px 12px 10px 28px; border-radius: 8px; background: var(--pp-alerta-fundo); color: var(--pp-alerta); font-size: 0.86rem; }

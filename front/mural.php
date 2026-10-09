@@ -1,16 +1,21 @@
 <?php
 
 /**
- * Pessoas+ - area "Mural e celebracoes" do RH (casca).
+ * Pessoas+ - "Publicacoes do mural", gestao do RH (casca).
  *
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3D
  *
- * O colaborador ve o mural na aba "Mural" da pagina inicial do GLPI
- * (Casca\MuralAba) e na pagina "Para mim > Mural" (front/mural_colaborador.php).
- * Esta pagina e a visao do RH, "Publicacoes do mural" (D-55): o mesmo
- * conteudo com a contagem agregada de visualizacoes.
+ * Lista das publicacoes por periodo e situacao (rascunho, agendada,
+ * publicada, encerrada), com o lugar no mural, a ordem entre as fixadas,
+ * a contagem agregada de visualizacoes (nunca quem viu) e a acao "Trazer
+ * ao topo" (D-59). Ler o modulo mostra a lista; Gerenciar mostra "Nova
+ * publicacao", "Editar" e "Trazer ao topo".
+ *
+ * O colaborador ve o mural em front/mural_colaborador.php e na aba Mural
+ * da pagina inicial (Casca\MuralAba). Na mobilia: B3.1 e B3.2.
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -25,14 +30,17 @@ use GlpiPlugin\Pessoasplus\Permissoes;
 Pagina::somenteInterfacePadrao();
 Permissoes::exigirLeitura('mural');
 
+$dados = Fontes::publicacoes();
+$dados['url_inicio'] = Pagina::url('/front/central.php');
+$dados['url_mural']  = Pagina::url(MenuSimplificado::PAGINA_MURAL);
+$dados['url_nova']   = Pagina::url('/plugins/pessoasplus/front/publicacao_nova.php');
+
 $pp = Pagina::contexto(
     'mural',
     'Publicações do mural',
-    'O que o colaborador vê no Mural e na aba Mural da página inicial, nas duas interfaces',
-    Fontes::mural()
+    'O que está no ar, o que vem e o que já saiu, na ordem em que o colaborador vê',
+    $dados
 );
-$pp['url_inicio'] = Pagina::url('/front/central.php');
-$pp['url_mural']  = Pagina::url(MenuSimplificado::PAGINA_MURAL);
 
 Pagina::cabecalho('Pessoas+');
 TemplateRenderer::getInstance()->display('@pessoasplus/casca/mural.html.twig', ['pp' => $pp]);

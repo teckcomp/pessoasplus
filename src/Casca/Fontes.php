@@ -10,6 +10,7 @@
  * PESSOASPLUS_BUILD_BP2C
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP3B
+ * PESSOASPLUS_BUILD_BP3D
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -123,6 +124,27 @@ final class Fontes
     public static function mural(): array
     {
         return DadosDemo::mural();
+    }
+
+    /**
+     * Gestao das publicacoes do mural (BP.3d): lista por periodo e situacao.
+     * Na mobilia (B3.1), vem da tabela de publicacoes.
+     *
+     * @return array<string, mixed>
+     */
+    public static function publicacoes(): array
+    {
+        return DadosDemo::publicacoesGestao();
+    }
+
+    /**
+     * Formulario de publicacao: em branco, ou a publicacao $id para editar.
+     *
+     * @return array<string, mixed>
+     */
+    public static function novaPublicacao(?int $id): array
+    {
+        return DadosDemo::novaPublicacao($id);
     }
 
     /**

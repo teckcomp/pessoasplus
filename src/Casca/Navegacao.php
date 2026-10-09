@@ -12,6 +12,7 @@
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3C
+ * PESSOASPLUS_BUILD_BP3D
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -32,7 +33,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'bp3c-1';
+    public const BUILD = 'bp3d-1';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
