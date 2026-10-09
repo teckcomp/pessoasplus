@@ -6,6 +6,7 @@
  * PESSOASPLUS_BUILD_BP1
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3C
+ * PESSOASPLUS_BUILD_BP3E
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -17,8 +18,10 @@ use GlpiPlugin\Pessoasplus\Install;
 use Session;
 
 /**
- * Coloca "Mural" e "Minha area" no primeiro nivel do menu simplificado,
- * logo depois de "Chamados" (D-55). O Mural vem primeiro (D-62).
+ * Coloca "Mural", "Minha area" e "Ouvidoria" no primeiro nivel do menu
+ * simplificado, logo depois de "Chamados" (D-55, D-56). O Mural vem primeiro
+ * (D-62). Como o core monta este menu a cada pagina (T-37), um item novo
+ * aparece sem novo login (T-47).
  *
  * O hook 'helpdesk_menu_entry' do core poria o item dentro de "Plugins" e
  * nao checa direito, por isso usamos 'redefine_menus' (Html.php:1853). O
@@ -36,6 +39,11 @@ final class MenuSimplificado
     public const CHAVE_MURAL = 'pessoasplus_mural';
 
     public const PAGINA_MURAL = '/plugins/pessoasplus/front/mural_colaborador.php';
+
+    /** Item "Ouvidoria" (BP.3e, D-56); tambem e o "sector" do helpHeader. */
+    public const CHAVE_OUVIDORIA = 'pessoasplus_ouvidoria';
+
+    public const PAGINA_OUVIDORIA = '/plugins/pessoasplus/front/ouvidoria.php';
 
     /**
      * @param mixed $menu menu montado pelo core
@@ -60,10 +68,16 @@ final class MenuSimplificado
             'icon'    => 'ti ti-layout-board',
         ]);
 
-        return self::inserirDepois($menu, self::CHAVE_MURAL, self::CHAVE, [
+        $menu = self::inserirDepois($menu, self::CHAVE_MURAL, self::CHAVE, [
             'default' => self::PAGINA,
             'title'   => 'Minha área',
             'icon'    => 'ti ti-user-check',
+        ]);
+
+        return self::inserirDepois($menu, self::CHAVE, self::CHAVE_OUVIDORIA, [
+            'default' => self::PAGINA_OUVIDORIA,
+            'title'   => 'Ouvidoria',
+            'icon'    => 'ti ti-message-circle-heart',
         ]);
     }
 

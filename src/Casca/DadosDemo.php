@@ -12,6 +12,7 @@
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3D
+ * PESSOASPLUS_BUILD_BP3E
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -574,9 +575,145 @@ final class DadosDemo
             ],
             'ouvidoria'   => [
                 'texto' => 'Dúvidas, sugestões, reclamações e relatos, com opção anônima e protocolo.',
-                'bloco' => 'BP.3e',
             ],
         ];
+    }
+
+    /**
+     * Ouvidoria (BP.3e, D-56): quadro 3 do canvas "Pessoas+ - Mural do
+     * colaborador". Os formularios chegam no B7.9, sobre o motor da E7 (D-58).
+     *
+     * Protocolos de demonstracao: nenhum traz data ou hora do envio, so a
+     * ultima atualizacao feita pelo RH (principio de anonimato, 3.2.1).
+     * Contatos com marcadores [...] para o que a secao 10 da proposta define.
+     * Textos legais: a validar com o juridico (selo na tela).
+     *
+     * @return array<string, mixed>
+     */
+    public static function ouvidoria(): array
+    {
+        return [
+            'portas'       => [
+                self::porta('duvida', 'Tirar uma dúvida', 'Férias, benefícios, documentos, normas. Resposta em até 2 dias úteis.', 'Identificado', 'info', 'ti ti-help-circle'),
+                self::porta('sugestao', 'Dar uma sugestão', 'Melhorias no trabalho, no ambiente, nos processos.', 'Identificado ou anônimo', 'info', 'ti ti-bulb'),
+                self::porta('reclamacao', 'Fazer uma reclamação', 'Algo que não está funcionando e precisa de providência.', 'Identificado ou anônimo', 'alerta', 'ti ti-message-report'),
+                self::porta('conduta', 'Relatar uma conduta', 'Assédio, discriminação, descumprimento de norma. Canal protegido, com protocolo e sem registro de quem enviou.', 'Anônimo por padrão', 'conduta', 'ti ti-shield'),
+            ],
+            'passos'       => [
+                ['titulo' => 'Você escolhe o tipo', 'texto' => 'acima. Cada tipo vai para uma fila diferente do RH; relato de conduta vai só para a comissão designada.'],
+                ['titulo' => 'Você escolhe se quer se identificar.', 'texto' => 'No modo anônimo o formulário não grava usuário, endereço nem horário exato do envio, e o anexo tem os metadados removidos.'],
+                ['titulo' => 'Recebe um protocolo', 'texto' => 'na tela. Guarde: é a única forma de acompanhar um envio anônimo.'],
+                ['titulo' => 'Acompanha pelo protocolo', 'texto' => 'aqui mesmo: situação, resposta do RH e pedido de complemento, sem revelar quem você é.'],
+            ],
+            'protocolos'   => [
+                'OUV-2026-0142' => [
+                    'porta'       => 'Relatar uma conduta',
+                    'modo'        => 'Anônimo',
+                    'situacao'    => 'Aguardando complemento',
+                    'tom'         => 'alerta',
+                    'atualizado'  => '07/10',
+                    'resposta'    => 'A comissão recebeu o relato e iniciou a apuração.',
+                    'complemento' => 'Se puder, informe em que setor e em que semana o fato aconteceu. Não é preciso se identificar.',
+                ],
+                'OUV-2026-0127' => [
+                    'porta'       => 'Dar uma sugestão',
+                    'modo'        => 'Identificado',
+                    'situacao'    => 'Respondido',
+                    'tom'         => 'ok',
+                    'atualizado'  => '02/10',
+                    'resposta'    => 'Obrigado! O bicicletário coberto entrou no plano de melhorias do próximo trimestre.',
+                    'complemento' => '',
+                ],
+                'OUV-2026-0109' => [
+                    'porta'       => 'Fazer uma reclamação',
+                    'modo'        => 'Anônimo',
+                    'situacao'    => 'Em análise',
+                    'tom'         => 'info',
+                    'atualizado'  => '29/09',
+                    'resposta'    => '',
+                    'complemento' => '',
+                ],
+            ],
+            'leis'         => [
+                ['titulo' => 'Canal de denúncias com anonimato', 'texto' => 'Empresas com CIPA devem manter um canal para receber e acompanhar denúncias de assédio sexual e outras formas de violência, com o anonimato de quem denuncia garantido.', 'fonte' => 'Lei 14.457/2022, art. 23'],
+                ['titulo' => 'Seus dados só para apurar', 'texto' => 'O que você informa é usado apenas para apurar o relato, pelo mínimo de pessoas necessário, e não para outra finalidade.', 'fonte' => 'Lei 13.709/2018 (LGPD), arts. 6º e 7º'],
+                ['titulo' => 'Proteção contra retaliação', 'texto' => 'Programas de integridade preveem canal de denúncias aberto e a proteção de quem relata de boa-fé.', 'fonte' => 'Lei 12.846/2013 e Decreto 11.129/2022'],
+                ['titulo' => 'Igualdade e não discriminação', 'texto' => 'Discriminação de salário ou de tratamento por sexo, raça, origem ou outra condição pode ser relatada por este canal.', 'fonte' => 'Constituição, art. 5º e art. 7º, XXX; Lei 14.611/2023'],
+            ],
+            'politica'     => 'Política da Ouvidoria e garantia de não retaliação',
+            'informativos' => [
+                ['titulo' => 'Política da Ouvidoria e garantia de não retaliação', 'revisao' => 'rev. 2'],
+                ['titulo' => 'Código de conduta', 'revisao' => 'rev. 3'],
+                ['titulo' => 'Perguntas frequentes sobre o canal anônimo', 'revisao' => 'rev. 1'],
+                ['titulo' => 'Prazos de resposta por tipo de envio', 'revisao' => 'rev. 1'],
+            ],
+            'qr'           => self::qrDemo(),
+            'contatos'     => [
+                ['rotulo' => 'E-mail', 'valor' => 'rh@[EMPRESA].com.br'],
+                ['rotulo' => 'Telefone e WhatsApp', 'valor' => '[(41) 0000-0000] · seg. a sex., 8h às 18h'],
+                ['rotulo' => 'Atendimento presencial', 'valor' => 'Sala do RH, sede · [horário]'],
+                ['rotulo' => 'Responsável pela Ouvidoria', 'valor' => '[nome, definido na seção 10 da proposta]'],
+            ],
+            'externos'     => 'Canais externos: [Ministério Público do Trabalho, sindicato], se a empresa decidir listar.',
+        ];
+    }
+
+    /**
+     * QR de demonstracao, desenhado: tres marcadores de canto, linhas de
+     * temporizacao e modulos pseudoaleatorios com semente fixa. Nao codifica
+     * nada (sem formato nem correcao de erro), entao nenhum leitor abre
+     * endereco algum. O QR real, nativo, chega no B7.9.
+     *
+     * @return array{lado: int, caminho: string, modulos: int}
+     */
+    public static function qrDemo(): array
+    {
+        $n      = 21;
+        $borda  = 2;
+        $marca  = [];
+        $cantos = [[0, 0], [$n - 7, 0], [0, $n - 7]];
+        foreach ($cantos as [$cx, $cy]) {
+            for ($y = 0; $y < 7; $y++) {
+                for ($x = 0; $x < 7; $x++) {
+                    $anel   = $x === 0 || $y === 0 || $x === 6 || $y === 6;
+                    $miolo  = $x >= 2 && $x <= 4 && $y >= 2 && $y <= 4;
+                    $marca[($cy + $y) * $n + $cx + $x] = $anel || $miolo;
+                }
+            }
+        }
+
+        $semente = 20261008;
+        $caminho = '';
+        $total   = 0;
+        for ($y = 0; $y < $n; $y++) {
+            for ($x = 0; $x < $n; $x++) {
+                $i = $y * $n + $x;
+                if (array_key_exists($i, $marca)) {
+                    $cheio = $marca[$i];
+                } elseif (($x < 8 && $y < 8) || ($x >= $n - 8 && $y < 8) || ($x < 8 && $y >= $n - 8)) {
+                    $cheio = false; // separador em volta dos marcadores
+                } elseif ($x === 6 || $y === 6) {
+                    $cheio = ($x + $y) % 2 === 0; // temporizacao
+                } else {
+                    $semente = ($semente * 1103515245 + 12345) % 2147483648;
+                    $cheio   = ($semente >> 16) % 100 < 46;
+                }
+                if ($cheio) {
+                    $caminho .= 'M' . ($x + $borda) . ' ' . ($y + $borda) . 'h1v1h-1z';
+                    $total++;
+                }
+            }
+        }
+
+        return ['lado' => $n + 2 * $borda, 'caminho' => $caminho, 'modulos' => $total];
+    }
+
+    /**
+     * @return array{chave: string, titulo: string, texto: string, modo: string, tom: string, icone: string}
+     */
+    private static function porta(string $chave, string $titulo, string $texto, string $modo, string $tom, string $icone): array
+    {
+        return ['chave' => $chave, 'titulo' => $titulo, 'texto' => $texto, 'modo' => $modo, 'tom' => $tom, 'icone' => $icone];
     }
 
     /**

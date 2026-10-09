@@ -1,0 +1,111 @@
+{# Pessoas+ - Ouvidoria (quadro 3 do canvas). PESSOASPLUS_BUILD_BP3E #}
+{# Usa pp.dados (Fontes::ouvidoria). Os formularios chegam no B7.9 (D-58). #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block conteudo %}
+    {% set o = pp.dados %}
+
+    <div class="pp-ouv-portas" role="list" aria-label="Escolha o tipo de envio">
+        {% for p in o.portas %}
+            <button type="button" role="listitem" class="pp-ouv-porta pp-ouv-{{ p.tom }}" data-pp-porta="{{ p.chave }}"
+                data-pp-demo="Formulário &quot;{{ p.titulo }}&quot; ({{ p.modo|lower }}): chega no bloco B7.9, sobre o motor de questionário com modo anônimo.">
+                <span class="pp-ouv-porta-icone" aria-hidden="true"><i class="{{ p.icone }}"></i></span>
+                <strong>{{ p.titulo }}</strong>
+                <span class="pp-ouv-porta-texto">{{ p.texto }}</span>
+                <span class="pp-ouv-porta-modo">{{ p.modo }}</span>
+            </button>
+        {% endfor %}
+    </div>
+
+    <div class="pp-ouv">
+        <div class="pp-ouv-principal">
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Como funciona</h2></header>
+                <ol class="pp-ouv-passos">
+                    {% for s in o.passos %}
+                        <li><strong>{{ s.titulo }}</strong> {{ s.texto }}</li>
+                    {% endfor %}
+                </ol>
+            </section>
+
+            <section class="pp-cartao" data-pp-ouvidoria>
+                <header class="pp-cartao-cabecalho"><h2>Acompanhar um protocolo</h2></header>
+                <script type="application/json" data-pp-protocolos-json>{{ o.protocolos_json|raw }}</script>
+                <form class="pp-ouv-consulta" data-pp-ouv-consulta autocomplete="off">
+                    <div class="pp-campo">
+                        <label class="pp-campo-rotulo" for="pp-ouv-protocolo">Número do protocolo</label>
+                        <input type="text" id="pp-ouv-protocolo" data-pp-ouv-protocolo maxlength="20" placeholder="OUV-2026-0000" spellcheck="false">
+                    </div>
+                    <button type="submit" class="pp-botao is-primario">Consultar</button>
+                </form>
+                <div class="pp-ouv-resultado" data-pp-ouv-resultado role="status" aria-live="polite" hidden></div>
+                <p class="pp-ouv-rodape">Envios identificados também aparecem na sua Minha área.</p>
+                <p class="pp-nota">Demonstração: a consulta acontece só no seu navegador, nada é enviado. Experimente {{ o.exemplos|join(', ') }}.</p>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Seu respaldo na lei</h2>
+                    <span class="pp-selo pp-tom-alerta pp-ouv-selo-juridico">texto a validar com o jurídico</span>
+                </header>
+                <p class="pp-ouv-intro">O canal existe por obrigação legal e o anonimato é garantido por lei. Em resumo, com linguagem simples:</p>
+                <div class="pp-ouv-leis">
+                    {% for l in o.leis %}
+                        <div class="pp-ouv-lei">
+                            <strong>{{ l.titulo }}</strong>
+                            <span>{{ l.texto }}</span>
+                            <small>{{ l.fonte }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+                <p class="pp-ouv-rodape">Nossa política interna:
+                    <button type="button" class="pp-mc-link" data-pp-demo="Abrir &quot;{{ o.politica }}&quot; no Codex+: chega com o vínculo do Codex+ na mobília.">{{ o.politica }}</button>.
+                </p>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Informativos</h2>
+                    <span class="pp-referencia">revisão vigente no Codex+</span>
+                </header>
+                <ul class="pp-ouv-informativos">
+                    {% for i in o.informativos %}
+                        <li>
+                            <button type="button" data-pp-demo="Abrir &quot;{{ i.titulo }}&quot; no Codex+: chega com o vínculo do Codex+ na mobília.">
+                                <span>{{ i.titulo }}</span>
+                                <small>Codex+ · {{ i.revisao }}</small>
+                            </button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+
+        <aside class="pp-ouv-lateral">
+            <section class="pp-cartao pp-ouv-qr">
+                <h2>Pelo celular, sem login</h2>
+                <svg class="pp-ouv-qr-img" viewBox="0 0 {{ o.qr.lado }} {{ o.qr.lado }}" role="img" aria-label="QR de demonstração do formulário de relato (não abre nenhum endereço)" shape-rendering="crispEdges">
+                    <rect width="{{ o.qr.lado }}" height="{{ o.qr.lado }}" fill="#ffffff"/>
+                    <path d="{{ o.qr.caminho }}" fill="#1f2a33"/>
+                </svg>
+                <p>Aponte a câmera para abrir o <strong>formulário de relato</strong>. O mesmo QR fica impresso nos murais físicos e no banheiro.</p>
+                <p class="pp-nota">Demonstração: este QR é desenhado e não abre nada. O QR nativo chega no bloco B7.9.</p>
+                <button type="button" class="pp-botao" data-pp-demo="Cartaz para impressão (PDF) com o QR real: chega no bloco B7.9."><i class="ti ti-printer" aria-hidden="true"></i><span>Baixar cartaz para impressão (PDF)</span></button>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Contatos do RH</h2></header>
+                <dl class="pp-ouv-contatos">
+                    {% for c in o.contatos %}
+                        <div>
+                            <dt>{{ c.rotulo }}</dt>
+                            <dd>{{ c.valor }}</dd>
+                        </div>
+                    {% endfor %}
+                </dl>
+                <p class="pp-ouv-rodape is-separado">{{ o.externos }}</p>
+            </section>
+        </aside>
+    </div>
+{% endblock %}

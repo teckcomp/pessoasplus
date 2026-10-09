@@ -1,4 +1,4 @@
-{# Pessoas+ - Mural do colaborador (quadro). PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D #}
+{# Pessoas+ - Mural do colaborador (quadro). PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E #}
 {# Usa pp.dados (Fontes::muralColaborador). Nenhuma contagem de visualizacao aqui: isso e do RH. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -259,7 +259,9 @@
                     <h2>Ouvidoria</h2>
                 </header>
                 <p class="pp-mc-ouvidoria">{{ m.ouvidoria.texto }}</p>
-                <button type="button" class="pp-botao" data-pp-demo="Página da Ouvidoria: disponível a partir do bloco {{ m.ouvidoria.bloco }}."><i class="ti ti-message-circle-heart" aria-hidden="true"></i><span>Abrir a Ouvidoria</span></button>
+                {% if pp.areas.ouvidoria != '' %}
+                    <a class="pp-botao" href="{{ pp.areas.ouvidoria }}"><i class="ti ti-message-circle-heart" aria-hidden="true"></i><span>Abrir a Ouvidoria</span></a>
+                {% endif %}
             </section>
         </div>
     </div>

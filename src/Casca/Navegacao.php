@@ -13,6 +13,7 @@
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3C
  * PESSOASPLUS_BUILD_BP3D
+ * PESSOASPLUS_BUILD_BP3E
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -33,7 +34,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'bp3d-1';
+    public const BUILD = 'bp3e-1';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
@@ -53,7 +54,7 @@ final class Navegacao
                     // D-62: o Mural vem primeiro, porque tem prioridade na entrada (D-54).
                     self::item('mural_colaborador', 'Mural', 'ti ti-layout-board', 'mural_colaborador.php', 'BP.3b'),
                     self::item('minha_area', 'Minha área', 'ti ti-user-check', 'minha_area.php', 'BP.1'),
-                    self::item('ouvidoria', 'Ouvidoria', 'ti ti-message-circle-heart', null, 'BP.3e'),
+                    self::item('ouvidoria', 'Ouvidoria', 'ti ti-message-circle-heart', 'ouvidoria.php', 'BP.3e'),
                 ],
             ],
             [

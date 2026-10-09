@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -624,6 +624,74 @@
         });
     }
 
+    /* Ouvidoria (BP.3e): consulta de protocolo so no navegador. Os
+     * protocolos de demonstracao vem em [data-pp-protocolos-json]. Todo
+     * texto entra por textContent (nunca innerHTML). Na mobilia (B7.9) a
+     * consulta vai ao servidor por POST, nunca pela URL (access.log). */
+    var PADRAO_PROTOCOLO = /^OUV-\d{4}-\d{4}$/;
+
+    function normalizarProtocolo(texto) {
+        return String(texto || '').trim().toUpperCase().replace(/\s+/g, '');
+    }
+
+    function mostrarProtocolo(caixa, numero, achado) {
+        while (caixa.firstChild) {
+            caixa.removeChild(caixa.firstChild);
+        }
+        caixa.classList.remove('is-erro');
+        caixa.hidden = false;
+
+        if (!PADRAO_PROTOCOLO.test(numero)) {
+            caixa.classList.add('is-erro');
+            caixa.appendChild(el('p', null, 'Confira o número: o protocolo tem o formato OUV-AAAA-NNNN.'));
+            return;
+        }
+        if (!achado || typeof achado !== 'object') {
+            caixa.classList.add('is-erro');
+            caixa.appendChild(el('p', null, 'Protocolo ' + numero + ' não encontrado. Confira o número digitado.'));
+            return;
+        }
+
+        var topo = el('div', 'pp-ouv-resultado-topo');
+        topo.appendChild(el('strong', null, numero));
+        topo.appendChild(el('span', 'pp-selo pp-tom-' + String(achado.tom || 'info'), String(achado.situacao || '')));
+        caixa.appendChild(topo);
+        caixa.appendChild(el('span', 'pp-ouv-resultado-meta',
+            String(achado.porta || '') + ' · ' + String(achado.modo || '') + ' · última atualização do RH em ' + String(achado.atualizado || '')));
+        caixa.appendChild(el('p', null, achado.resposta ? 'Resposta do RH: ' + achado.resposta : 'O RH ainda não respondeu. Volte a consultar mais tarde.'));
+        if (achado.complemento) {
+            var pedido = el('div', 'pp-ouv-complemento');
+            pedido.appendChild(el('p', null, 'Pedido de complemento: ' + achado.complemento));
+            var botao = el('button', 'pp-botao is-compacto', 'Responder ao pedido');
+            botao.type = 'button';
+            botao.setAttribute('data-pp-demo', 'Responder ao pedido de complemento sem se identificar: chega no bloco B7.9.');
+            pedido.appendChild(botao);
+            caixa.appendChild(pedido);
+        }
+    }
+
+    function iniciarOuvidoria() {
+        document.querySelectorAll('.pp-casca [data-pp-ouvidoria]').forEach(function (bloco) {
+            if (!primeiraVez(bloco)) {
+                return;
+            }
+            var form = bloco.querySelector('[data-pp-ouv-consulta]');
+            var campo = bloco.querySelector('[data-pp-ouv-protocolo]');
+            var caixa = bloco.querySelector('[data-pp-ouv-resultado]');
+            if (!form || !campo || !caixa) {
+                return;
+            }
+            var protocolos = lerJson(bloco, '[data-pp-protocolos-json]');
+            form.addEventListener('submit', function (evento) {
+                evento.preventDefault();
+                var numero = normalizarProtocolo(campo.value);
+                campo.value = numero;
+                var achado = Object.prototype.hasOwnProperty.call(protocolos, numero) ? protocolos[numero] : null;
+                mostrarProtocolo(caixa, numero, achado);
+            });
+        });
+    }
+
     function tudo() {
         iniciar();
         iniciarFiltros();
@@ -633,6 +701,7 @@
         iniciarPublicacao();
         iniciarMural();
         iniciarLateral();
+        iniciarOuvidoria();
     }
 
     if (document.readyState === 'loading') {

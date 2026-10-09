@@ -1,4 +1,4 @@
-/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D
+/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E
  * Tudo prefixado com pp- e escopado em .pp-casca (T-30): nada aqui
  * estiliza elemento solto do GLPI nem de outros plugins.
  * Cores de superficie e texto herdam do tema do GLPI (Tabler), para
@@ -1182,3 +1182,122 @@ body.pp-pagina-impressao { margin: 0; background: #eef1f3; font-family: system-u
 .pp-casca .pp-pv.is-lateral .pp-pv-titulo { font-size: 0.92rem; }
 .pp-casca .pp-pv.pp-pv-tipo-campanha .pp-pv-rotulo { color: #a0284f; }
 .pp-casca .pp-pendencias { margin: 0 0 4px; padding: 10px 12px 10px 28px; border-radius: 8px; background: var(--pp-alerta-fundo); color: var(--pp-alerta); font-size: 0.86rem; }
+
+/* Ouvidoria (BP.3e, D-56): quadro 3 do canvas. Prefixo pp-ouv-. */
+.pp-casca .pp-ouv-portas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.pp-casca .pp-ouv-porta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-height: 150px;
+    padding: 18px;
+    border: 1px solid var(--pp-borda);
+    border-radius: 12px;
+    background: var(--pp-superficie);
+    color: var(--pp-texto);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.pp-casca .pp-ouv-porta:hover,
+.pp-casca .pp-ouv-porta:focus-visible { border-color: var(--pp-acento); outline: none; box-shadow: 0 0 0 3px var(--pp-acento-claro); }
+.pp-casca .pp-ouv-porta > strong { font-size: 1.05rem; }
+.pp-casca .pp-ouv-porta-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--pp-acento-claro);
+    color: var(--pp-acento);
+    font-size: 1.4rem;
+}
+.pp-casca .pp-ouv-porta-texto { font-size: 0.88rem; color: var(--pp-texto-2); }
+.pp-casca .pp-ouv-porta-modo { margin-top: auto; font-size: 0.8rem; font-weight: 700; color: var(--pp-acento-escuro); }
+.pp-casca .pp-ouv-alerta .pp-ouv-porta-icone { background: var(--pp-alerta-fundo); color: var(--pp-alerta); }
+.pp-casca .pp-ouv-alerta .pp-ouv-porta-modo { color: var(--pp-alerta); }
+.pp-casca .pp-ouv-conduta { border: 2px solid var(--pp-neutro); }
+.pp-casca .pp-ouv-conduta .pp-ouv-porta-icone { background: var(--pp-neutro); color: #ffffff; }
+.pp-casca .pp-ouv-conduta .pp-ouv-porta-modo { color: var(--pp-neutro); }
+
+.pp-casca .pp-ouv {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 16px;
+    align-items: start;
+}
+@media (max-width: 1199px) { .pp-casca .pp-ouv { grid-template-columns: minmax(0, 1fr); } }
+.pp-casca .pp-ouv-principal,
+.pp-casca .pp-ouv-lateral { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.pp-casca .pp-ouv-passos { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.92rem; }
+.pp-casca .pp-ouv-intro { margin: 0 0 12px; font-size: 0.9rem; }
+.pp-casca .pp-ouv-rodape { margin: 10px 0 0; font-size: 0.84rem; color: var(--pp-texto-2); }
+.pp-casca .pp-ouv-rodape.is-separado { border-top: 1px solid var(--pp-borda); padding-top: 10px; }
+.pp-casca .pp-ouv-rodape .pp-mc-link { margin-left: 0; padding: 0; font-size: inherit; }
+
+.pp-casca .pp-ouv-consulta { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.pp-casca .pp-ouv-consulta .pp-campo { margin-bottom: 0; min-width: 220px; }
+.pp-casca .pp-ouv-consulta input[type="text"] {
+    border: 1px solid var(--pp-borda);
+    border-radius: 6px;
+    padding: 8px 10px;
+    min-height: 40px;
+    font: inherit;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--pp-superficie);
+    color: var(--pp-texto);
+}
+.pp-casca .pp-ouv-resultado { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--pp-borda); border-radius: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.pp-casca .pp-ouv-resultado[hidden] { display: none; }
+.pp-casca .pp-ouv-resultado.is-erro { border-color: var(--pp-alerta); background: var(--pp-alerta-fundo); color: var(--pp-alerta); }
+.pp-casca .pp-ouv-resultado-topo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pp-casca .pp-ouv-resultado-topo strong { letter-spacing: 0.04em; }
+.pp-casca .pp-ouv-resultado-meta { font-size: 0.82rem; color: var(--pp-texto-2); }
+.pp-casca .pp-ouv-resultado p { margin: 0; }
+.pp-casca .pp-ouv-complemento { padding: 10px 12px; border-radius: 8px; background: var(--pp-alerta-fundo); color: var(--pp-alerta); }
+.pp-casca .pp-ouv-complemento .pp-botao { margin-top: 8px; }
+
+.pp-casca .pp-ouv-selo-juridico { margin-left: auto; }
+.pp-casca .pp-ouv-leis { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pp-casca .pp-ouv-lei { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--pp-borda); border-radius: 10px; }
+.pp-casca .pp-ouv-lei span { font-size: 0.86rem; }
+.pp-casca .pp-ouv-lei small { font-size: 0.78rem; color: var(--pp-texto-2); }
+
+.pp-casca .pp-ouv-informativos { list-style: none; margin: 0; padding: 0; }
+.pp-casca .pp-ouv-informativos li + li { border-top: 1px solid var(--pp-borda); }
+.pp-casca .pp-ouv-informativos button {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 0;
+    border: 0;
+    background: none;
+    color: var(--pp-texto);
+    font: inherit;
+    font-size: 0.94rem;
+    text-align: left;
+    cursor: pointer;
+}
+.pp-casca .pp-ouv-informativos button:hover span { color: var(--pp-acento); text-decoration: underline; }
+.pp-casca .pp-ouv-informativos small { flex-shrink: 0; font-size: 0.8rem; color: var(--pp-texto-2); }
+
+.pp-casca .pp-ouv-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.pp-casca .pp-ouv-qr h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.pp-casca .pp-ouv-qr p { margin: 0; font-size: 0.88rem; }
+.pp-casca .pp-ouv-qr-img { width: 180px; height: 180px; border: 1px solid var(--pp-borda); border-radius: 8px; }
+
+.pp-casca .pp-ouv-contatos { margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; }
+.pp-casca .pp-ouv-contatos dt { font-weight: 600; }
+.pp-casca .pp-ouv-contatos dd { margin: 0; overflow-wrap: anywhere; }

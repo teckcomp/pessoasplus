@@ -11,6 +11,7 @@
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3D
+ * PESSOASPLUS_BUILD_BP3E
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -155,6 +156,17 @@ final class Fontes
     public static function muralColaborador(): array
     {
         return DadosDemo::muralColaborador();
+    }
+
+    /**
+     * Ouvidoria (BP.3e): portas, protocolos, respaldo legal, informativos e
+     * contatos. Na mobilia (B7.9), portas e protocolos vem do motor da E7.
+     *
+     * @return array<string, mixed>
+     */
+    public static function ouvidoria(): array
+    {
+        return DadosDemo::ouvidoria();
     }
 
     /**
