@@ -1,0 +1,138 @@
+/* Pessoas+ - aviso ao entrar e contador. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2D
+ * Carregado em todas as paginas de quem tem o direito do Pessoas+:
+ * todo seletor comeca em .pp-aviso-entrada ou .pp-aviso-contador (T-30).
+ */
+.pp-aviso-entrada {
+    --pp-ae-acento: #23767e;
+    --pp-ae-escuro: #1c5e65;
+    --pp-ae-claro: #e5eff0;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(20, 24, 28, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.pp-aviso-entrada .pp-ae-caixa {
+    width: 100%;
+    max-width: 520px;
+    background: #ffffff;
+    color: #1f2328;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    padding: 22px 22px 18px;
+    font-size: 0.95rem;
+}
+.pp-aviso-entrada .pp-ae-topo { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+.pp-aviso-entrada .pp-ae-icone {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--pp-ae-claro);
+    color: var(--pp-ae-acento);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+.pp-aviso-entrada .pp-ae-textos { flex-grow: 1; min-width: 0; }
+.pp-aviso-entrada .pp-ae-titulo { margin: 0; font-size: 1.15rem; font-weight: 700; color: #1f2328; }
+.pp-aviso-entrada .pp-ae-subtitulo { margin: 4px 0 0; font-size: 0.85rem; color: #4a525c; }
+.pp-aviso-entrada .pp-ae-demo {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background: #fff1d6;
+    color: #5c3d00;
+    border: 1px solid #e8b54a;
+}
+.pp-aviso-entrada .pp-ae-lista { list-style: none; margin: 0 0 16px; padding: 0; }
+.pp-aviso-entrada .pp-ae-lista li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-top: 1px solid #e3e7ea;
+}
+.pp-aviso-entrada .pp-ae-item { display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0; }
+.pp-aviso-entrada .pp-ae-item span { font-size: 0.82rem; color: #4a525c; }
+.pp-aviso-entrada .pp-ae-selo {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 10px;
+    background: #eceff3;
+    color: #3b4450;
+    white-space: nowrap;
+}
+.pp-aviso-entrada .pp-ae-atraso { background: #fde8e6; color: #b42318; }
+.pp-aviso-entrada .pp-ae-alerta { background: #fff1d6; color: #8a5300; }
+.pp-aviso-entrada .pp-ae-info { background: var(--pp-ae-claro); color: var(--pp-ae-escuro); }
+.pp-aviso-entrada .pp-ae-ok { background: #e0f2e6; color: #1e6b3a; }
+.pp-aviso-entrada .pp-ae-acoes { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.pp-aviso-entrada .pp-ae-botao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid #d3d9de;
+    background: #ffffff;
+    color: #1f2328;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.pp-aviso-entrada .pp-ae-botao:hover { border-color: var(--pp-ae-acento); color: var(--pp-ae-escuro); }
+.pp-aviso-entrada .pp-ae-botao.is-primario { background: var(--pp-ae-acento); border-color: var(--pp-ae-acento); color: #ffffff; }
+.pp-aviso-entrada .pp-ae-botao.is-primario:hover { background: var(--pp-ae-escuro); color: #ffffff; }
+
+.pp-aviso-entrada .pp-ae-motivo { margin: -4px 0 14px; font-size: 0.8rem; color: #4a525c; }
+.pp-aviso-entrada .pp-ae-exibicao { margin-right: auto; align-self: center; font-size: 0.75rem; color: #4a525c; }
+
+/* Contador fixo enquanto houver pendencia (D-49, item 4). Fica no canto
+ * inferior direito para nao disputar espaco com o menu e a busca do GLPI. */
+.pp-aviso-contador {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1990;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px 0 8px;
+    border-radius: 22px;
+    background: #23767e;
+    color: #ffffff;
+    font-size: 0.88rem;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+.pp-aviso-contador:hover { color: #ffffff; background: #1c5e65; }
+.pp-aviso-contador strong {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #1c5e65;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+.pp-aviso-contador em { font-style: normal; font-weight: 700; padding-left: 8px; border-left: 1px solid rgba(255, 255, 255, 0.5); }
+.pp-aviso-contador.is-atraso { background: #b42318; }
+.pp-aviso-contador.is-atraso:hover { background: #8f1c13; }
+.pp-aviso-contador.is-atraso strong { color: #b42318; }

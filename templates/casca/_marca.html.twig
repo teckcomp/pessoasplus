@@ -1,0 +1,30 @@
+{# Pessoas+ - bloco de marca. PESSOASPLUS_BUILD_BP1 #}
+{# Usa "id" (identidade) e "pp.pode_config" do contexto de quem inclui. #}
+<div class="pp-marca">
+    <span class="pp-marca-logo" aria-hidden="true">
+        {% if id.logo != '' %}
+            <img src="{{ id.logo }}" alt="">
+        {% else %}
+            {# Marca "Equipe" (opcao 1, escolhida em 26/09/2026). As figuras
+               usam a cor de acento; o tom claro da segunda pessoa e derivado. #}
+            <svg viewBox="0 0 48 48" width="48" height="48" focusable="false">
+                <rect width="48" height="48" rx="12" fill="{{ id.cor }}"></rect>
+                <circle cx="30" cy="19" r="4.2" fill="{{ id.cor_suave }}"></circle>
+                <path d="M22.5 37c0-5 3.4-8.6 7.5-8.6s7.5 3.6 7.5 8.6z" fill="{{ id.cor_suave }}"></path>
+                <circle cx="19" cy="17.5" r="5" fill="#ffffff"></circle>
+                <path d="M9.5 37c0-6 4.3-10 9.5-10s9.5 4 9.5 10z" fill="#ffffff"></path>
+                <path d="M38 7.5v8M34 11.5h8" stroke="#ffffff" stroke-width="3" stroke-linecap="round"></path>
+            </svg>
+        {% endif %}
+    </span>
+    <div class="pp-marca-texto">
+        <strong>{{ id.nome_base }}<span>{{ id.nome_sufixo }}</span></strong>
+        {% if id.rotulo != '' %}<small>{{ id.rotulo }}</small>{% endif %}
+        {% if id.organizacao != '' %}<em>{{ id.organizacao }}</em>{% endif %}
+    </div>
+    {% if pp.pode_config %}
+        <button type="button" class="pp-marca-editar" aria-label="Personalizar identidade visual" title="Personalizar identidade visual" data-pp-demo="Identidade visual (logo, nome e cor): disponível a partir do bloco BP.10.">
+            <i class="ti ti-palette" aria-hidden="true"></i>
+        </button>
+    {% endif %}
+</div>

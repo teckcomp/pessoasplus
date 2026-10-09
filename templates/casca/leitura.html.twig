@@ -1,0 +1,72 @@
+{# Pessoas+ - leitura com ciencia. PESSOASPLUS_BUILD_BP2B #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_minha_area }}">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Minha área</span>
+    </a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    <div class="pp-leitura">
+        <article class="pp-cartao pp-documento">
+            <div class="pp-emissor-topo">
+                <span class="pp-selo">{{ d.codigo }}</span>
+                <span class="pp-selo pp-tom-alerta">Prazo {{ d.prazo }}</span>
+                <span class="pp-hash" title="Selo de integridade SHA-256 do conteúdo publicado"><i class="ti ti-shield-check" aria-hidden="true"></i> conteúdo congelado · {{ d.selo|slice(0, 16) }}…</span>
+            </div>
+            {% for s in d.secoes %}
+                <section class="pp-doc-secao">
+                    <h2>{{ s[0] }}</h2>
+                    <p>{{ s[1] }}</p>
+                </section>
+            {% endfor %}
+            <div class="pp-anexos">
+                <h2>Anexos</h2>
+                <ul>
+                    {% for a in d.anexos %}
+                        <li>
+                            <i class="ti ti-paperclip" aria-hidden="true"></i>
+                            <button type="button" class="pp-link-forte is-botao" data-pp-demo="Abrir anexo congelado: disponível na mobília (B1.7).">{{ a.nome }}</button>
+                            <small>{{ a.tamanho }} · selo {{ a.hash }}…</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </article>
+
+        <aside class="pp-cartao pp-ciencia" data-pp-ciencia>
+            <h2>Sua ciência</h2>
+            <p class="pp-ciencia-leitura"><i class="ti ti-eye" aria-hidden="true"></i> Leitura registrada ao abrir esta página.</p>
+            {% if d.quiz.exigido %}
+                <p class="pp-ciencia-quiz"><i class="ti ti-circle-check" aria-hidden="true"></i> Quiz exigido: aprovado com {{ d.quiz.nota }}% (mínimo {{ d.quiz.minima }}%).</p>
+            {% endif %}
+
+            <div data-pp-ciencia-form>
+                <label class="pp-marcar">
+                    <input type="checkbox" data-pp-ciencia-marcar>
+                    <span>Li e compreendi a <strong>{{ d.titulo }}</strong>, {{ d.versao }}.</span>
+                </label>
+                <button type="button" class="pp-botao is-primario is-largo" data-pp-ciencia-confirmar disabled>
+                    <i class="ti ti-check" aria-hidden="true"></i><span>{{ d.resposta }}</span>
+                </button>
+                <p class="pp-nota">A confirmação fica registrada com seu usuário, a data e a hora do servidor e esta versão do texto. Não pode ser editada nem apagada.</p>
+            </div>
+
+            <div class="pp-recibo" data-pp-ciencia-ok hidden>
+                <div class="pp-recibo-titulo"><i class="ti ti-circle-check" aria-hidden="true"></i> Ciência registrada</div>
+                <dl>
+                    <div><dt>Resposta</dt><dd>{{ d.resposta }}</dd></div>
+                    <div><dt>Versão</dt><dd>{{ d.codigo }}</dd></div>
+                    <div><dt>Data e hora</dt><dd data-pp-ciencia-hora>—</dd></div>
+                    <div><dt>Selo</dt><dd class="pp-hash">{{ d.selo|slice(0, 16) }}…</dd></div>
+                </dl>
+                <p class="pp-nota">Na demonstração nada foi gravado. Na versão final o comprovante vai também para sua pasta no Fichário.</p>
+                <a class="pp-botao is-largo" href="{{ d.url_comprovante }}" target="_blank" rel="noopener">
+                    <i class="ti ti-file-certificate" aria-hidden="true"></i><span>Ver um comprovante de exemplo</span>
+                </a>
+            </div>
+        </aside>
+    </div>
+{% endblock %}

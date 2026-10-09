@@ -1,0 +1,253 @@
+{# Pessoas+ - Mural do colaborador (quadro). PESSOASPLUS_BUILD_BP3B #}
+{# Usa pp.dados (Fontes::muralColaborador). Nenhuma contagem de visualizacao aqui: isso e do RH. #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao is-primario" href="{{ pp.dados.url_inicio }}">
+        <span>Continuar para a página inicial</span><i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set m = pp.dados %}
+
+    <div class="pp-mc-resumo" aria-label="Seu resumo">
+        {% for r in m.resumo %}
+            {% set url = pp.areas[r.area] %}
+            {% if url != '' %}
+                <a class="pp-mc-chip pp-tom-{{ r.tom }}" href="{{ url }}"><i class="{{ r.icone }}" aria-hidden="true"></i><strong>{{ r.valor }}</strong> {{ r.texto }}</a>
+            {% else %}
+                <span class="pp-mc-chip pp-tom-{{ r.tom }}"><i class="{{ r.icone }}" aria-hidden="true"></i><strong>{{ r.valor }}</strong> {{ r.texto }}</span>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="pp-mural">
+        <div class="pp-mural-principal">
+
+            {# Destaque fixo: faixa no topo (D-59) #}
+            <article class="pp-destaque">
+                <span class="pp-destaque-icone" aria-hidden="true"><i class="{{ m.destaque.icone }}"></i></span>
+                <div class="pp-destaque-texto">
+                    <span class="pp-destaque-rotulo"><i class="ti ti-pin" aria-hidden="true"></i> Destaque fixo · {{ m.destaque.categoria }}</span>
+                    <h2>{{ m.destaque.titulo }}</h2>
+                    <p>{{ m.destaque.texto }}</p>
+                    <div class="pp-mural-meta">
+                        <span><i class="ti ti-user" aria-hidden="true"></i> {{ m.destaque.autor }}</span>
+                        <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ m.destaque.periodo }}</span>
+                        {% if m.destaque.novo %}<span class="pp-mc-novo">Novo</span>{% endif %}
+                    </div>
+                </div>
+            </article>
+
+            {# Publicacao grande do mes, fixada no topo da area (D-59) #}
+            {% set c = m.campanha %}
+            <article class="pp-cartao pp-mc-campanha" data-pp-post>
+                {% if c.imagem_url != '' %}
+                    <img class="pp-mc-capa" src="{{ c.imagem_url }}" alt="{{ c.alt }}">
+                {% endif %}
+                <div class="pp-mc-campanha-corpo">
+                    <div class="pp-mc-rotulo">
+                        <span>{{ c.rotulo }}</span>
+                        {% if c.fixada %}<span class="pp-mc-fixada"><i class="ti ti-pin" aria-hidden="true"></i> Fixada no topo</span>{% endif %}
+                    </div>
+                    <h2>{{ c.titulo }}</h2>
+                    <p>{{ c.texto }}</p>
+                    <div class="pp-mc-acoes">
+                        {% for a in c.acoes %}
+                            <button type="button" class="pp-botao{% if a.primario %} is-primario{% endif %}" data-pp-demo="{{ a.acao }}: disponível a partir do bloco {{ a.bloco }}.">{{ a.rotulo }}</button>
+                        {% endfor %}
+                    </div>
+                    <div class="pp-mural-meta pp-mc-rodape">
+                        <span><i class="ti ti-user" aria-hidden="true"></i> {{ c.autor }}</span>
+                        <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ c.periodo }}</span>
+                        <button type="button" class="pp-mc-curtir" data-pp-curtir aria-pressed="false"><i class="ti ti-thumb-up" aria-hidden="true"></i> <span data-pp-curtidas>{{ c.curtidas }}</span> curtidas</button>
+                        <span><i class="ti ti-message-circle" aria-hidden="true"></i> {{ c.comentarios }} comentários</span>
+                        <button type="button" class="pp-mc-link" data-pp-demo="Abrir a publicação completa com todos os comentários: disponível a partir do bloco BP.3d.">Abrir publicação e comentários</button>
+                    </div>
+                </div>
+            </article>
+
+            {# Aniversariantes: cartao com comentarios (D-41, D-57) #}
+            <section class="pp-mc-secao">
+                <header class="pp-mc-secao-cabecalho">
+                    <h2>Aniversariantes da semana</h2>
+                    <span class="pp-referencia">só dia e mês · quem consentiu</span>
+                </header>
+                {% for a in m.aniversarios %}
+                    <article class="pp-cartao pp-mc-aniversario{% if a.imagem_url != '' %} tem-arte{% endif %}" data-pp-post>
+                        {% if a.imagem_url != '' %}
+                            <img class="pp-mc-arte" src="{{ a.imagem_url }}" alt="{{ a.alt }}">
+                        {% else %}
+                            <div class="pp-mc-capa-auto" aria-hidden="true">
+                                <span class="pp-mc-avatar is-grande">{{ a.iniciais }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="pp-mc-aniversario-corpo">
+                            <div class="pp-mc-rotulo"><span>Aniversário · {{ a.quando }}</span></div>
+                            <h3>Parabéns, {{ a.nome }}!</h3>
+                            <span class="pp-mc-detalhe">{{ a.detalhe }}</span>
+                            <p class="pp-mc-cartao-texto"><strong>Cartão da equipe</strong> — {{ a.cartao }}</p>
+
+                            <div class="pp-mural-meta">
+                                <button type="button" class="pp-mc-curtir" data-pp-curtir aria-pressed="false"><i class="ti ti-thumb-up" aria-hidden="true"></i> <span data-pp-curtidas>{{ a.curtidas }}</span> curtidas</button>
+                                <span><i class="ti ti-message-circle" aria-hidden="true"></i> <span data-pp-total-comentarios>{{ a.total_comentarios }}</span> comentários</span>
+                            </div>
+
+                            {% if a.aberto %}
+                                <ul class="pp-mc-comentarios" data-pp-comentarios>
+                                    {% for k in a.comentarios %}
+                                        <li class="pp-mc-comentario">
+                                            <span class="pp-mc-avatar" aria-hidden="true">{{ k.iniciais }}</span>
+                                            <div class="pp-mc-balao">
+                                                <div class="pp-mc-quem"><strong>{{ k.autor }}</strong> <span>· {{ k.detalhe }}</span></div>
+                                                <p>{{ k.texto }}</p>
+                                                <div class="pp-mc-comentario-acoes">
+                                                    <button type="button" data-pp-responder>Responder</button>
+                                                    <button type="button" data-pp-curtir-comentario aria-pressed="false">Curtir · <span data-pp-curtidas>{{ k.curtidas }}</span></button>
+                                                </div>
+                                            </div>
+                                            {% if k.respostas|length > 0 %}
+                                                <ul class="pp-mc-respostas" data-pp-respostas>
+                                                    {% for r in k.respostas %}
+                                                        <li class="pp-mc-comentario is-resposta">
+                                                            <span class="pp-mc-avatar is-pequeno" aria-hidden="true">{{ r.iniciais }}</span>
+                                                            <div class="pp-mc-balao">
+                                                                <div class="pp-mc-quem"><strong>{{ r.autor }}</strong> <span>· {{ r.detalhe }}</span></div>
+                                                                <p>{{ r.texto }}</p>
+                                                            </div>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <ul class="pp-mc-respostas" data-pp-respostas hidden></ul>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <form class="pp-mc-compor" data-pp-compor data-pp-quem="{{ m.quem }}" data-pp-iniciais="{{ m.quem_iniciais }}">
+                                    <span class="pp-mc-avatar" aria-hidden="true">{{ m.quem_iniciais }}</span>
+                                    <div class="pp-mc-compor-campo">
+                                        <label for="pp-mc-coment-{{ loop.index }}">Comentar como {{ m.quem }}</label>
+                                        <input type="text" id="pp-mc-coment-{{ loop.index }}" data-pp-compor-texto maxlength="500" placeholder="Escreva uma mensagem de parabéns…" autocomplete="off">
+                                    </div>
+                                    <button type="submit" class="pp-botao is-primario">Publicar</button>
+                                </form>
+                                <p class="pp-nota pp-mc-nota-demo">Demonstração: o comentário aparece só nesta tela e não é gravado.</p>
+                            {% else %}
+                                <div class="pp-mc-acoes">
+                                    <button type="button" class="pp-botao is-primario" data-pp-demo="Deixar parabéns: disponível a partir do bloco B3.2.">Deixar parabéns</button>
+                                    <button type="button" class="pp-botao" data-pp-demo="Ver os {{ a.total_comentarios }} comentários: disponível a partir do bloco B3.2.">Ver os {{ a.total_comentarios }} comentários</button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+
+            {# Publicacoes normais (cartoes) #}
+            <section class="pp-cartao" data-pp-filtravel>
+                <header class="pp-cartao-cabecalho">
+                    <h2>Publicações</h2>
+                    <span class="pp-contagem">{{ m.publicacoes|length }}</span>
+                </header>
+                <div class="pp-filtros" role="group" aria-label="Filtrar por categoria">
+                    {% for f in m.filtros %}
+                        <button type="button" class="pp-chip{% if loop.first %} is-ativo{% endif %}" data-pp-filtro="{{ f.chave }}" aria-pressed="{{ loop.first ? 'true' : 'false' }}">{{ f.rotulo }}</button>
+                    {% endfor %}
+                </div>
+                <div class="pp-publicacoes">
+                    {% for p in m.publicacoes %}
+                        <article class="pp-publicacao" data-pp-item data-pp-situacao="{{ p.categoria_chave }}">
+                            <div class="pp-publicacao-capa pp-cat-{{ p.categoria_chave }}" aria-hidden="true">
+                                <i class="{{ p.icone }}"></i>
+                            </div>
+                            <div class="pp-publicacao-corpo">
+                                <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.categoria }}</span>
+                                <h3>{{ p.titulo }}</h3>
+                                <p>{{ p.resumo }}</p>
+                                {% if p.nota != '' %}
+                                    <em class="pp-nota"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ p.nota }}</em>
+                                {% endif %}
+                                <div class="pp-mural-meta">
+                                    <span><i class="ti ti-user" aria-hidden="true"></i> {{ p.autor }}</span>
+                                    <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ p.periodo }}</span>
+                                    {% if p.comentarios_ligados %}
+                                        <span><i class="ti ti-message-circle" aria-hidden="true"></i> {{ p.comentarios }} comentários</span>
+                                    {% else %}
+                                        <span><i class="ti ti-message-circle-off" aria-hidden="true"></i> comentários desligados</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+                <p class="pp-vazio" data-pp-vazio hidden>Nenhuma publicação nesta categoria.</p>
+                <p class="pp-vazio" data-pp-mostra-em="celebracao" hidden>As celebrações estão nos cartões acima e na lista ao lado.</p>
+            </section>
+        </div>
+
+        <div class="pp-mural-lateral">
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Para você responder</h2>
+                    <span class="pp-contagem">{{ m.pesquisas|length }}</span>
+                </header>
+                <ul class="pp-lista is-compacta">
+                    {% for q in m.pesquisas %}
+                        <li class="pp-mural-pesquisa">
+                            <div class="pp-lista-texto">
+                                <strong><i class="ti {{ q.anonima ? 'ti-lock' : 'ti-clipboard-check' }}" aria-hidden="true"></i> {{ q.titulo }}</strong>
+                                <span>{{ q.detalhe }}</span>
+                                {% if q.progresso >= 0 %}
+                                    <div class="pp-progresso is-largo" role="img" aria-label="{{ q.progresso }}% concluído">
+                                        <div class="pp-progresso-barra" style="width: {{ q.progresso }}%"></div>
+                                    </div>
+                                {% endif %}
+                                {% if q.anonima %}
+                                    <em class="pp-nota">Suas respostas não ficam ligadas ao seu usuário.</em>
+                                {% endif %}
+                            </div>
+                            <div class="pp-mural-pesquisa-acao">
+                                <span class="pp-selo pp-tom-{{ q.tom }}">{{ q.selo }}</span>
+                                <button type="button" class="pp-botao is-compacto" data-pp-demo="{{ q.acao }}: disponível a partir do bloco {{ q.bloco }}.">{{ q.acao }}</button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Celebrações</h2>
+                    <span class="pp-referencia">próximos 30 dias</span>
+                </header>
+                <ul class="pp-celebracoes">
+                    {% for c in m.celebracoes %}
+                        <li class="pp-celebracao pp-celebra-{{ c.tipo }}">
+                            <span class="pp-celebracao-icone" aria-hidden="true"><i class="{{ c.icone }}"></i></span>
+                            <div class="pp-lista-texto">
+                                <strong>{{ c.titulo }}</strong>
+                                <span>{{ c.detalhe }}</span>
+                            </div>
+                            <span class="pp-celebracao-data">{{ c.data }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="pp-nota pp-celebracoes-nota">Aniversários aparecem só com a autorização da pessoa, com dia e mês.</p>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Ouvidoria</h2>
+                </header>
+                <p class="pp-mc-ouvidoria">{{ m.ouvidoria.texto }}</p>
+                <button type="button" class="pp-botao" data-pp-demo="Página da Ouvidoria: disponível a partir do bloco {{ m.ouvidoria.bloco }}."><i class="ti ti-message-circle-heart" aria-hidden="true"></i><span>Abrir a Ouvidoria</span></button>
+            </section>
+        </div>
+    </div>
+
+    <div class="pp-mc-fim">
+        <a class="pp-botao is-primario" href="{{ m.url_inicio }}"><span>Continuar para a página inicial</span><i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+{% endblock %}

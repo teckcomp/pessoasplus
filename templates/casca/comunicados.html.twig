@@ -1,0 +1,87 @@
+{# Pessoas+ - lista de comunicados e normativas. PESSOASPLUS_BUILD_BP0C PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    {% if pp.pode.comunicados.gerenciar %}
+    <a class="pp-botao is-primario" href="{{ pp.dados.url_novo }}">
+        <i class="ti ti-speakerphone" aria-hidden="true"></i><span>Novo comunicado</span>
+    </a>
+    <a class="pp-botao" href="{{ pp.dados.url_novo }}?tipo=normativa">
+        <i class="ti ti-books" aria-hidden="true"></i><span>Normativa do Codex+</span>
+    </a>
+    {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    <section class="pp-cartao" data-pp-filtravel>
+        <div class="pp-filtros" role="group" aria-label="Filtrar comunicados">
+            <button type="button" class="pp-chip is-ativo" data-pp-filtro="todos" aria-pressed="true">Todos</button>
+            <button type="button" class="pp-chip" data-pp-filtro="andamento" aria-pressed="false">Em andamento</button>
+            <button type="button" class="pp-chip" data-pp-filtro="concluido" aria-pressed="false">Concluídos</button>
+            <button type="button" class="pp-chip" data-pp-filtro="rascunho" aria-pressed="false">Rascunhos</button>
+            <label class="pp-busca">
+                <i class="ti ti-search" aria-hidden="true"></i>
+                <span class="pp-oculto">Buscar comunicado</span>
+                <input type="search" data-pp-busca placeholder="Buscar por título">
+            </label>
+        </div>
+        <div class="pp-tabela-rolagem">
+            <table class="pp-tabela">
+                <thead>
+                    <tr>
+                        <th scope="col">Comunicado</th>
+                        <th scope="col">Público</th>
+                        <th scope="col">Publicado</th>
+                        <th scope="col">Prazo</th>
+                        <th scope="col">Ciência</th>
+                        <th scope="col">Situação</th>
+                        <th scope="col"><span class="pp-oculto">Ações</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in pp.dados.comunicados %}
+                        <tr data-pp-item data-pp-situacao="{{ c.fase }}">
+                            <td>
+                                {% if c.url != '' %}
+                                    <a class="pp-link-forte" href="{{ c.url }}">{{ c.titulo }}</a>
+                                {% else %}
+                                    <button type="button" class="pp-link-forte is-botao" data-pp-demo="Na demonstração, o acompanhamento completo é o da Política de uso de veículos.">{{ c.titulo }}</button>
+                                {% endif %}
+                                <small class="pp-sub">{{ c.tipo }} · {{ c.origem }}</small>
+                            </td>
+                            <td class="pp-publico">{{ c.publico }}</td>
+                            <td>{{ c.publicado }}</td>
+                            <td>{{ c.prazo }}</td>
+                            <td>
+                                {% if c.total > 0 %}
+                                    <div class="pp-progresso" role="img" aria-label="{{ c.confirmados }} de {{ c.total }} confirmaram">
+                                        <div class="pp-progresso-barra pp-tom-{{ c.tom }}" style="width: {{ c.percentual }}%"></div>
+                                    </div>
+                                    <small class="pp-progresso-texto">{{ c.confirmados }} de {{ c.total }} · {{ c.percentual }}%</small>
+                                {% else %}
+                                    <small class="pp-progresso-texto">não publicado</small>
+                                {% endif %}
+                            </td>
+                            <td><span class="pp-selo pp-tom-{{ c.tom }}">{{ c.situacao }}</span></td>
+                            <td class="pp-acoes-linha">
+                                {% if c.total > 0 %}
+                                    {% if c.url != '' %}
+                                        <a class="pp-botao is-compacto is-icone" href="{{ c.url }}" title="Acompanhar a ciência" aria-label="Acompanhar a ciência de {{ c.titulo }}"><i class="ti ti-chart-bar" aria-hidden="true"></i></a>
+                                    {% else %}
+                                        <button type="button" class="pp-botao is-compacto is-icone" title="Acompanhar a ciência" aria-label="Acompanhar a ciência de {{ c.titulo }}" data-pp-demo="Na demonstração, o acompanhamento completo é o da Política de uso de veículos."><i class="ti ti-chart-bar" aria-hidden="true"></i></button>
+                                    {% endif %}
+                                    {% if c.url_comprovante != '' %}
+                                        <a class="pp-botao is-compacto is-icone" href="{{ c.url_comprovante }}" target="_blank" rel="noopener" title="Comprovante coletivo" aria-label="Comprovante coletivo de {{ c.titulo }}"><i class="ti ti-file-certificate" aria-hidden="true"></i></a>
+                                    {% else %}
+                                        <button type="button" class="pp-botao is-compacto is-icone" title="Comprovante coletivo" aria-label="Comprovante coletivo de {{ c.titulo }}" data-pp-demo="Na demonstração, o comprovante completo é o da Política de uso de veículos."><i class="ti ti-file-certificate" aria-hidden="true"></i></button>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="pp-vazio" data-pp-vazio hidden>Nenhum comunicado com esse filtro.</p>
+    </section>
+{% endblock %}

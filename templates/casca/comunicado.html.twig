@@ -1,0 +1,100 @@
+{# Pessoas+ - painel do emissor (Tela 2 da proposta). PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP0C #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Todos os comunicados</span>
+    </a>
+    <button type="button" class="pp-botao" data-pp-demo="Exportar CSV: disponível a partir do bloco B2.3 (mobília).">
+        <i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span>Exportar CSV</span>
+    </button>
+    <a class="pp-botao" href="{{ pp.dados.url_comprovante }}" target="_blank" rel="noopener">
+        <i class="ti ti-file-certificate" aria-hidden="true"></i><span>Comprovante coletivo</span>
+    </a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    <div class="pp-emissor-topo">
+        <span class="pp-rotulo-tela"><i class="ti ti-chart-bar" aria-hidden="true"></i> Acompanhamento da ciência</span>
+        <span class="pp-selo pp-tom-ok">{{ d.situacao }}</span>
+        <span class="pp-selo">{{ d.codigo }}</span>
+        <span class="pp-hash" title="Selo de integridade SHA-256 do conteúdo publicado"><i class="ti ti-shield-check" aria-hidden="true"></i> {{ d.selo|slice(0, 16) }}…</span>
+    </div>
+
+    <section class="pp-indicadores is-quatro" aria-label="Números do comunicado">
+        {% for n in d.numeros %}
+            <div class="pp-indicador pp-tom-{{ n.tom }}">
+                <div class="pp-indicador-valor">{{ n.valor }}</div>
+                <div class="pp-indicador-rotulo">{{ n.rotulo }}</div>
+            </div>
+        {% endfor %}
+    </section>
+
+    <div class="pp-emissor">
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho">
+                <h2>Adesão por grupo</h2>
+                <span class="pp-referencia">{{ d.adesao }}% no total</span>
+            </header>
+            <ul class="pp-barras">
+                {% for g in d.por_grupo %}
+                    <li>
+                        <span class="pp-barras-rotulo">{{ g.grupo }}</span>
+                        <div class="pp-progresso is-largo" role="img" aria-label="{{ g.confirmados }} de {{ g.total }} confirmaram">
+                            <div class="pp-progresso-barra pp-tom-{{ g.tom }}" style="width: {{ g.percentual }}%"></div>
+                        </div>
+                        <span class="pp-barras-valor">{{ g.percentual }}%</span>
+                        <small class="pp-barras-detalhe">{{ g.confirmados }}/{{ g.total }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="pp-cartao" data-pp-filtravel>
+            <header class="pp-cartao-cabecalho">
+                <h2>Quem falta e quem já confirmou</h2>
+                {% if pp.pode.comunicados.gerenciar %}
+                <button type="button" class="pp-botao is-primario is-compacto pp-a-direita" data-pp-demo="Lembrar os 7 que faltam: o aviso volta para cada um (D-49). Disponível na mobília (B2.3).">
+                    <i class="ti ti-bell-ringing" aria-hidden="true"></i><span>Lembrar os 7</span>
+                </button>
+                {% endif %}
+            </header>
+            <div class="pp-filtros" role="group" aria-label="Filtrar pessoas">
+                <button type="button" class="pp-chip is-ativo" data-pp-filtro="faltam" aria-pressed="true">Faltam <strong>7</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="atrasado" aria-pressed="false">Em atraso <strong>2</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="pendente" aria-pressed="false">Pendentes <strong>5</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="confirmado" aria-pressed="false">Confirmaram <strong>41</strong></button>
+                <label class="pp-busca">
+                    <i class="ti ti-search" aria-hidden="true"></i>
+                    <span class="pp-oculto">Buscar pessoa ou grupo</span>
+                    <input type="search" data-pp-busca placeholder="Pessoa ou grupo">
+                </label>
+            </div>
+            <ul class="pp-pessoas">
+                {% for p in d.pessoas %}
+                    <li data-pp-item data-pp-situacao="{{ p.situacao }}{{ p.situacao != 'confirmado' ? ' faltam' : '' }}"{% if p.situacao == 'confirmado' %} hidden{% endif %}>
+                        <span class="pp-avatar" aria-hidden="true">{{ p.iniciais }}</span>
+                        <div class="pp-lista-texto">
+                            <strong>{{ p.nome }}</strong>
+                            <span>{{ p.grupo }} · {{ p.leitura }}{% if p.prazo != '' %} · {{ p.prazo }}{% endif %}</span>
+                            {% if p.avisos > 0 %}<em class="pp-nota"><i class="ti ti-bell" aria-hidden="true"></i> avisado {{ p.avisos }} {{ p.avisos == 1 ? 'vez' : 'vezes' }}</em>{% endif %}
+                        </div>
+                        <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.rotulo }}</span>
+                        {% if p.situacao != 'confirmado' %}
+                            {% if pp.pode.comunicados.gerenciar %}
+                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Lembrar {{ p.nome }}: disponível na mobília (B2.3).">Lembrar</button>
+                            {% endif %}
+                        {% else %}
+                            <a class="pp-botao is-compacto" href="{{ d.url_comprovante }}&amp;p={{ loop.index0 }}" target="_blank" rel="noopener" title="Também anexado à pasta de {{ p.nome }} no Fichário (D-50)">
+                                <i class="ti ti-file-certificate" aria-hidden="true"></i><span>Comprovante</span>
+                            </a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="pp-vazio" data-pp-vazio hidden>Ninguém com esse filtro.</p>
+            <p class="pp-rodape-lista" data-pp-mostra-em="confirmado" hidden>E mais {{ d.omitidos }} que confirmaram. A lista completa sai na exportação.</p>
+        </section>
+    </div>
+{% endblock %}

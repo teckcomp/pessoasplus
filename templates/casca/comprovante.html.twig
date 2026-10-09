@@ -1,0 +1,68 @@
+{# Pessoas+ - comprovante de ciencia (Tela 12). PESSOASPLUS_BUILD_BP2B #}
+{# Pagina propria, sem a moldura do GLPI, para imprimir ou salvar em PDF.
+   Sem icones Tabler: a fonte de icones do GLPI nao e carregada aqui. #}
+{% set id = pp.identidade %}
+{% set d = pp.dados %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprovante de ciência · {{ d.codigo }}</title>
+<link rel="stylesheet" href="{{ pp.css }}">
+</head>
+<body class="pp-pagina-impressao">
+<div class="pp-casca pp-comprovante" style="--pp-acento: {{ id.cor }}; --pp-acento-escuro: {{ id.cor_escura }}; --pp-acento-claro: {{ id.cor_clara }};">
+    <div class="pp-comp-barra">
+        <button type="button" class="pp-botao is-primario" data-pp-imprimir>
+            <span>Imprimir ou salvar em PDF</span>
+        </button>
+    </div>
+
+    <div class="pp-comp-folha">
+        {% if pp.demo %}
+            <div class="pp-comp-demo">DEMONSTRAÇÃO · dados fictícios · sem valor de prova</div>
+        {% endif %}
+        <header class="pp-comp-cabecalho">
+            <div class="pp-comp-marca">
+                <strong>{{ id.nome_base }}<span>{{ id.nome_sufixo }}</span></strong>
+                {% if id.organizacao != '' %}<small>{{ id.organizacao }}</small>{% endif %}
+            </div>
+            <div class="pp-comp-tipo">
+                COMPROVANTE DE CIÊNCIA
+                <small>{{ d.individual ? 'Individual' : 'Coletivo' }} · protocolo {{ d.protocolo }}</small>
+            </div>
+        </header>
+
+        <h1>{{ d.titulo }}</h1>
+        <p class="pp-comp-meta">{{ d.tipo }} {{ d.codigo }} · publicada em {{ d.publicado }}</p>
+
+        <div class="pp-comp-selo">
+            <strong>Selo de integridade</strong>
+            <code>sha256: {{ d.selo }}</code>
+            <small>Calculado sobre o conteúdo e os anexos no momento da publicação. Qualquer alteração posterior muda o selo e é acusada pela verificação.</small>
+        </div>
+
+        <table class="pp-comp-tabela">
+            <thead>
+                <tr><th scope="col">Colaborador</th><th scope="col">Grupo</th><th scope="col">Resposta</th><th scope="col">Data e hora</th><th scope="col">Interface</th><th scope="col">Avisos antes</th></tr>
+            </thead>
+            <tbody>
+                {% for l in d.linhas %}
+                    <tr><td>{{ l.nome }}</td><td>{{ l.grupo }}</td><td>{{ l.resposta }}</td><td>{{ l.data }}</td><td>{{ l.interface }}</td><td>{{ l.avisos }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if d.omitidos > 0 %}
+            <p class="pp-comp-meta">Na demonstração a lista está resumida: mais {{ d.omitidos }} confirmações completam as 41.</p>
+        {% endif %}
+
+        <footer class="pp-comp-rodape">
+            <span>Emitido em {{ d.emitido }} pelo {{ id.nome }}</span>
+            <span>Registro somente de inclusão · data e hora do servidor</span>
+        </footer>
+    </div>
+</div>
+<script src="{{ pp.js }}" defer></script>
+</body>
+</html>

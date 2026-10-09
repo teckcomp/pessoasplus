@@ -1,0 +1,64 @@
+{# Pessoas+ - layout base da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 #}
+{# Recebe uma unica variavel associativa "pp" (T-06). #}
+<link rel="stylesheet" href="{{ pp.css }}">
+{% set id = pp.identidade %}
+<div class="pp-casca" style="--pp-acento: {{ id.cor }}; --pp-acento-escuro: {{ id.cor_escura }}; --pp-acento-claro: {{ id.cor_clara }};">
+    {% if pp.demo %}
+        <div class="pp-faixa" role="note">
+            <i class="ti ti-flask" aria-hidden="true"></i>
+            <strong>DEMONSTRAÇÃO</strong>
+            <span>Dados fictícios. Esta tela ainda não lê nem grava dados reais.</span>
+        </div>
+    {% endif %}
+
+    <div class="pp-corpo{% if pp.nav|length == 0 %} is-sem-nav{% endif %}">
+        {% if pp.nav|length > 0 %}
+        <nav class="pp-nav" aria-label="Áreas do Pessoas+">
+            {{ include('@pessoasplus/casca/_marca.html.twig') }}
+            {% for grupo in pp.nav %}
+                <div class="pp-nav-grupo">
+                    <div class="pp-nav-titulo">{{ grupo.grupo }}</div>
+                    <ul>
+                        {% for item in grupo.itens %}
+                            <li>
+                                {% if item.pronta %}
+                                    <a class="pp-nav-item{% if item.ativa %} is-ativa{% endif %}" href="{{ item.url }}"{% if item.ativa %} aria-current="page"{% endif %}>
+                                        <i class="{{ item.icone }}" aria-hidden="true"></i>
+                                        <span>{{ item.rotulo }}</span>
+                                    </a>
+                                {% else %}
+                                    <span class="pp-nav-item is-breve" title="Chega no bloco {{ item.bloco }}">
+                                        <i class="{{ item.icone }}" aria-hidden="true"></i>
+                                        <span>{{ item.rotulo }}</span>
+                                        <em>em breve</em>
+                                    </span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </nav>
+        {% endif %}
+
+        <main class="pp-conteudo">
+            {% if pp.nav|length == 0 %}
+                <div class="pp-marca-topo">{{ include('@pessoasplus/casca/_marca.html.twig') }}</div>
+            {% endif %}
+            <header class="pp-cabecalho">
+                <div>
+                    <h1>{{ pp.pagina.titulo }}</h1>
+                    <p>{{ pp.pagina.subtitulo }}</p>
+                </div>
+                <div class="pp-acoes">
+                    {% block acoes %}{% endblock %}
+                </div>
+            </header>
+
+            {% block conteudo %}{% endblock %}
+        </main>
+    </div>
+
+    <div class="pp-aviso" role="status" aria-live="polite" hidden></div>
+</div>
+<script src="{{ pp.js }}" defer></script>

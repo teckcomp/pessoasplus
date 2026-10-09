@@ -1,0 +1,120 @@
+{# Pessoas+ - painel inicial do RH. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP0C #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    {% for atalho in pp.dados.atalhos %}
+        {% if atalho.url != '' %}
+            <a class="pp-botao{% if loop.first %} is-primario{% endif %}" href="{{ atalho.url }}">
+                <i class="{{ atalho.icone }}" aria-hidden="true"></i>
+                <span>{{ atalho.rotulo }}</span>
+            </a>
+        {% else %}
+            <button type="button" class="pp-botao{% if loop.first %} is-primario{% endif %}" data-pp-demo="{{ atalho.rotulo }}: disponível a partir do bloco {{ atalho.bloco }}.">
+                <i class="{{ atalho.icone }}" aria-hidden="true"></i>
+                <span>{{ atalho.rotulo }}</span>
+            </button>
+        {% endif %}
+    {% endfor %}
+{% endblock %}
+
+{% block conteudo %}
+    <section class="pp-indicadores" aria-label="Indicadores">
+        {% for ind in pp.dados.indicadores %}
+            {% set destino = pp.areas[ind.area] %}
+            {% if destino != '' %}<a class="pp-indicador pp-tom-{{ ind.tom }}" href="{{ destino }}">{% else %}<div class="pp-indicador pp-tom-{{ ind.tom }}">{% endif %}
+                <i class="{{ ind.icone }}" aria-hidden="true"></i>
+                <div class="pp-indicador-valor">{{ ind.valor }}</div>
+                <div class="pp-indicador-rotulo">{{ ind.rotulo }}</div>
+                <div class="pp-indicador-detalhe">{{ ind.detalhe }}</div>
+            {% if destino != '' %}</a>{% else %}</div>{% endif %}
+        {% endfor %}
+    </section>
+
+    <div class="pp-duas-colunas">
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho">
+                <h2>Alertas de prazo</h2>
+                <span class="pp-contagem">{{ pp.dados.alertas|length }}</span>
+            </header>
+            <ul class="pp-alertas">
+                {% for alerta in pp.dados.alertas %}
+                    <li class="pp-alerta pp-tom-{{ alerta.tom }}">
+                        <i class="ti {{ alerta.tom == 'atraso' ? 'ti-alert-triangle' : (alerta.tom == 'alerta' ? 'ti-clock' : 'ti-info-circle') }}" aria-hidden="true"></i>
+                        <div class="pp-alerta-texto">
+                            <strong>{{ alerta.titulo }}</strong>
+                            <span>{{ alerta.detalhe }}</span>
+                        </div>
+                        <span class="pp-selo pp-tom-{{ alerta.tom }}">{{ alerta.prazo }}</span>
+                    </li>
+                {% else %}
+                    <li class="pp-vazio">Nenhum alerta nas áreas que você acompanha.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho">
+                <h2>Próximos 30 dias</h2>
+                <span class="pp-referencia">a partir de {{ pp.dados.referencia }}</span>
+            </header>
+            <ul class="pp-agenda">
+                {% for ev in pp.dados.agenda %}
+                    <li>
+                        <div class="pp-data"><span>{{ ev.dia }}</span><small>{{ ev.mes }}</small></div>
+                        <div class="pp-agenda-texto">
+                            <strong>{{ ev.titulo }}</strong>
+                            <span><i class="{{ ev.icone }}" aria-hidden="true"></i> {{ ev.origem }}</span>
+                        </div>
+                    </li>
+                {% else %}
+                    <li class="pp-vazio">Nada previsto nas áreas que você acompanha.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    <section class="pp-cartao">
+        <header class="pp-cartao-cabecalho">
+            <h2>Processos em andamento</h2>
+            <span class="pp-contagem">{{ pp.dados.processos|length }}</span>
+        </header>
+        <div class="pp-tabela-rolagem">
+            <table class="pp-tabela">
+                <thead>
+                    <tr>
+                        <th scope="col">Pessoa</th>
+                        <th scope="col">Processo</th>
+                        <th scope="col">Etapa</th>
+                        <th scope="col">Progresso</th>
+                        <th scope="col">Prazo</th>
+                        <th scope="col">Situação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proc in pp.dados.processos %}
+                        <tr>
+                            <td>
+                                <div class="pp-pessoa">
+                                    <span class="pp-avatar" aria-hidden="true">{{ proc.iniciais }}</span>
+                                    <div><strong>{{ proc.pessoa }}</strong><small>{{ proc.contexto }}</small></div>
+                                </div>
+                            </td>
+                            <td>{{ proc.tipo }}</td>
+                            <td>{{ proc.etapa }}</td>
+                            <td>
+                                <div class="pp-progresso" role="img" aria-label="{{ proc.feitos }} de {{ proc.total }} itens concluídos">
+                                    <div class="pp-progresso-barra pp-tom-{{ proc.tom }}" style="width: {{ proc.percentual }}%"></div>
+                                </div>
+                                <small class="pp-progresso-texto">{{ proc.feitos }} de {{ proc.total }}</small>
+                            </td>
+                            <td>{{ proc.prazo }}</td>
+                            <td><span class="pp-selo pp-tom-{{ proc.tom }}">{{ proc.situacao }}</span></td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="pp-vazio">Nenhum processo nas áreas que você acompanha.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

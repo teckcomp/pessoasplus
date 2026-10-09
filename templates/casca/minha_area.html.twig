@@ -1,0 +1,124 @@
+{# Pessoas+ - Minha area do colaborador. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2B #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <button type="button" class="pp-botao" data-pp-demo="Meus comprovantes de ciência: disponível a partir do bloco BP.2.">
+        <i class="ti ti-file-certificate" aria-hidden="true"></i>
+        <span>Meus comprovantes</span>
+    </button>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    <div class="pp-minha">
+        <div class="pp-minha-principal">
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Aguardando sua ciência</h2>
+                    <span class="pp-contagem">{{ d.ciencias|length }}</span>
+                </header>
+                <ul class="pp-lista">
+                    {% for c in d.ciencias %}
+                        <li>
+                            <i class="ti ti-speakerphone pp-lista-icone" aria-hidden="true"></i>
+                            <div class="pp-lista-texto">
+                                <strong>{{ c.titulo }}</strong>
+                                <span>{{ c.detalhe }}</span>
+                            </div>
+                            <span class="pp-selo pp-tom-{{ c.tom }}">{{ c.selo }}</span>
+                            {% if c.url != '' %}
+                                <a class="pp-botao is-primario is-compacto" href="{{ c.url }}">Ler e confirmar</a>
+                            {% else %}
+                                <button type="button" class="pp-botao is-primario is-compacto" data-pp-demo="Na demonstração, a leitura completa é a da Política de uso de veículos.">Ler e confirmar</button>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Pesquisas e quiz</h2>
+                    <span class="pp-contagem">{{ d.pesquisas|length }}</span>
+                </header>
+                <ul class="pp-lista">
+                    {% for p in d.pesquisas %}
+                        <li>
+                            <i class="ti {{ p.anonima ? 'ti-lock' : 'ti-clipboard-check' }} pp-lista-icone" aria-hidden="true"></i>
+                            <div class="pp-lista-texto">
+                                <strong>{{ p.titulo }}</strong>
+                                <span>{{ p.detalhe }}</span>
+                                {% if p.progresso >= 0 %}
+                                    <div class="pp-progresso is-largo" role="img" aria-label="{{ p.progresso }}% concluído">
+                                        <div class="pp-progresso-barra" style="width: {{ p.progresso }}%"></div>
+                                    </div>
+                                {% endif %}
+                                {% if p.anonima %}
+                                    <em class="pp-nota">Suas respostas não ficam ligadas ao seu usuário.</em>
+                                {% endif %}
+                            </div>
+                            <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.selo }}</span>
+                            <button type="button" class="pp-botao is-compacto" data-pp-demo="{{ p.acao }}: disponível a partir do bloco {{ p.bloco }}.">{{ p.acao }}</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+
+        <div class="pp-minha-lateral">
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Minhas férias</h2>
+                </header>
+                <div class="pp-ferias">
+                    <div class="pp-ferias-saldo">
+                        <span>{{ d.ferias.saldo }}</span>
+                        <small>dias de saldo</small>
+                    </div>
+                    <dl class="pp-ferias-dados">
+                        <div><dt>Período aquisitivo</dt><dd>{{ d.ferias.periodo }}</dd></div>
+                        <div><dt>Concessivo vence em</dt><dd>{{ d.ferias.concessivo }}</dd></div>
+                        <div><dt>Situação</dt><dd>{{ d.ferias.situacao }}</dd></div>
+                    </dl>
+                </div>
+                <button type="button" class="pp-botao is-largo" data-pp-demo="Solicitar férias: disponível a partir do bloco BP.5.">
+                    <i class="ti ti-beach" aria-hidden="true"></i>
+                    <span>Solicitar férias</span>
+                </button>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Minhas tarefas de RH</h2>
+                    <span class="pp-contagem">{{ d.tarefas|length }}</span>
+                </header>
+                <ul class="pp-lista is-compacta">
+                    {% for t in d.tarefas %}
+                        <li>
+                            <div class="pp-lista-texto">
+                                <strong>{{ t.titulo }}</strong>
+                                <span>{{ t.detalhe }}</span>
+                            </div>
+                            <span class="pp-selo pp-tom-{{ t.tom }}">{{ t.selo }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho">
+                    <h2>Meus registros</h2>
+                </header>
+                <ul class="pp-registros">
+                    {% for r in d.registros %}
+                        <li>
+                            <i class="{{ r.icone }}" aria-hidden="true"></i>
+                            <span>{{ r.rotulo }}</span>
+                            <strong>{{ r.valor }}</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </div>
+{% endblock %}

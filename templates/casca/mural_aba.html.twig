@@ -1,0 +1,19 @@
+{# Pessoas+ - aba "Mural" da pagina inicial do GLPI. PESSOASPLUS_BUILD_BP3A #}
+{# Carregada por AJAX dentro da moldura do GLPI (ajax/common.tabs.php): o jQuery
+   executa o <script> ao inserir o HTML. Recebe a variavel "pp" (T-06). #}
+<link rel="stylesheet" href="{{ pp.css }}">
+{% set id = pp.identidade %}
+<div class="pp-casca pp-casca-aba" style="--pp-acento: {{ id.cor }}; --pp-acento-escuro: {{ id.cor_escura }}; --pp-acento-claro: {{ id.cor_clara }};">
+    {% if pp.demo %}
+        <div class="pp-faixa" role="note">
+            <i class="ti ti-flask" aria-hidden="true"></i>
+            <strong>DEMONSTRAÇÃO</strong>
+            <span>Dados fictícios. O mural ainda não lê nem grava dados reais.</span>
+        </div>
+    {% endif %}
+
+    {{ include('@pessoasplus/casca/_mural.html.twig', {modo: 'aba'}) }}
+
+    <div class="pp-aviso" role="status" aria-live="polite" hidden></div>
+</div>
+<script src="{{ pp.js }}"></script>

@@ -1,0 +1,111 @@
+{# Pessoas+ - mural e celebracoes (parcial). PESSOASPLUS_BUILD_BP3A #}
+{# Usa pp.dados (Fontes::mural) e "modo": 'aba' (pagina inicial do GLPI) ou 'pagina' (area do RH).
+   Na pagina do RH aparece a contagem agregada de visualizacoes; nunca quem viu. #}
+{% set m = pp.dados %}
+<div class="pp-mural">
+    <div class="pp-mural-principal">
+        <article class="pp-destaque">
+            <span class="pp-destaque-icone" aria-hidden="true"><i class="{{ m.destaque.icone }}"></i></span>
+            <div class="pp-destaque-texto">
+                <span class="pp-destaque-rotulo"><i class="ti ti-pin" aria-hidden="true"></i> Destaque fixo · {{ m.destaque.categoria }}</span>
+                <h2>{{ m.destaque.titulo }}</h2>
+                <p>{{ m.destaque.texto }}</p>
+                <div class="pp-mural-meta">
+                    <span><i class="ti ti-user" aria-hidden="true"></i> {{ m.destaque.autor }}</span>
+                    <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ m.destaque.periodo }}</span>
+                    {% if modo == 'pagina' %}
+                        <span><i class="ti ti-eye" aria-hidden="true"></i> vista por {{ m.destaque.visualizacoes }} de {{ m.publico }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+
+        <section class="pp-cartao" data-pp-filtravel>
+            <header class="pp-cartao-cabecalho">
+                <h2>Publicações</h2>
+                <span class="pp-contagem">{{ m.publicacoes|length }}</span>
+            </header>
+            <div class="pp-filtros" role="group" aria-label="Filtrar por categoria">
+                {% for f in m.filtros %}
+                    <button type="button" class="pp-chip{% if loop.first %} is-ativo{% endif %}" data-pp-filtro="{{ f.chave }}" aria-pressed="{{ loop.first ? 'true' : 'false' }}">{{ f.rotulo }}</button>
+                {% endfor %}
+            </div>
+            <div class="pp-publicacoes">
+                {% for p in m.publicacoes %}
+                    <article class="pp-publicacao" data-pp-item data-pp-situacao="{{ p.categoria_chave }}">
+                        <div class="pp-publicacao-capa pp-cat-{{ p.categoria_chave }}" aria-hidden="true">
+                            <i class="{{ p.icone }}"></i>
+                        </div>
+                        <div class="pp-publicacao-corpo">
+                            <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.categoria }}</span>
+                            <h3>{{ p.titulo }}</h3>
+                            <p>{{ p.resumo }}</p>
+                            {% if p.nota != '' %}
+                                <em class="pp-nota"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ p.nota }}</em>
+                            {% endif %}
+                            <div class="pp-mural-meta">
+                                <span><i class="ti ti-user" aria-hidden="true"></i> {{ p.autor }}</span>
+                                <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ p.periodo }}</span>
+                                {% if modo == 'pagina' %}
+                                    <span><i class="ti ti-eye" aria-hidden="true"></i> vista por {{ p.visualizacoes }} de {{ m.publico }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            <p class="pp-vazio" data-pp-vazio hidden>Nenhuma publicação nesta categoria.</p>
+        </section>
+    </div>
+
+    <div class="pp-mural-lateral">
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho">
+                <h2>Pesquisas e quiz</h2>
+                <span class="pp-contagem">{{ m.pesquisas|length }}</span>
+            </header>
+            <ul class="pp-lista is-compacta">
+                {% for q in m.pesquisas %}
+                    <li class="pp-mural-pesquisa">
+                        <div class="pp-lista-texto">
+                            <strong><i class="ti {{ q.anonima ? 'ti-lock' : 'ti-clipboard-check' }}" aria-hidden="true"></i> {{ q.titulo }}</strong>
+                            <span>{{ q.detalhe }}</span>
+                            {% if q.progresso >= 0 %}
+                                <div class="pp-progresso is-largo" role="img" aria-label="{{ q.progresso }}% concluído">
+                                    <div class="pp-progresso-barra" style="width: {{ q.progresso }}%"></div>
+                                </div>
+                            {% endif %}
+                            {% if q.anonima %}
+                                <em class="pp-nota">Suas respostas não ficam ligadas ao seu usuário.</em>
+                            {% endif %}
+                        </div>
+                        <div class="pp-mural-pesquisa-acao">
+                            <span class="pp-selo pp-tom-{{ q.tom }}">{{ q.selo }}</span>
+                            <button type="button" class="pp-botao is-compacto" data-pp-demo="{{ q.acao }}: disponível a partir do bloco {{ q.bloco }}.">{{ q.acao }}</button>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho">
+                <h2>Celebrações</h2>
+                <span class="pp-referencia">próximos 30 dias</span>
+            </header>
+            <ul class="pp-celebracoes">
+                {% for c in m.celebracoes %}
+                    <li class="pp-celebracao pp-celebra-{{ c.tipo }}">
+                        <span class="pp-celebracao-icone" aria-hidden="true"><i class="{{ c.icone }}"></i></span>
+                        <div class="pp-lista-texto">
+                            <strong>{{ c.titulo }}</strong>
+                            <span>{{ c.detalhe }}</span>
+                        </div>
+                        <span class="pp-celebracao-data">{{ c.data }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="pp-nota pp-celebracoes-nota">Aniversários aparecem só com a autorização da pessoa, com dia e mês.</p>
+        </section>
+    </div>
+</div>
