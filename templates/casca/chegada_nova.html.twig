@@ -1,0 +1,358 @@
+{# Pessoas+ - assistente de chegada (Tela 4 da proposta). PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 #}
+{# Usa pp.dados (Fontes::novaChegada). Todas as etapas vem no HTML; o JS mostra uma por vez. #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Chegadas e checklists</span>
+    </a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set f = d.form %}
+    <script type="application/json" data-pp-assistente-json>{{ d.config_json|raw }}</script>
+    <div class="pp-assist" data-pp-assistente data-pp-etapa-inicial="{{ d.etapa }}">
+        <section class="pp-cartao pp-assist-cartao" aria-labelledby="pp-assist-titulo">
+            <header class="pp-assist-topo">
+                <h2 id="pp-assist-titulo">Nova chegada<span data-pp-assist-nome>{{ f.nome != '' ? ' · ' ~ f.nome : '' }}</span></h2>
+                <span class="pp-assist-salvo" data-pp-assist-salvo{% if d.rascunho is null %} hidden{% endif %}>
+                    <i class="ti ti-cloud-check" aria-hidden="true"></i>
+                    <span data-pp-assist-salvo-texto>{{ d.rascunho is null ? 'Rascunho salvo' : 'Rascunho salvo há ' ~ d.rascunho.parado ~ ' dias' }}</span>
+                </span>
+            </header>
+
+            <ol class="pp-assist-passos" aria-label="Etapas do assistente">
+                {% for n, e in d.etapas %}
+                    <li class="pp-assist-passo{% if n == 7 %} is-final{% endif %}" data-pp-passo="{{ n }}">
+                        <button type="button" data-pp-ir="{{ n }}" title="{{ e.titulo }}">
+                            <span class="pp-assist-bola">{% if n == 7 %}<i class="ti ti-flag" aria-hidden="true"></i>{% else %}{{ n }}{% endif %}</span>
+                            <span class="pp-assist-passo-rotulo">{{ e.curto }}</span>
+                        </button>
+                    </li>
+                {% endfor %}
+            </ol>
+
+            {% if d.rascunho is null %}
+                <div class="pp-assist-exemplo">
+                    <i class="ti ti-bulb" aria-hidden="true"></i>
+                    <div data-pp-assist-exemplo-texto>
+                        <strong>Primeira vez por aqui?</strong>
+                        <span>O exemplo da proposta preenche todas as etapas com uma chegada real de campo, para ver como cada campo é usado. Cada campo também traz um exemplo logo abaixo.</span>
+                    </div>
+                    <button type="button" class="pp-botao is-compacto" data-pp-assist-exemplo>
+                        <i class="ti ti-wand" aria-hidden="true"></i><span>Preencher com o exemplo</span>
+                    </button>
+                </div>
+            {% else %}
+                <p class="pp-assist-retomada">
+                    <i class="ti ti-player-play" aria-hidden="true"></i>
+                    Retomando o rascunho de <strong>{{ d.rascunho.pessoa }}</strong>, parado na etapa {{ d.rascunho.etapa }} há {{ d.rascunho.parado }} dias.
+                    Os chamados de TI só saem quando o assistente é concluído.
+                </p>
+            {% endif %}
+
+            {# ---------- Etapa 1 ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="1">
+                <legend class="pp-assist-etapa-titulo">1. {{ d.etapas[1].titulo }}</legend>
+                <label class="pp-campo">
+                    <span>Nome completo <em class="pp-obrig" aria-hidden="true">*</em></span>
+                    <input type="text" data-pp-campo="nome" data-pp-obrigatorio="Informe o nome completo." maxlength="120" value="{{ f.nome }}" required>
+                    <small class="pp-dica">Como consta no documento de identidade. Ex.: Lucas Ferreira.</small>
+                </label>
+                <div class="pp-linha-campos">
+                    <label class="pp-campo">
+                        <span>E-mail para contato</span>
+                        <input type="email" data-pp-campo="email" maxlength="120" value="{{ f.email }}">
+                        <small class="pp-dica">E-mail pessoal, para falar com a pessoa antes do primeiro dia. Ex.: lucas.ferreira@exemplo.com.br. O e-mail da empresa sai do chamado de conta.</small>
+                    </label>
+                    <label class="pp-campo is-curto">
+                        <span>Telefone</span>
+                        <input type="text" data-pp-campo="telefone" maxlength="20" value="{{ f.telefone }}">
+                        <small class="pp-dica">Ex.: (41) 99999-0000.</small>
+                    </label>
+                </div>
+                <fieldset class="pp-campo">
+                    <legend class="pp-campo-rotulo">Conta no GLPI</legend>
+                    <label class="pp-marcar is-justo">
+                        <input type="radio" name="pp_assist_conta" value="pre" data-pp-campo="conta"{% if f.conta == 'pre' %} checked{% endif %}>
+                        <span><strong>Ainda não tem: pré-cadastro.</strong> O RH declara agora, a TI cria a conta pelo chamado e a ficha é ligada depois.</span>
+                    </label>
+                    <label class="pp-marcar is-justo">
+                        <input type="radio" name="pp_assist_conta" value="existe" data-pp-campo="conta"{% if f.conta == 'existe' %} checked{% endif %}>
+                        <span><strong>Já tem usuário no GLPI.</strong> Por exemplo, um prestador que passou a CLT.</span>
+                    </label>
+                    <label class="pp-campo is-curto pp-assist-usuario" data-pp-assist-so-conta="existe"{% if f.conta != 'existe' %} hidden{% endif %}>
+                        <span>Usuário <em class="pp-obrig" aria-hidden="true">*</em></span>
+                        <select data-pp-campo="usuario">
+                            <option value="">Escolha…</option>
+                            {% for u in d.usuarios %}
+                                <option value="{{ u }}"{% if u == f.usuario %} selected{% endif %}>{{ u }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="pp-dica">Só aparecem usuários que ainda não têm ficha.</small>
+                    </label>
+                    <small class="pp-dica">Pré-cadastro é o caso comum. As ciências só são cobradas depois que a ficha estiver ligada a um usuário.</small>
+                </fieldset>
+                <div class="pp-linha-campos">
+                    <label class="pp-campo">
+                        <span>Local de trabalho</span>
+                        <span class="pp-lista-livre" data-pp-lista="Local de trabalho">
+                            <select data-pp-campo="local">
+                                <option value="">Escolha…</option>
+                                {% for l in d.locais %}
+                                    <option value="{{ l }}"{% if l == f.local %} selected{% endif %}>{{ l }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="pp-botao is-icone" data-pp-lista-mais title="Adicionar local de trabalho" aria-label="Adicionar local de trabalho"><i class="ti ti-plus" aria-hidden="true"></i></button>
+                        </span>
+                        <small class="pp-dica">Lista livre do plugin. Ex.: Base Norte. Diz à TI onde entregar o equipamento. Falta um? Use o +.</small>
+                    </label>
+                </div>
+            </fieldset>
+
+            {# ---------- Etapa 2 ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="2">
+                <legend class="pp-assist-etapa-titulo">2. {{ d.etapas[2].titulo }}</legend>
+                <label class="pp-campo is-curto">
+                    <span>Empregador ou contratante <em class="pp-obrig" aria-hidden="true">*</em></span>
+                    <span class="pp-lista-livre" data-pp-lista="Empregador">
+                        <select data-pp-campo="empregador" data-pp-obrigatorio="Escolha o empregador.">
+                            {% for e in d.empregadores %}
+                                <option value="{{ e }}"{% if e == f.empregador %} selected{% endif %}>{{ e }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="pp-botao is-icone" data-pp-lista-mais title="Adicionar empregador" aria-label="Adicionar empregador"><i class="ti ti-plus" aria-hidden="true"></i></button>
+                    </span>
+                    <small class="pp-dica">Lista livre do plugin, uma linha por empresa (CNPJ). Em grupo com mais de uma empresa, muda documentos e modelos. Falta uma? Use o +.</small>
+                </label>
+                <div class="pp-campo" role="radiogroup" aria-labelledby="pp-assist-vinculo-rotulo">
+                    <span class="pp-campo-rotulo" id="pp-assist-vinculo-rotulo">Tipo de vínculo <em class="pp-obrig" aria-hidden="true">*</em></span>
+                    <div class="pp-tipos pp-assist-vinculos">
+                        {% for v in d.vinculos %}
+                            <label class="pp-tipo">
+                                <input type="radio" name="pp_assist_vinculo" value="{{ v.nome }}" data-pp-campo="vinculo"{% if v.nome == f.vinculo %} checked{% endif %}>
+                                <span class="pp-tipo-corpo">
+                                    <strong>{{ v.nome }}</strong>
+                                    <small>Férias {{ v.ferias ? 'com aprovação' : 'não controladas' }} · {{ v.de_acordo ? 'aceita "De acordo"' : 'sem "De acordo"' }} · {{ v.documentos|length }} documentos</small>
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    <p class="pp-nota pp-assist-vinculo-nota" data-pp-assist-vinculo-nota hidden></p>
+                    <small class="pp-dica">O vínculo liga ou desliga férias, "De acordo" e medida disciplinar, e decide a lista de documentos da etapa 6.</small>
+                </div>
+                <div class="pp-linha-campos">
+                    <label class="pp-campo">
+                        <span>Cargo <em class="pp-obrig" aria-hidden="true">*</em></span>
+                        <span class="pp-lista-livre" data-pp-lista="Cargo">
+                            <select data-pp-campo="cargo" data-pp-obrigatorio="Escolha o cargo.">
+                                <option value="">Escolha…</option>
+                                {% for c in d.cargos %}
+                                    <option value="{{ c }}"{% if c == f.cargo %} selected{% endif %}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="pp-botao is-icone" data-pp-lista-mais title="Adicionar cargo" aria-label="Adicionar cargo"><i class="ti ti-plus" aria-hidden="true"></i></button>
+                        </span>
+                        <small class="pp-dica">Lista livre do plugin. Ex.: Técnico de campo. Sugere o perfil do GLPI na etapa de TI. Falta um? Use o +.</small>
+                    </label>
+                    <label class="pp-campo">
+                        <span>Setor <em class="pp-obrig" aria-hidden="true">*</em></span>
+                        <select data-pp-campo="setor" data-pp-obrigatorio="Escolha o setor.">
+                            <option value="">Escolha…</option>
+                            {% for s in d.setores %}
+                                <option value="{{ s }}"{% if s == f.setor %} selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="pp-dica">Grupo do GLPI em que a pessoa trabalha (D-69). Ex.: Campo Norte. Decide modelos de checklist, normativas, o gestor sugerido e o que o gestor enxerga.</small>
+                    </label>
+                </div>
+                <div class="pp-linha-campos">
+                    <label class="pp-campo">
+                        <span>Gestor imediato <em class="pp-obrig" aria-hidden="true">*</em></span>
+                        <input type="text" data-pp-campo="gestor" data-pp-obrigatorio="Informe o gestor imediato." maxlength="120" value="{{ f.gestor }}">
+                        <small class="pp-dica" data-pp-assist-gestor-dica>Vem do gestor do grupo escolhido; troque se a pessoa responder a outra liderança.</small>
+                    </label>
+                    <label class="pp-campo is-curto">
+                        <span><span data-pp-assist-inicio-rotulo>Data de admissão</span> <em class="pp-obrig" aria-hidden="true">*</em></span>
+                        <input type="date" data-pp-campo="inicio" data-pp-obrigatorio="Informe a data de início." value="{{ f.inicio }}">
+                        <small class="pp-dica">Os prazos do checklist contam desta data. Ex.: 01/10/2026.</small>
+                    </label>
+                </div>
+            </fieldset>
+
+            {# ---------- Etapa 3 ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="3">
+                <legend class="pp-assist-etapa-titulo">3. {{ d.etapas[3].titulo }}</legend>
+                <ul class="pp-assist-ti">
+                    {% for t in d.ti %}
+                        <li>
+                            <label>
+                                <input type="checkbox" value="{{ t.chave }}" data-pp-ti>
+                                <span class="pp-assist-ti-corpo">
+                                    <strong>{{ t.titulo }}{% if t.chave == 'glpi' %} · perfil <span data-pp-assist-perfil>a definir pelo cargo</span>{% endif %}</strong>
+                                    <span>Gera chamado em {{ t.categoria }}</span>
+                                    <small class="pp-dica">{{ t.dica }} No checklist: “{{ t.item }}”, TI, {{ t.prazo }}.</small>
+                                </span>
+                            </label>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <label class="pp-campo">
+                    <span>Observações para a TI</span>
+                    <textarea rows="2" maxlength="500" data-pp-campo="obs_ti">{{ f.obs_ti }}</textarea>
+                    <small class="pp-dica">Vai na descrição dos chamados. Ex.: precisa do notebook com o sistema de rotas.</small>
+                </label>
+                <p class="pp-nota">Cada item marcado vira um chamado de requisição na categoria indicada e um item do checklist que se conclui sozinho quando o chamado é solucionado.</p>
+            </fieldset>
+
+            {# ---------- Etapa 4 ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="4">
+                <legend class="pp-assist-etapa-titulo">4. {{ d.etapas[4].titulo }}</legend>
+                <div class="pp-assist-foto">
+                    <span class="pp-avatar pp-assist-avatar" aria-hidden="true" data-pp-assist-iniciais>?</span>
+                    <div>
+                        <label class="pp-campo">
+                            <span>Foto do colaborador</span>
+                            <input type="file" accept="image/*" disabled aria-describedby="pp-assist-foto-dica">
+                        </label>
+                        <small class="pp-dica" id="pp-assist-foto-dica">Foto de rosto, fundo neutro, sem outras pessoas. Vai para a foto do usuário no GLPI; no pré-cadastro, é aplicada quando a conta for ligada. Envio na mobília (B4.7).</small>
+                    </div>
+                </div>
+                <p class="pp-nota">Opcional. Serve para identificar a pessoa no GLPI e no Fichário.</p>
+            </fieldset>
+
+            {# ---------- Etapa 5 ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="5">
+                <legend class="pp-assist-etapa-titulo">5. {{ d.etapas[5].titulo }}</legend>
+                <div class="pp-linha-campos">
+                    <label class="pp-campo">
+                        <span>Origem da contratação</span>
+                        <select data-pp-campo="origem">
+                            <option value="">Escolha…</option>
+                            {% for o in d.origens %}
+                                <option value="{{ o }}"{% if o == f.origem %} selected{% endif %}>{{ o }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="pp-dica">Ex.: Indicação de colaborador. Alimenta os indicadores de onde vêm as contratações.</small>
+                    </label>
+                    <label class="pp-campo is-curto">
+                        <span>Abertura da vaga</span>
+                        <input type="date" data-pp-campo="abertura" value="{{ f.abertura }}">
+                        <small class="pp-dica" data-pp-assist-dias-vaga>Ex.: 25/08/2026. Com a data de início, mostra quanto tempo a vaga levou.</small>
+                    </label>
+                </div>
+                <label class="pp-campo">
+                    <span>Observações</span>
+                    <textarea rows="2" maxlength="500" data-pp-campo="obs_vaga">{{ f.obs_vaga }}</textarea>
+                    <small class="pp-dica">Fatos da contratação. Ex.: vaga de reposição na Base Norte. Não registre avaliação do candidato nem dado de saúde.</small>
+                </label>
+                <p class="pp-nota">Registro simples, sem processo seletivo: recrutamento fica fora do Pessoas+.</p>
+            </fieldset>
+
+            {# ---------- Etapa 6 ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="6">
+                <legend class="pp-assist-etapa-titulo">6. {{ d.etapas[6].titulo }}</legend>
+                <p class="pp-assist-sem-vinculo" data-pp-assist-docs-vazio>Escolha o tipo de vínculo na etapa 2 para ver a lista.</p>
+                {% for v in d.vinculos %}
+                    <div class="pp-tabela-rolagem" data-pp-assist-docs="{{ v.nome }}" hidden>
+                        <table class="pp-tabela">
+                            <caption class="pp-oculto">Documentos exigidos para {{ v.nome }}</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Documento · {{ v.nome }}</th>
+                                    <th scope="col">Situação</th>
+                                    <th scope="col"><span class="pp-oculto">Anexo</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in v.documentos %}
+                                    <tr>
+                                        <td>{{ doc }}</td>
+                                        <td>
+                                            <select data-pp-doc aria-label="Situação de {{ doc }}">
+                                                <option value="pendente" selected>Pendente</option>
+                                                <option value="entregue">Entregue</option>
+                                                <option value="dispensado">Dispensado</option>
+                                            </select>
+                                        </td>
+                                        <td><button type="button" class="pp-botao is-compacto" data-pp-demo="Anexar “{{ doc }}”: vira documento do GLPI ligado à ficha. Chega na mobília (B4.7)."><i class="ti ti-paperclip" aria-hidden="true"></i><span>Anexar</span></button></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+                <small class="pp-dica">Pendente aparece no painel da movimentação até ser entregue. Dispensado exige justificativa na mobília.</small>
+                <p class="pp-nota"><i class="ti ti-shield-lock" aria-hidden="true"></i> O exame admissional (ASO) não entra aqui: é dado de saúde e fica com a medicina do trabalho.</p>
+            </fieldset>
+
+            {# ---------- Etapa final ---------- #}
+            <fieldset class="pp-assist-etapa" data-pp-etapa="7">
+                <legend class="pp-assist-etapa-titulo">{{ d.etapas[7].titulo }}</legend>
+                <p class="pp-assist-final-intro">Ao concluir, o Pessoas+ cria tudo abaixo de uma vez. Confira antes.</p>
+                <div class="pp-assist-final">
+                    <section class="pp-assist-bloco">
+                        <h3><i class="ti ti-id-badge-2" aria-hidden="true"></i> Ficha</h3>
+                        <dl class="pp-assist-dl" data-pp-assist-ficha></dl>
+                    </section>
+                    <section class="pp-assist-bloco">
+                        <h3><i class="ti ti-list-check" aria-hidden="true"></i> Checklist de chegada <span class="pp-contagem" data-pp-assist-total-itens>0</span></h3>
+                        <ul class="pp-assist-lista" data-pp-assist-modelos></ul>
+                        <p class="pp-alerta-zero" data-pp-assist-sem-modelo hidden></p>
+                        <p class="pp-nota">Todos os modelos cuja regra casa com a pessoa entram juntos; as necessidades de TI entram como itens a mais.</p>
+                    </section>
+                    <section class="pp-assist-bloco">
+                        <h3><i class="ti ti-ticket" aria-hidden="true"></i> Chamados de TI <span class="pp-contagem" data-pp-assist-total-chamados>0</span></h3>
+                        <ul class="pp-assist-lista" data-pp-assist-chamados></ul>
+                    </section>
+                    <section class="pp-assist-bloco">
+                        <h3><i class="ti ti-file-certificate" aria-hidden="true"></i> Normativas para ciência <span class="pp-contagem" data-pp-assist-total-normativas>0</span></h3>
+                        <ul class="pp-assist-lista" data-pp-assist-normativas></ul>
+                        <p class="pp-nota" data-pp-assist-normativas-nota></p>
+                    </section>
+                    <section class="pp-assist-bloco">
+                        <h3><i class="ti ti-files" aria-hidden="true"></i> Documentos</h3>
+                        <p data-pp-assist-docs-resumo></p>
+                    </section>
+                    <section class="pp-assist-bloco">
+                        <h3><i class="ti ti-bell" aria-hidden="true"></i> Quem é avisado</h3>
+                        <p data-pp-assist-avisos></p>
+                    </section>
+                </div>
+            </fieldset>
+
+            <div class="pp-alerta-zero pp-assist-erro" role="alert" data-pp-assist-erro hidden></div>
+
+            <footer class="pp-assist-rodape">
+                <button type="button" class="pp-botao" data-pp-voltar>
+                    <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Voltar</span>
+                </button>
+                <span class="pp-assist-contador" data-pp-assist-contador aria-live="polite"></span>
+                <button type="button" class="pp-botao" data-pp-demo="Salvar e sair: o rascunho fica na lista de movimentações e pode ser retomado em “Continuar”. Grava na mobília (B4.5).">
+                    <i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar e sair</span>
+                </button>
+                <button type="button" class="pp-botao is-primario" data-pp-avancar>
+                    <span>Próxima etapa</span><i class="ti ti-arrow-right" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="pp-botao is-primario" data-pp-concluir hidden data-pp-demo="Concluir: cria a ficha, aplica os modelos de checklist, abre os chamados de TI e atribui as normativas, tudo de uma vez. Grava na mobília (B4.5 a B4.8).">
+                    <i class="ti ti-check" aria-hidden="true"></i><span>Concluir chegada</span>
+                </button>
+            </footer>
+        </section>
+
+        <aside class="pp-cartao pp-assist-lateral" aria-label="O que vai ser criado">
+            <header class="pp-cartao-cabecalho">
+                <h2>O que vai ser criado</h2>
+            </header>
+            <ul class="pp-assist-resumo">
+                <li><i class="ti ti-list-check" aria-hidden="true"></i><span><strong data-pp-assist-r-itens>0</strong> <span data-pp-assist-r-itens-rotulo>itens no checklist</span></span></li>
+                <li><i class="ti ti-ticket" aria-hidden="true"></i><span><strong data-pp-assist-r-chamados>0</strong> <span data-pp-assist-r-chamados-rotulo>chamados de TI</span></span></li>
+                <li><i class="ti ti-file-certificate" aria-hidden="true"></i><span><strong data-pp-assist-r-normativas>0</strong> <span data-pp-assist-r-normativas-rotulo>normativas para ciência</span></span></li>
+                <li><i class="ti ti-files" aria-hidden="true"></i><span><strong data-pp-assist-r-docs>0</strong> <span data-pp-assist-r-docs-rotulo>documentos pendentes</span></span></li>
+            </ul>
+            <p class="pp-assist-r-modelos" data-pp-assist-r-modelos>Escolha vínculo e setor para ver os modelos que se aplicam.</p>
+            <p class="pp-nota">Regra: entram todos os modelos que casam com vínculo e setor da pessoa.</p>
+        </aside>
+    </div>
+{% endblock %}

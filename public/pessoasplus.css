@@ -1,4 +1,4 @@
-/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4A
+/* Pessoas+ - estilos da casca. PESSOASPLUS_BUILD_BP0_3 PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4A PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_3
  * Tudo prefixado com pp- e escopado em .pp-casca (T-30): nada aqui
  * estiliza elemento solto do GLPI nem de outros plugins.
  * Cores de superficie e texto herdam do tema do GLPI (Tabler), para
@@ -1450,3 +1450,117 @@ body.pp-pagina-impressao { margin: 0; background: #eef1f3; font-family: system-u
 .pp-casca .pp-cheg-historico li { display: flex; flex-direction: column; gap: 1px; padding: 6px 0; border-top: 1px solid var(--pp-borda); }
 .pp-casca .pp-cheg-historico li:first-child { border-top: 0; }
 .pp-casca .pp-cheg-historico small { color: var(--pp-texto-2); }
+
+/* ---- BP.4b: assistente de chegada (Tela 4) ---- */
+.pp-casca .pp-assist {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+@media (max-width: 1199px) { .pp-casca .pp-assist { grid-template-columns: minmax(0, 1fr); } }
+.pp-casca .pp-assist [hidden] { display: none !important; }
+.pp-casca .pp-assist-cartao { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.pp-casca .pp-assist-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pp-casca .pp-assist-topo h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.pp-casca .pp-assist-salvo { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--pp-ok); background: var(--pp-ok-fundo); border-radius: 14px; padding: 3px 10px; }
+.pp-casca .pp-assist-passos { list-style: none; margin: 0; padding: 0; display: flex; justify-content: space-between; gap: 4px; position: relative; }
+.pp-casca .pp-assist-passos::before { content: ''; position: absolute; left: 20px; right: 20px; top: 17px; border-top: 2px solid var(--pp-borda); }
+.pp-casca .pp-assist-passo { position: relative; flex: 1 1 0; display: flex; justify-content: center; }
+.pp-casca .pp-assist-passo button { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--pp-texto-2); font: inherit; font-size: 0.78rem; }
+.pp-casca .pp-assist-passo button:disabled { cursor: default; opacity: 0.7; }
+.pp-casca .pp-assist-bola {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pp-superficie);
+    border: 2px solid var(--pp-borda);
+    font-weight: 600;
+    color: var(--pp-texto-2);
+}
+.pp-casca .pp-assist-passo.is-feito .pp-assist-bola { background: var(--pp-acento); border-color: var(--pp-acento); color: #ffffff; }
+.pp-casca .pp-assist-passo.is-atual .pp-assist-bola { border-color: var(--pp-acento); color: var(--pp-acento-escuro); box-shadow: 0 0 0 3px var(--pp-acento-claro); }
+.pp-casca .pp-assist-passo.is-atual button { color: var(--pp-texto); font-weight: 600; }
+.pp-casca .pp-assist-passo button:focus-visible .pp-assist-bola { outline: 2px solid var(--pp-acento); outline-offset: 2px; }
+@media (max-width: 575px) { .pp-casca .pp-assist-passo-rotulo { display: none; } }
+.pp-casca .pp-assist-exemplo,
+.pp-casca .pp-assist-retomada {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--pp-acento-claro);
+    font-size: 0.88rem;
+}
+.pp-casca .pp-assist-exemplo > .ti, .pp-casca .pp-assist-retomada > .ti { color: var(--pp-acento); font-size: 1.3rem; }
+.pp-casca .pp-assist-exemplo > div { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; }
+.pp-casca .pp-assist-etapa { display: flex; flex-direction: column; gap: 4px; }
+.pp-casca .pp-assist-etapa-titulo { font-size: 1rem; font-weight: 600; margin: 0 0 10px; padding: 0; float: none; width: auto; }
+.pp-casca .pp-assist-etapa-titulo:focus { outline: none; }
+.pp-casca .pp-obrig { font-style: normal; color: var(--pp-atraso); }
+.pp-casca .pp-dica { display: block; font-size: 0.78rem; color: var(--pp-texto-2); line-height: 1.4; }
+.pp-casca .pp-campo input[type="email"] {
+    border: 1px solid var(--pp-borda);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 0.92rem;
+    background: var(--pp-superficie);
+    color: var(--pp-texto);
+}
+.pp-casca .pp-assist-usuario { margin: 6px 0 4px 28px; }
+.pp-casca .pp-assist-vinculos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* height: 100% com padding em content-box passava da linha da grade e cobria a dica. */
+.pp-casca .pp-assist-vinculos .pp-tipo-corpo { box-sizing: border-box; }
+@media (max-width: 991px) { .pp-casca .pp-assist-vinculos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pp-casca .pp-assist-vinculo-nota { margin: 8px 0 2px; }
+.pp-casca .pp-assist-ti { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pp-casca .pp-assist-ti label { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border: 1px solid var(--pp-borda); border-radius: 8px; cursor: pointer; }
+.pp-casca .pp-assist-ti input { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; accent-color: var(--pp-acento); }
+.pp-casca .pp-assist-ti label:has(input:checked) { border-color: var(--pp-acento); background: var(--pp-acento-claro); }
+.pp-casca .pp-assist-ti-corpo { display: flex; flex-direction: column; gap: 2px; font-size: 0.88rem; }
+.pp-casca .pp-assist-foto { display: flex; gap: 16px; align-items: flex-start; }
+.pp-casca .pp-assist-avatar { width: 72px; height: 72px; font-size: 1.5rem; flex-shrink: 0; }
+.pp-casca .pp-assist-sem-vinculo { margin: 0; color: var(--pp-texto-2); }
+.pp-casca .pp-assist-final-intro { margin: 0 0 6px; color: var(--pp-texto-2); }
+.pp-casca .pp-assist-final { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 767px) { .pp-casca .pp-assist-final { grid-template-columns: minmax(0, 1fr); } }
+.pp-casca .pp-assist-bloco { border: 1px solid var(--pp-borda); border-radius: 8px; padding: 12px 14px; }
+.pp-casca .pp-assist-bloco h3 { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; font-weight: 600; margin: 0 0 8px; }
+.pp-casca .pp-assist-bloco h3 .ti { color: var(--pp-acento); }
+.pp-casca .pp-assist-bloco p { margin: 0; font-size: 0.88rem; }
+.pp-casca .pp-assist-dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 0.86rem; }
+.pp-casca .pp-assist-dl dt { color: var(--pp-texto-2); font-weight: 400; }
+.pp-casca .pp-assist-dl dd { margin: 0; }
+.pp-casca .pp-assist-lista { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.86rem; }
+.pp-casca .pp-assist-lista li { display: flex; flex-direction: column; }
+.pp-casca .pp-assist-rodape { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--pp-borda); padding-top: 14px; }
+.pp-casca .pp-assist-contador { margin-right: auto; font-size: 0.85rem; color: var(--pp-texto-2); }
+.pp-casca .pp-assist-erro { margin: 0; }
+.pp-casca .pp-assist-lateral { padding: 16px 0 14px; position: sticky; top: 12px; }
+.pp-casca .pp-assist-lateral .pp-cartao-cabecalho { padding: 0 18px 10px; margin: 0; }
+.pp-casca .pp-assist .pp-linha-campos > .pp-campo { flex: 1 1 200px; min-width: 0; }
+.pp-casca .pp-assist .pp-linha-campos > .pp-campo.is-curto { flex: 0 1 220px; }
+.pp-casca .pp-assist .pp-campo input[type="text"],
+.pp-casca .pp-assist .pp-campo input[type="email"],
+.pp-casca .pp-assist .pp-campo input[type="date"],
+.pp-casca .pp-assist .pp-campo select { width: 100%; box-sizing: border-box; min-width: 0; }
+.pp-casca .pp-assist-resumo { list-style: none; margin: 0; padding: 4px 18px; display: flex; flex-direction: column; gap: 10px; }
+.pp-casca .pp-assist-resumo li { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.pp-casca .pp-assist-resumo .ti { color: var(--pp-acento); font-size: 1.15rem; }
+.pp-casca .pp-assist-resumo strong { font-size: 1.1rem; }
+.pp-casca .pp-assist-r-modelos, .pp-casca .pp-assist-lateral .pp-nota { margin: 12px 18px 0; font-size: 0.85rem; }
+
+/* BP.4b-3: listas livres com "+" (D-69) */
+.pp-casca .pp-lista-livre { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+.pp-casca .pp-lista-livre select,
+.pp-casca .pp-assist .pp-campo .pp-lista-livre select { flex: 1 1 0; width: auto; min-width: 0; }
+.pp-casca .pp-lista-livre .pp-botao.is-icone { flex-shrink: 0; align-self: center; }
+.pp-casca .pp-lista-nova { flex-basis: 100%; display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.pp-casca .pp-lista-nova input { flex: 1 1 160px; border: 1px solid var(--pp-borda); border-radius: 6px; padding: 8px 10px; font: inherit; font-size: 0.92rem; background: var(--pp-superficie); color: var(--pp-texto); }

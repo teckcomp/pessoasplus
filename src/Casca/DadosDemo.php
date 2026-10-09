@@ -14,6 +14,7 @@
  * PESSOASPLUS_BUILD_BP3D
  * PESSOASPLUS_BUILD_BP3E
  * PESSOASPLUS_BUILD_BP4A
+ * PESSOASPLUS_BUILD_BP4B
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -79,7 +80,7 @@ final class DadosDemo
             'atalhos' => [
                 self::atalho('comunicados', 'Novo comunicado', 'ti ti-speakerphone', 'BP.2c', 'comunicado_novo.php'),
                 self::atalho('mural', 'Nova publicação', 'ti ti-news', 'BP.3d', 'publicacao_nova.php'),
-                self::atalho('chegadas', 'Nova chegada', 'ti ti-door-enter', 'BP.4b'),
+                self::atalho('chegadas', 'Nova chegada', 'ti ti-door-enter', 'BP.4b', 'chegada_nova.php'),
                 self::atalho('desligamentos', 'Declarar desligamento', 'ti ti-door-exit', 'BP.8'),
                 self::atalho('pesquisas', 'Nova pesquisa', 'ti ti-chart-bar', 'BP.7'),
             ],

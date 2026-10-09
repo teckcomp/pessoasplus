@@ -1,4 +1,4 @@
-{# Pessoas+ - "Chegadas e checklists", area do RH. PESSOASPLUS_BUILD_BP4A #}
+{# Pessoas+ - "Chegadas e checklists", area do RH. PESSOASPLUS_BUILD_BP4A PESSOASPLUS_BUILD_BP4B #}
 {# Usa pp.dados (Fontes::chegadas). Aba escolhida no servidor (pp.dados.aba). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -9,9 +9,9 @@
                 <i class="ti ti-plus" aria-hidden="true"></i><span>Novo modelo</span>
             </button>
         {% else %}
-            <button type="button" class="pp-botao is-primario" data-pp-demo="Nova chegada: assistente em 6 etapas (dados, vínculo, TI, foto, vaga, documentos). Chega no bloco BP.4b.">
+            <a class="pp-botao is-primario" href="{{ pp.dados.url_nova }}">
                 <i class="ti ti-door-enter" aria-hidden="true"></i><span>Nova chegada</span>
-            </button>
+            </a>
             <button type="button" class="pp-botao" data-pp-demo="Nova transferência: troca de setor ou de gestor com data em que vale. Chega no bloco BP.4c.">
                 <i class="ti ti-arrows-exchange" aria-hidden="true"></i><span>Nova transferência</span>
             </button>
@@ -116,9 +116,9 @@
                                     <td class="pp-acoes-linha">
                                         {% if m.fase == 'rascunho' %}
                                             {% if gerencia %}
-                                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Continuar o assistente de chegada de {{ m.pessoa }} na etapa {{ m.etapa }}: chega no bloco BP.4b.">
+                                                <a class="pp-botao is-compacto" href="{{ d.url_nova }}?id={{ m.id }}" aria-label="Continuar o assistente de chegada de {{ m.pessoa }} na etapa {{ m.etapa }}">
                                                     <i class="ti ti-player-play" aria-hidden="true"></i><span>Continuar</span>
-                                                </button>
+                                                </a>
                                             {% endif %}
                                         {% else %}
                                             <a class="pp-botao is-compacto is-icone" href="{{ d.url_checklist }}{{ m.id }}" title="Abrir o checklist" aria-label="Abrir o checklist de {{ m.pessoa }}"><i class="ti ti-list-check" aria-hidden="true"></i></a>

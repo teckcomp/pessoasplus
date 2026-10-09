@@ -13,6 +13,7 @@
  * PESSOASPLUS_BUILD_BP3D
  * PESSOASPLUS_BUILD_BP3E
  * PESSOASPLUS_BUILD_BP4A
+ * PESSOASPLUS_BUILD_BP4B
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -191,6 +192,17 @@ final class Fontes
     public static function movimentacao(int $id): ?array
     {
         return DemoChegadas::movimentacao($id);
+    }
+
+    /**
+     * Assistente de chegada (BP.4b, Tela 4): em branco, ou o rascunho $id
+     * a retomar. null para id que nao e rascunho. Na mobilia: B4.5 a B4.8.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function novaChegada(?int $id): ?array
+    {
+        return DemoAssistente::dados($id);
     }
 
     /**

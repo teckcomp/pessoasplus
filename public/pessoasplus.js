@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -692,6 +692,524 @@
         });
     }
 
+    /* BP.4b: assistente de chegada (Tela 4). Todas as etapas vem no HTML e
+     * aparece uma por vez; so avanca com os obrigatorios da etapa
+     * preenchidos, e o indicador deixa voltar a qualquer etapa ja
+     * alcancada. O resumo (lateral e etapa final) vem da matriz calculada
+     * no servidor (DemoAssistente): modelos que casam (D-65), chamados de
+     * TI (I-04) e normativas de admissao (I-01). Nada e enviado ao
+     * servidor na casca; todo texto entra por textContent. */
+    var ASSIST_FINAL = 7;
+
+    function dataLonga(iso) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : '';
+    }
+
+    function diasEntre(deIso, ateIso) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(deIso) || !/^\d{4}-\d{2}-\d{2}$/.test(ateIso)) {
+            return null;
+        }
+        return Math.round((Date.parse(ateIso + 'T00:00:00Z') - Date.parse(deIso + 'T00:00:00Z')) / 86400000);
+    }
+
+    function iniciaisDe(nome) {
+        var partes = String(nome || '').trim().split(/\s+/).filter(function (p) { return p !== ''; });
+        if (partes.length === 0) {
+            return '?';
+        }
+        var primeira = partes[0].charAt(0);
+        var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0) : '';
+        return (primeira + ultima).toUpperCase();
+    }
+
+    /* Estado do formulario lido da tela. */
+    function lerAssistente(raiz) {
+        var valor = function (campo) {
+            var radios = raiz.querySelectorAll('[data-pp-campo="' + campo + '"][type="radio"]');
+            if (radios.length > 0) {
+                var marcado = '';
+                radios.forEach(function (r) { if (r.checked) { marcado = r.value; } });
+                return marcado;
+            }
+            var no = raiz.querySelector('[data-pp-campo="' + campo + '"]');
+            return no ? String(no.value || '').trim() : '';
+        };
+        var estado = {};
+        ['nome', 'email', 'telefone', 'conta', 'usuario', 'local', 'empregador', 'vinculo',
+            'cargo', 'setor', 'gestor', 'inicio', 'origem', 'abertura', 'obs_vaga', 'obs_ti'].forEach(function (c) {
+            estado[c] = valor(c);
+        });
+        estado.ti = [];
+        raiz.querySelectorAll('[data-pp-ti]').forEach(function (caixa) {
+            if (caixa.checked) {
+                estado.ti.push(caixa.value);
+            }
+        });
+        estado.docs = [];
+        var tabela = estado.vinculo === '' ? null : raiz.querySelector('[data-pp-assist-docs="' + estado.vinculo + '"]');
+        if (tabela) {
+            tabela.querySelectorAll('[data-pp-doc]').forEach(function (sel) { estado.docs.push(sel.value); });
+        }
+        return estado;
+    }
+
+    /* Pendencias que impedem sair da etapa. */
+    function pendenciasEtapa(etapa, estado) {
+        var lista = [];
+        if (etapa === 1) {
+            if (estado.nome.length < 3) {
+                lista.push('Informe o nome completo.');
+            }
+            if (estado.email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(estado.email)) {
+                lista.push('O e-mail para contato não parece válido.');
+            }
+            if (estado.conta === 'existe' && estado.usuario === '') {
+                lista.push('Escolha o usuário do GLPI, ou marque pré-cadastro.');
+            }
+        }
+        if (etapa === 2) {
+            if (estado.empregador === '') {
+                lista.push('Escolha o empregador.');
+            }
+            if (estado.vinculo === '') {
+                lista.push('Escolha o tipo de vínculo.');
+            }
+            if (estado.cargo === '') {
+                lista.push('Escolha o cargo.');
+            }
+            if (estado.setor === '') {
+                lista.push('Escolha o setor.');
+            }
+            if (estado.gestor === '') {
+                lista.push('Informe o gestor imediato.');
+            }
+            if (estado.inicio === '') {
+                lista.push('Informe a data de início.');
+            }
+        }
+        return lista;
+    }
+
+    /* O que sera criado, a partir do estado e da configuracao. */
+    function resumoChegada(estado, cfg) {
+        var combo = (cfg.matriz && cfg.matriz[estado.vinculo] && cfg.matriz[estado.vinculo][estado.setor]) || null;
+        var modelos = [];
+        var itensModelos = 0;
+        (combo ? combo.modelos : []).forEach(function (chave) {
+            var m = (cfg.modelos || {})[chave];
+            if (m) {
+                modelos.push(m);
+                itensModelos += m.itens;
+            }
+        });
+        var chamados = [];
+        (cfg.ti || []).forEach(function (t) {
+            if (estado.ti.indexOf(t.chave) !== -1) {
+                chamados.push(t);
+            }
+        });
+        var normativas = (combo ? combo.normativas : []).map(function (codigo) {
+            return { codigo: codigo, titulo: (cfg.normativas || {})[codigo] || codigo };
+        });
+        var pendentes = estado.docs.filter(function (s) { return s === 'pendente'; }).length;
+        return {
+            definido: combo !== null,
+            modelos: modelos,
+            chamados: chamados,
+            normativas: normativas,
+            itens: itensModelos + chamados.length,
+            docsPendentes: pendentes,
+            docsTotal: estado.docs.length
+        };
+    }
+
+    function preencherLista(lista, linhas) {
+        if (!lista) {
+            return;
+        }
+        while (lista.firstChild) {
+            lista.removeChild(lista.firstChild);
+        }
+        linhas.forEach(function (linha) {
+            var li = el('li');
+            li.appendChild(el('strong', '', linha[0]));
+            if (linha[1]) {
+                li.appendChild(el('small', 'pp-sub', linha[1]));
+            }
+            lista.appendChild(li);
+        });
+    }
+
+    function iniciarAssistente() {
+        document.querySelectorAll('.pp-casca [data-pp-assistente]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var casca = raiz.closest('.pp-casca') || document;
+            var cfg = lerJson(casca, '[data-pp-assistente-json]');
+            var q = function (sel) { return raiz.querySelector(sel); };
+            var definir = function (sel, texto) {
+                var no = q(sel);
+                if (no) {
+                    no.textContent = texto;
+                }
+            };
+            var inicial = parseInt(raiz.getAttribute('data-pp-etapa-inicial'), 10);
+            var atual = inicial >= 1 && inicial <= ASSIST_FINAL ? inicial : 1;
+            var alcancada = atual;
+            var gestorSugerido = '';
+            var setor = q('[data-pp-campo="setor"]');
+            var gestor = q('[data-pp-campo="gestor"]');
+            if (setor && gestor && cfg.setores && cfg.setores[setor.value] === gestor.value) {
+                gestorSugerido = gestor.value;
+            }
+
+            function atualizarCampos() {
+                var estado = lerAssistente(raiz);
+                definir('[data-pp-assist-nome]', estado.nome !== '' ? ' · ' + estado.nome : '');
+                definir('[data-pp-assist-iniciais]', iniciaisDe(estado.nome));
+                definir('[data-pp-assist-perfil]', (cfg.cargos || {})[estado.cargo] || 'a definir pelo cargo');
+                raiz.querySelectorAll('[data-pp-assist-so-conta]').forEach(function (bloco) {
+                    bloco.hidden = bloco.getAttribute('data-pp-assist-so-conta') !== estado.conta;
+                });
+                var vinculo = (cfg.vinculos || {})[estado.vinculo] || null;
+                var nota = q('[data-pp-assist-vinculo-nota]');
+                if (nota) {
+                    nota.textContent = vinculo ? vinculo.nota : '';
+                    nota.hidden = !vinculo || vinculo.nota === '';
+                }
+                definir('[data-pp-assist-inicio-rotulo]', vinculo ? vinculo.inicio : 'Data de admissão');
+                raiz.querySelectorAll('[data-pp-assist-docs]').forEach(function (tabela) {
+                    tabela.hidden = tabela.getAttribute('data-pp-assist-docs') !== estado.vinculo;
+                });
+                var docsVazio = q('[data-pp-assist-docs-vazio]');
+                if (docsVazio) {
+                    docsVazio.hidden = estado.vinculo !== '';
+                }
+                var dias = diasEntre(estado.abertura, estado.inicio);
+                definir('[data-pp-assist-dias-vaga]', dias === null
+                    ? 'Ex.: 25/08/2026. Com a data de início, mostra quanto tempo a vaga levou.'
+                    : (dias < 0 ? 'A abertura da vaga está depois da data de início.' : 'Da abertura da vaga ao início: ' + dias + (dias === 1 ? ' dia.' : ' dias.')));
+                atualizarResumo(estado);
+            }
+
+            function atualizarResumo(estado) {
+                var r = resumoChegada(estado, cfg);
+                [
+                    ['itens', r.itens, 'item no checklist', 'itens no checklist'],
+                    ['chamados', r.chamados.length, 'chamado de TI', 'chamados de TI'],
+                    ['normativas', r.normativas.length, 'normativa para ciência', 'normativas para ciência'],
+                    ['docs', r.docsPendentes, 'documento pendente', 'documentos pendentes']
+                ].forEach(function (c) {
+                    definir('[data-pp-assist-r-' + c[0] + ']', String(c[1]));
+                    definir('[data-pp-assist-r-' + c[0] + '-rotulo]', c[1] === 1 ? c[2] : c[3]);
+                });
+                definir('[data-pp-assist-r-modelos]', !r.definido
+                    ? 'Escolha vínculo e setor para ver os modelos que se aplicam.'
+                    : (r.modelos.length === 0
+                        ? 'Nenhum modelo casa com ' + estado.vinculo + ' · ' + estado.setor + '.'
+                        : 'Modelos: ' + r.modelos.map(function (m) { return m.nome; }).join(' + ') + '.'));
+
+                // Etapa final
+                var ficha = q('[data-pp-assist-ficha]');
+                if (ficha) {
+                    while (ficha.firstChild) {
+                        ficha.removeChild(ficha.firstChild);
+                    }
+                    var situacao = estado.conta === 'existe'
+                        ? 'Ligada ao usuário ' + (estado.usuario || '—') + ', ativa a partir do início'
+                        : 'Pré-cadastro, ligado ao usuário quando a TI criar a conta';
+                    [
+                        ['Pessoa', estado.nome || '—'],
+                        ['Vínculo', (estado.vinculo || '—') + ' · ' + (estado.empregador || '—')],
+                        ['Cargo e setor', (estado.cargo || '—') + ' · ' + (estado.setor || '—')],
+                        ['Gestor imediato', estado.gestor || '—'],
+                        [(((cfg.vinculos || {})[estado.vinculo] || {}).inicio) || 'Início', dataLonga(estado.inicio) || '—'],
+                        ['Situação da ficha', situacao]
+                    ].forEach(function (par) {
+                        ficha.appendChild(el('dt', '', par[0]));
+                        ficha.appendChild(el('dd', '', par[1]));
+                    });
+                }
+                definir('[data-pp-assist-total-itens]', String(r.itens));
+                var linhasModelos = r.modelos.map(function (m) {
+                    return [m.nome, m.itens + (m.itens === 1 ? ' item' : ' itens') + ' · regra: ' + m.regra];
+                });
+                if (r.chamados.length > 0) {
+                    linhasModelos.push(['Necessidades de TI', r.chamados.length + (r.chamados.length === 1 ? ' item' : ' itens') + ' que concluem quando o chamado é solucionado']);
+                }
+                preencherLista(q('[data-pp-assist-modelos]'), linhasModelos);
+                var semModelo = q('[data-pp-assist-sem-modelo]');
+                if (semModelo) {
+                    semModelo.hidden = !r.definido || r.modelos.length > 0;
+                    semModelo.textContent = 'Nenhum modelo de checklist casa com ' + estado.vinculo + ' · ' + estado.setor
+                        + '. O checklist terá só os itens de TI. Crie ou ative um modelo em Modelos de checklist.';
+                }
+                definir('[data-pp-assist-total-chamados]', String(r.chamados.length));
+                preencherLista(q('[data-pp-assist-chamados]'), r.chamados.length === 0
+                    ? [['Nenhum chamado', 'nenhuma necessidade de TI marcada']]
+                    : r.chamados.map(function (t) {
+                        var titulo = t.chave === 'glpi' ? t.titulo + ' · perfil ' + ((cfg.cargos || {})[estado.cargo] || 'a definir') : t.titulo;
+                        return [titulo, t.categoria];
+                    }));
+                definir('[data-pp-assist-total-normativas]', String(r.normativas.length));
+                preencherLista(q('[data-pp-assist-normativas]'), r.normativas.map(function (n) { return [n.codigo + ' · ' + n.titulo, '']; }));
+                definir('[data-pp-assist-normativas-nota]', estado.conta === 'existe'
+                    ? 'Ficam pendentes de ciência assim que a chegada for concluída.'
+                    : 'Ficam pendentes de ciência assim que a conta for criada e ligada à ficha.');
+                definir('[data-pp-assist-docs-resumo]', r.docsTotal === 0
+                    ? 'Escolha o vínculo para ver os documentos.'
+                    : r.docsPendentes + ' de ' + r.docsTotal + ' documentos pendentes, acompanhados no painel da movimentação.');
+                definir('[data-pp-assist-avisos]', 'Gestor (' + (estado.gestor || '—') + '), TI'
+                    + (r.chamados.length > 0 ? ' (pelos chamados)' : '') + ' e RH. Cada responsável vê as suas tarefas na Minha área.');
+            }
+
+            function mostrar(etapa, focar) {
+                atual = etapa;
+                raiz.querySelectorAll('[data-pp-etapa]').forEach(function (painel) {
+                    painel.hidden = parseInt(painel.getAttribute('data-pp-etapa'), 10) !== atual;
+                });
+                raiz.querySelectorAll('[data-pp-passo]').forEach(function (passo) {
+                    var n = parseInt(passo.getAttribute('data-pp-passo'), 10);
+                    passo.classList.toggle('is-atual', n === atual);
+                    passo.classList.toggle('is-feito', n < alcancada && n !== atual);
+                    var botao = passo.querySelector('[data-pp-ir]');
+                    if (botao) {
+                        botao.disabled = n > alcancada;
+                        if (n === atual) {
+                            botao.setAttribute('aria-current', 'step');
+                        } else {
+                            botao.removeAttribute('aria-current');
+                        }
+                    }
+                });
+                var voltar = q('[data-pp-voltar]');
+                if (voltar) {
+                    voltar.disabled = atual === 1;
+                }
+                var avancar = q('[data-pp-avancar]');
+                var concluir = q('[data-pp-concluir]');
+                if (avancar) {
+                    avancar.hidden = atual === ASSIST_FINAL;
+                }
+                if (concluir) {
+                    concluir.hidden = atual !== ASSIST_FINAL;
+                }
+                definir('[data-pp-assist-contador]', atual === ASSIST_FINAL ? 'Conferir e concluir' : 'Etapa ' + atual + ' de 6');
+                var erro = q('[data-pp-assist-erro]');
+                if (erro) {
+                    erro.hidden = true;
+                }
+                atualizarCampos();
+                if (focar) {
+                    var titulo = q('[data-pp-etapa="' + atual + '"] .pp-assist-etapa-titulo');
+                    var cartao = q('.pp-assist-cartao');
+                    if (cartao && typeof cartao.scrollIntoView === 'function') {
+                        cartao.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                    }
+                    if (titulo) {
+                        titulo.setAttribute('tabindex', '-1');
+                        titulo.focus({ preventScroll: true });
+                    }
+                }
+            }
+
+            function avancar() {
+                var pendencias = pendenciasEtapa(atual, lerAssistente(raiz));
+                var erro = q('[data-pp-assist-erro]');
+                if (pendencias.length > 0) {
+                    if (erro) {
+                        erro.textContent = pendencias.join(' ');
+                        erro.hidden = false;
+                    }
+                    return false;
+                }
+                var proxima = Math.min(atual + 1, ASSIST_FINAL);
+                alcancada = Math.max(alcancada, proxima);
+                var salvo = q('[data-pp-assist-salvo]');
+                if (salvo) {
+                    salvo.hidden = false;
+                    definir('[data-pp-assist-salvo-texto]', 'Rascunho salvo');
+                }
+                mostrar(proxima, true);
+                return true;
+            }
+
+            function preencherExemplo() {
+                var ex = cfg.exemplo || {};
+                var form = ex.form || {};
+                Object.keys(form).forEach(function (campo) {
+                    var radios = raiz.querySelectorAll('[data-pp-campo="' + campo + '"][type="radio"]');
+                    if (radios.length > 0) {
+                        radios.forEach(function (r) { r.checked = r.value === form[campo]; });
+                        return;
+                    }
+                    var no = raiz.querySelector('[data-pp-campo="' + campo + '"]');
+                    if (no) {
+                        no.value = form[campo];
+                    }
+                });
+                gestorSugerido = form.gestor || '';
+                var ti = Array.isArray(ex.ti) ? ex.ti : [];
+                raiz.querySelectorAll('[data-pp-ti]').forEach(function (caixa) {
+                    caixa.checked = ti.indexOf(caixa.value) !== -1;
+                });
+                var docs = Array.isArray(ex.documentos) ? ex.documentos : [];
+                var tabela = raiz.querySelector('[data-pp-assist-docs="' + (form.vinculo || '') + '"]');
+                if (tabela) {
+                    tabela.querySelectorAll('[data-pp-doc]').forEach(function (sel, i) {
+                        if (docs[i]) {
+                            sel.value = docs[i];
+                        }
+                    });
+                }
+                alcancada = ASSIST_FINAL;
+                var texto = q('[data-pp-assist-exemplo-texto]');
+                if (texto) {
+                    while (texto.firstChild) {
+                        texto.removeChild(texto.firstChild);
+                    }
+                    texto.appendChild(el('strong', '', 'Exemplo carregado: ' + (form.nome || '')));
+                    texto.appendChild(el('span', '', 'Todas as etapas estão preenchidas. Navegue pelo indicador e troque o que quiser: nada é gravado.'));
+                }
+                mostrar(atual, false);
+            }
+
+            raiz.addEventListener('click', function (evento) {
+                var ir = evento.target.closest('[data-pp-ir]');
+                if (ir && raiz.contains(ir) && !ir.disabled) {
+                    var n = parseInt(ir.getAttribute('data-pp-ir'), 10);
+                    if (n > alcancada) {
+                        return;
+                    }
+                    // Pular para frente confere as etapas do caminho: pode ter
+                    // apagado um obrigatorio depois de passar por ela.
+                    var estado = lerAssistente(raiz);
+                    for (var k = Math.min(atual, n); k < n; k++) {
+                        var pend = pendenciasEtapa(k, estado);
+                        if (pend.length > 0) {
+                            mostrar(k, true);
+                            var caixa = q('[data-pp-assist-erro]');
+                            if (caixa) {
+                                caixa.textContent = pend.join(' ');
+                                caixa.hidden = false;
+                            }
+                            return;
+                        }
+                    }
+                    mostrar(n, true);
+                    return;
+                }
+                if (evento.target.closest('[data-pp-avancar]')) {
+                    avancar();
+                    return;
+                }
+                if (evento.target.closest('[data-pp-voltar]')) {
+                    if (atual > 1) {
+                        mostrar(atual - 1, true);
+                    }
+                    return;
+                }
+                if (evento.target.closest('[data-pp-assist-exemplo]')) {
+                    preencherExemplo();
+                }
+            });
+
+            raiz.addEventListener('change', function (evento) {
+                if (evento.target === setor && gestor && cfg.setores) {
+                    // Troca o gestor so se ele estiver vazio ou ainda for a sugestao anterior.
+                    if (gestor.value.trim() === '' || gestor.value === gestorSugerido) {
+                        gestorSugerido = cfg.setores[setor.value] || '';
+                        gestor.value = gestorSugerido;
+                    }
+                }
+                atualizarCampos();
+            });
+            raiz.addEventListener('input', atualizarCampos);
+
+            /* Listas livres do plugin (D-69): o "+" abre uma linha para
+             * digitar o novo item, que entra na lista e fica escolhido.
+             * Na casca vale so nesta tela; na mobilia grava na lista (B0.3). */
+            raiz.querySelectorAll('[data-pp-lista]').forEach(function (bloco) {
+                var select = bloco.querySelector('select');
+                var mais = bloco.querySelector('[data-pp-lista-mais]');
+                if (!select || !mais) {
+                    return;
+                }
+                var rotulo = bloco.getAttribute('data-pp-lista') || 'item';
+                var linha = el('span', 'pp-lista-nova');
+                linha.hidden = true;
+                var campo = document.createElement('input');
+                campo.type = 'text';
+                campo.maxLength = 80;
+                campo.setAttribute('aria-label', 'Novo ' + rotulo.toLowerCase());
+                campo.placeholder = 'Novo ' + rotulo.toLowerCase();
+                var adicionar = el('button', 'pp-botao is-compacto is-primario', 'Adicionar');
+                adicionar.type = 'button';
+                var cancelar = el('button', 'pp-botao is-compacto', 'Cancelar');
+                cancelar.type = 'button';
+                linha.appendChild(campo);
+                linha.appendChild(adicionar);
+                linha.appendChild(cancelar);
+                bloco.appendChild(linha);
+                mais.setAttribute('aria-expanded', 'false');
+
+                function fechar() {
+                    linha.hidden = true;
+                    campo.value = '';
+                    mais.setAttribute('aria-expanded', 'false');
+                }
+                function incluir() {
+                    var texto = campo.value.trim();
+                    if (texto === '') {
+                        campo.focus();
+                        return;
+                    }
+                    var existente = null;
+                    Array.prototype.forEach.call(select.options, function (o) {
+                        if (normalizar(o.value) === normalizar(texto)) {
+                            existente = o;
+                        }
+                    });
+                    if (!existente) {
+                        existente = document.createElement('option');
+                        existente.value = texto;
+                        existente.textContent = texto;
+                        select.appendChild(existente);
+                    }
+                    select.value = existente.value;
+                    fechar();
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    var aviso = casca.querySelector('.pp-aviso');
+                    if (aviso) {
+                        aviso.textContent = 'Demonstração. “' + existente.value + '” entrou na lista só nesta tela. Na versão final grava na lista de ' + rotulo.toLowerCase() + ' do plugin.';
+                        aviso.hidden = false;
+                        setTimeout(function () { aviso.hidden = true; }, 4000);
+                    }
+                }
+                mais.addEventListener('click', function () {
+                    linha.hidden = !linha.hidden;
+                    mais.setAttribute('aria-expanded', linha.hidden ? 'false' : 'true');
+                    if (!linha.hidden) {
+                        campo.focus();
+                    }
+                });
+                adicionar.addEventListener('click', incluir);
+                cancelar.addEventListener('click', fechar);
+                campo.addEventListener('keydown', function (evento) {
+                    if (evento.key === 'Enter') {
+                        evento.preventDefault();
+                        incluir();
+                    } else if (evento.key === 'Escape') {
+                        fechar();
+                    }
+                });
+            });
+
+            mostrar(atual, false);
+        });
+    }
+
     function tudo() {
         iniciar();
         iniciarFiltros();
@@ -702,6 +1220,7 @@
         iniciarMural();
         iniciarLateral();
         iniciarOuvidoria();
+        iniciarAssistente();
     }
 
     if (document.readyState === 'loading') {
