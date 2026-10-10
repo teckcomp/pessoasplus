@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -1442,6 +1442,41 @@
         });
     }
 
+
+    /* BM.3: formulario da publicacao real: o lugar decide imagem, botoes e fixacao. */
+    function iniciarPublicacaoReal() {
+        document.querySelectorAll('.pp-casca [data-pp-pubreal]').forEach(function (raiz) {
+            if (raiz.hasAttribute('data-pp-pronto-pub')) {
+                return;
+            }
+            raiz.setAttribute('data-pp-pronto-pub', '');
+            var imagem = raiz.querySelector('[data-pp-so-imagem]');
+            var botoes = raiz.querySelector('[data-pp-so-botoes]');
+            var fixavel = raiz.querySelector('[data-pp-so-fixavel]');
+            function aplicar() {
+                var marcado = raiz.querySelector('input[name="lugar"]:checked');
+                var lugar = marcado ? marcado.value : 'cartao';
+                if (imagem) {
+                    imagem.hidden = !(lugar === 'grande' || lugar === 'cartao');
+                }
+                if (botoes) {
+                    botoes.hidden = lugar !== 'grande';
+                }
+                if (fixavel) {
+                    fixavel.hidden = lugar === 'destaque';
+                    var caixa = fixavel.querySelector('input[type="checkbox"]');
+                    if (caixa && lugar === 'destaque') {
+                        caixa.checked = false;
+                    }
+                }
+            }
+            raiz.querySelectorAll('input[name="lugar"]').forEach(function (r) {
+                r.addEventListener('change', aplicar);
+            });
+            aplicar();
+        });
+    }
+
     /* Confirmacao antes de acoes destrutivas: botoes com data-pp-confirmar. */
     function iniciarConfirmacoes() {
         document.querySelectorAll('.pp-casca [data-pp-confirmar]').forEach(function (botao) {
@@ -1814,6 +1849,7 @@
         iniciarJornada();
         iniciarComunicado();
         iniciarLinks();
+        iniciarPublicacaoReal();
     }
 
     if (document.readyState === 'loading') {

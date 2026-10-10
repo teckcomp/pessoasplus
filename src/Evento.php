@@ -52,6 +52,10 @@ final class Evento extends CommonDBTM
         'leitura_registrada'     => 'Leitura registrada',
         'ciencia_confirmada'     => 'Ciência confirmada',
         'ciencia_nao_concorda'   => 'Ciência registrada com "Não concordo"',
+        'publicacao_criada'      => 'Publicação criada',
+        'publicacao_publicada'   => 'Publicação no mural',
+        'publicacao_despublicada' => 'Publicação tirada do mural',
+        'publicacao_excluida'    => 'Publicação excluída',
     ];
 
     /**

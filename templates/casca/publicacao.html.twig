@@ -1,0 +1,18 @@
+{# Pessoas+ - publicacao completa do mural. PESSOASPLUS_BUILD_BM3 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_mural }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Mural</span></a>
+    {% if pp.dados.do_rh %}<a class="pp-botao" href="{{ pp.dados.url_editar }}"><i class="ti ti-pencil" aria-hidden="true"></i><span>Editar</span></a>{% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set p = pp.dados %}
+    <article class="pp-cartao pp-documento pp-pub-completa">
+        {% if p.imagem_url != '' %}<img class="pp-mc-capa" src="{{ p.imagem_url }}" alt="{{ p.imagem_alt }}">{% endif %}
+        <div class="pp-emissor-topo"><span class="pp-selo pp-tom-{{ p.tom }}">{{ p.tipo_rotulo }}</span><span class="pp-selo pp-tom-{{ p.estado_tom }}">{{ p.estado_rotulo }}</span><span class="pp-sub"><i class="ti ti-user" aria-hidden="true"></i> {{ p.autor }} · <i class="ti ti-calendar" aria-hidden="true"></i> {{ p.periodo }}</span></div>
+        <p class="pp-pub-chamada-grande">{{ p.chamada }}</p>
+        <div class="pp-doc-secao pp-conteudo-rico">{{ p.conteudo_html|raw }}</div>
+        {% if p.botoes|length > 0 %}<div class="pp-links-botoes">{% for b in p.botoes %}<a class="pp-botao{% if loop.first %} is-primario{% endif %}" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% endfor %}</div>{% endif %}
+    </article>
+{% endblock %}

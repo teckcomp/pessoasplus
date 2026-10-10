@@ -5,6 +5,8 @@
  *
  * PESSOASPLUS_BUILD_BP3A
  *
+ * PESSOASPLUS_BUILD_BM3
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -16,6 +18,7 @@ use CommonGLPI;
 use Glpi\Application\View\TemplateRenderer;
 use Glpi\Helpdesk\HomePageTabs;
 use GlpiPlugin\Pessoasplus\Install;
+use GlpiPlugin\Pessoasplus\Publicacao;
 use Session;
 
 /**
@@ -94,7 +97,10 @@ final class MuralAba extends CommonGLPI
      */
     public static function contexto(): array
     {
-        $pp        = Pagina::contexto('mural', 'Mural', '', Fontes::mural());
+        // BM.3: publicacoes reais do publico da pessoa (nao marca como vistas: isso e do mural).
+        $dados = Publicacao::muralDe((int) Session::getLoginUserID());
+        $dados['url_mural'] = Pagina::url(MenuSimplificado::PAGINA_MURAL);
+        $pp        = Pagina::contexto('mural_colaborador', 'Mural', '', $dados);
         $pp['nav'] = [];
 
         return $pp;

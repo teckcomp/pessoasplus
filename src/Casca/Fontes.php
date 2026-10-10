@@ -37,8 +37,6 @@ final class Fontes
      */
     private const EM_DEMONSTRACAO = [
         'inicio',
-        'mural',
-        'mural_colaborador',
         'ouvidoria',
         'pesquisas',
         'chegadas',

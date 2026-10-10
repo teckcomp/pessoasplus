@@ -42,7 +42,7 @@
                 {% if edita %}
                     <div class="pp-publ-nova" data-pp-regra-nova>
                         <label class="pp-campo is-curto">
-                            <span>Tipo</span>
+                            <span>Incluir por</span>
                             <select data-pp-regra-tipo>
                                 {% for t in d.tipos %}
                                     <option value="{{ t.chave }}">{{ t.rotulo }}</option>
@@ -62,6 +62,7 @@
                             <span>Excluir (não incluir)</span>
                         </label>
                         <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                        <small class="pp-dica pp-dica-criterio" data-pp-regra-dica>Grupo: quem está no grupo (setor) do GLPI. Perfil: quem tem esse perfil. Entidade: quem tem perfil nessa entidade. Usuário: uma pessoa. Vínculo e empregador: pela ficha do Fichário.</small>
                     </div>
                 {% endif %}
             </section>

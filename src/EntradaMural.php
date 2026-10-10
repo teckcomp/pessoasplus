@@ -5,6 +5,9 @@
  *
  * PESSOASPLUS_BUILD_BP3C
  *
+ * PESSOASPLUS_BUILD_BM3
+ * PESSOASPLUS_BUILD_BM3_2
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -108,17 +111,20 @@ final class EntradaMural
      *
      * @param array<string, mixed> $sessao sessao do PHP, por referencia
      */
-    public static function decidir(array &$sessao, ?string $inicio, bool $tem_direito, bool $tem_novidade): bool
+    public static function decidir(array &$sessao, ?string $inicio, bool $tem_direito, bool $tem_novidade, int $perfil = 0): bool
     {
         if ($inicio === null || !isset(self::INICIOS[$inicio])) {
             return false;
         }
-        if (!empty($sessao[self::SESSAO_DECIDIDO])) {
+        // BM.3-2: a decisao vale por perfil ativo. Trocar de perfil sem sair
+        // (Super-Admin -> Auditoria) conta como nova entrada (T-81).
+        $marca = 'p' . $perfil;
+        if (!empty($sessao[self::SESSAO_DECIDIDO]) && (string) $sessao[self::SESSAO_DECIDIDO] === $marca) {
             return false;
         }
 
         // Marca antes de desviar: e o que impede o laco com o Task+.
-        $sessao[self::SESSAO_DECIDIDO] = 1;
+        $sessao[self::SESSAO_DECIDIDO] = $marca;
 
         if (!$tem_direito || !$tem_novidade) {
             return false;
@@ -151,7 +157,8 @@ final class EntradaMural
      */
     public static function temNovidade(): bool
     {
-        return true;
+        // BM.3: so desvia quando ha publicacao no ar, no publico da pessoa, nao vista.
+        return Publicacao::temNovidadePara((int) \Session::getLoginUserID());
     }
 
     /**
@@ -184,7 +191,7 @@ final class EntradaMural
         $tem_direito = (bool) Session::haveRight(Install::RIGHT_BASE, READ)
             && (bool) Session::haveRight(self::DIREITO, READ);
 
-        if (!self::decidir($_SESSION, $inicio, $tem_direito, self::temNovidade())) {
+        if (!self::decidir($_SESSION, $inicio, $tem_direito, self::temNovidade(), (int) ($_SESSION['glpiactiveprofile']['id'] ?? 0))) {
             return;
         }
 

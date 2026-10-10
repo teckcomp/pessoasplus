@@ -9,6 +9,7 @@
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM2
  * PESSOASPLUS_BUILD_BM2_2
+ * PESSOASPLUS_BUILD_BM3
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -52,6 +53,8 @@ final class Install
         'glpi_plugin_pessoasplus_anexos',
         'glpi_plugin_pessoasplus_destinatarios',
         'glpi_plugin_pessoasplus_ciencias',
+        'glpi_plugin_pessoasplus_publicacoes',
+        'glpi_plugin_pessoasplus_vistas',
     ];
 
     /**
@@ -313,6 +316,55 @@ final class Install
                 `selo` char(64) NOT NULL DEFAULT '',
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `unicidade` (`plugin_pessoasplus_versoes_id`,`users_id`),
+                KEY `users_id` (`users_id`)
+            ) $fim");
+        }
+
+        // BM.3 - mural (M2): publicacoes com lugar, fixacao, periodo e publico.
+        $tabela = 'glpi_plugin_pessoasplus_publicacoes';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `entities_id` int unsigned NOT NULL DEFAULT '0',
+                `titulo` varchar(255) NOT NULL DEFAULT '',
+                `chamada` varchar(255) NOT NULL DEFAULT '',
+                `conteudo` longtext,
+                `tipo` varchar(20) NOT NULL DEFAULT 'aviso',
+                `lugar` varchar(20) NOT NULL DEFAULT 'cartao',
+                `situacao` varchar(20) NOT NULL DEFAULT 'rascunho',
+                `inicio` date DEFAULT NULL,
+                `fim` date DEFAULT NULL,
+                `fixada` tinyint NOT NULL DEFAULT '0',
+                `fixada_em` timestamp NULL DEFAULT NULL,
+                `imagem_caminho` varchar(255) NOT NULL DEFAULT '',
+                `imagem_alt` varchar(255) NOT NULL DEFAULT '',
+                `botoes` text,
+                `plugin_pessoasplus_publicos_id` int unsigned NOT NULL DEFAULT '0',
+                `publico_modelo_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `is_deleted` tinyint NOT NULL DEFAULT '0',
+                `date_creation` timestamp NULL DEFAULT NULL,
+                `date_mod` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `situacao` (`situacao`),
+                KEY `lugar` (`lugar`),
+                KEY `periodo` (`inicio`,`fim`),
+                KEY `is_deleted` (`is_deleted`)
+            ) $fim");
+        }
+
+        // Quem ja viu cada publicacao (novidade na entrada, D-54; contagem agregada).
+        $tabela = 'glpi_plugin_pessoasplus_vistas';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_publicacoes_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `data` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unicidade` (`plugin_pessoasplus_publicacoes_id`,`users_id`),
                 KEY `users_id` (`users_id`)
             ) $fim");
         }

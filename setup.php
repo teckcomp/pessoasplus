@@ -11,6 +11,7 @@
  * PESSOASPLUS_BUILD_BP3C
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM2
+ * PESSOASPLUS_BUILD_BM3
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -21,6 +22,7 @@ use GlpiPlugin\Pessoasplus\Casca\MenuSimplificado;
 use GlpiPlugin\Pessoasplus\Casca\MuralAba;
 use GlpiPlugin\Pessoasplus\Colaborador;
 use GlpiPlugin\Pessoasplus\Comunicado;
+use GlpiPlugin\Pessoasplus\Publicacao;
 use GlpiPlugin\Pessoasplus\EntradaMural;
 use GlpiPlugin\Pessoasplus\Install;
 use GlpiPlugin\Pessoasplus\Menu;
@@ -62,6 +64,8 @@ function plugin_init_pessoasplus(): void
     Plugin::registerClass(Colaborador::class, ['addtabon' => [User::class], 'document_types' => true]);
     // BM.2: anexos do rascunho pela aba nativa de Documentos (D-09).
     Plugin::registerClass(Comunicado::class, ['document_types' => true]);
+    // BM.3: imagem de capa da publicacao vem de um Document nativo ligado a ela.
+    Plugin::registerClass(Publicacao::class, ['document_types' => true]);
 
     // Daqui para baixo, so para usuario logado com o direito do Pessoas+.
     // A sessao ja esta aberta quando o plugin_init roda (T-36), entao quem

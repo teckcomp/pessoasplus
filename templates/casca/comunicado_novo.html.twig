@@ -132,13 +132,14 @@
                     </ul>
                     {% if not d.revogado %}
                         <div class="pp-publ-nova" data-pp-regra-nova>
-                            <label class="pp-campo is-curto"><span>Tipo</span>
+                            <label class="pp-campo is-curto"><span>Incluir por</span>
                                 <select data-pp-regra-tipo>{% for t in d.tipos_regra %}<option value="{{ t.chave }}">{{ t.rotulo }}</option>{% endfor %}</select>
                             </label>
                             <label class="pp-campo"><span>Valor</span><select data-pp-regra-valor data-pp-buscavel></select></label>
                             <label class="pp-marcar is-justo" data-pp-regra-filhos-rotulo><input type="checkbox" data-pp-regra-filhos><span>Incluir subníveis</span></label>
                             <label class="pp-marcar is-justo"><input type="checkbox" data-pp-regra-exclusao><span>Excluir (não incluir)</span></label>
                             <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                        <small class="pp-dica pp-dica-criterio" data-pp-regra-dica>Grupo: quem está no grupo (setor) do GLPI. Perfil: quem tem esse perfil. Entidade: quem tem perfil nessa entidade. Usuário: uma pessoa. Vínculo e empregador: pela ficha do Fichário.</small>
                         </div>
                     {% endif %}
                     <p class="pp-contagem-publico" data-pp-previa-bloco><strong data-pp-previa-total>{{ d.previa.total }}</strong> <span data-pp-previa-rotulo>{{ d.previa.total == 1 ? 'pessoa receberá' : 'pessoas receberão' }}</span></p>

@@ -1,221 +1,153 @@
-{# Pessoas+ - nova publicacao / editar publicacao do mural. PESSOASPLUS_BUILD_BP3D #}
-{# Quadro 2 do canvas "Pessoas+ - Mural do colaborador". Usa pp.dados (Fontes::novaPublicacao). #}
+{# Pessoas+ - nova publicacao / editar publicacao, real. PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM3_2 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
-    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
-        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Publicações do mural</span>
-    </a>
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Publicações do mural</span></a>
 {% endblock %}
 
 {% block conteudo %}
     {% set d = pp.dados %}
-    {% set f = d.form %}
-    {% set publicada = f.situacao == 'publicada' %}
-    <script type="application/json" data-pp-fixadas-json>{{ d.fixadas_json|raw }}</script>
-    <div class="pp-novo" data-pp-pubform data-pp-hoje="{{ d.hoje }}">
-        <div class="pp-novo-form">
+    {% set f = d.f %}
+    {% set csrf = csrf_token() %}
 
-            <fieldset class="pp-cartao pp-secao">
-                <legend class="pp-secao-titulo"><span>1</span> Tipo</legend>
-                <div class="pp-pub-tipos">
-                    {% for t in d.tipos %}
-                        <label class="pp-tipo">
-                            <input type="radio" name="pp_pub_tipo" value="{{ t.chave }}" data-pp-rotulo="{{ t.rotulo }}" data-pp-icone="{{ t.icone }}"{% if t.chave == f.tipo %} checked{% endif %}>
-                            <span class="pp-tipo-corpo">
-                                <strong><span class="pp-pub-tipo is-pequeno pp-pv-tipo-{{ t.chave }}" aria-hidden="true"><i class="{{ t.icone }}"></i></span> {{ t.rotulo }}</strong>
-                                <small>{{ t.descricao }}</small>
-                            </span>
-                        </label>
+    {% if not d.nova %}
+        <nav class="pp-cheg-abas" aria-label="Seções">
+            <a class="pp-cheg-aba{% if d.aba == 'conteudo' %} is-ativa{% endif %}" href="{{ d.url_aba.conteudo }}"><i class="ti ti-file-text" aria-hidden="true"></i> Conteúdo, lugar e público</a>
+            <a class="pp-cheg-aba{% if d.aba == 'imagem' %} is-ativa{% endif %}" href="{{ d.url_aba.imagem }}"><i class="ti ti-photo" aria-hidden="true"></i> Imagem</a>
+        </nav>
+    {% endif %}
+
+    {% if d.aba == 'imagem' %}
+        <section class="pp-cartao pp-pasta-docs">
+            <p class="pp-nota">Anexe a imagem pelo formulário nativo abaixo (JPEG ou PNG, de preferência 1400 px de largura) e clique em <strong>Usar como capa</strong>. Imagem só aparece nos lugares <strong>Grande</strong> e <strong>Cartão</strong>.</p>
+            {% if d.imagens|length > 0 %}
+                <ul class="pp-lista is-compacta pp-capas">
+                    {% for i in d.imagens %}
+                        <li>
+                            <i class="ti ti-photo pp-lista-icone" aria-hidden="true"></i>
+                            <div class="pp-lista-texto"><strong>{{ i.nome }}</strong>{% if i.escolhida %}<span class="pp-selo pp-tom-ok">capa atual</span>{% endif %}</div>
+                            {% if not i.escolhida %}
+                                <form method="post" action="{{ d.url_form }}" class="pp-inline"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}"><input type="hidden" name="id" value="{{ d.id }}"><button type="submit" name="capa" value="{{ i.id }}" class="pp-botao is-compacto is-primario"><i class="ti ti-check" aria-hidden="true"></i><span>Usar como capa</span></button></form>
+                            {% else %}
+                                <form method="post" action="{{ d.url_form }}" class="pp-inline"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}"><input type="hidden" name="id" value="{{ d.id }}"><button type="submit" name="capa" value="0" class="pp-botao is-compacto"><i class="ti ti-x" aria-hidden="true"></i><span>Remover capa</span></button></form>
+                            {% endif %}
+                        </li>
                     {% endfor %}
-                </div>
-                <p class="pp-nota" data-pp-so-tipo="celebracao" hidden>Tempo de casa, boas-vindas, feriado e aniversário já nascem sozinhos. Use este tipo para uma data que o sistema não conhece, ou para trocar o cartão automático por uma arte.</p>
-            </fieldset>
+                </ul>
+                {% if d.imagem_url != '' %}<img class="pp-pv-imagem-atual" src="{{ d.imagem_url }}" alt="{{ f.imagem_alt }}">{% endif %}
+            {% elseif not d.nova %}
+                <p class="pp-nota">Nenhuma imagem anexada ainda. Anexe abaixo: com uma única imagem, ela vira a capa automaticamente ao salvar.</p>
+            {% endif %}
+            {% if d.pode_documentos %}<div class="pp-nativo">{{ d.anexos_html|raw }}</div>{% else %}<p class="pp-nota">Seu perfil não tem o direito "Documentos" do GLPI, necessário para anexar.</p>{% endif %}
+        </section>
+    {% else %}
+        <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-pubreal data-pp-url-previa="{{ d.url_previa }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="1">
+            <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+            {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% endif %}
+            <input type="hidden" name="regras_json" value="{{ d.regras_json|e('html_attr') }}" data-pp-regras-campo>
+            <input type="hidden" name="publico_modelo_id" value="{{ f.publico_modelo_id }}" data-pp-modelo-campo>
+            <script type="application/json" data-pp-regras-json>{{ d.regras_json|raw }}</script>
+            <script type="application/json" data-pp-opcoes-json>{{ d.opcoes_json|raw }}</script>
 
-            <section class="pp-cartao pp-secao">
-                <h2 class="pp-secao-titulo"><span>2</span> Conteúdo</h2>
-                <label class="pp-campo">
-                    <span>Título</span>
-                    <input type="text" data-pp-titulo maxlength="120" value="{{ f.titulo }}">
-                </label>
-                <label class="pp-campo">
-                    <span>Chamada <small class="pp-sub">aparece no mural · <span data-pp-contador>0</span>/240</small></span>
-                    <textarea rows="3" maxlength="240" data-pp-chamada>{{ f.chamada }}</textarea>
-                </label>
-                <p class="pp-nota">O texto completo, que abre ao clicar na publicação, usa o editor do GLPI na versão final.</p>
-
-                <fieldset class="pp-campo" data-pp-com-imagem>
-                    <legend class="pp-campo-rotulo">Imagem de capa ou arte</legend>
-                    <label class="pp-marcar is-justo">
-                        <input type="radio" name="pp_pub_imagem" value=""{% if f.imagem == '' %} checked{% endif %}>
-                        <span>Sem imagem: capa na cor do tipo</span>
-                    </label>
-                    {% for img in d.imagens %}
-                        <label class="pp-marcar is-justo">
-                            <input type="radio" name="pp_pub_imagem" value="{{ img.arquivo }}" data-pp-url="{{ img.url }}"{% if f.imagem == img.arquivo %} checked{% endif %}>
-                            <span>{{ img.rotulo }}</span>
-                        </label>
-                    {% endfor %}
-                    <input type="file" accept="image/*" disabled aria-label="Enviar imagem">
-                    <small class="pp-sub">Envio de arquivo na mobília (B3.1), comprimido como as fotos da demonstração.</small>
-                </fieldset>
-
-                <fieldset class="pp-campo" data-pp-so-lugar="grande">
-                    <legend class="pp-campo-rotulo">Botões de ação <small class="pp-sub">até 2, só no lugar Grande</small></legend>
-                    {% for b in f.botoes %}
-                        <div class="pp-linha-campos pp-pub-botao">
-                            <label class="pp-campo">
-                                <span>Texto do botão {{ loop.index }}</span>
-                                <input type="text" maxlength="60" data-pp-botao-rotulo value="{{ b.rotulo }}" placeholder="Deixe em branco para não mostrar">
-                            </label>
-                            <label class="pp-campo is-curto">
-                                <span>Abre</span>
-                                <select>
-                                    {% for o in d.destinos %}
-                                        <option value="{{ o.valor }}"{% if o.valor == b.destino %} selected{% endif %}>{{ o.rotulo }}</option>
-                                    {% endfor %}
-                                </select>
-                            </label>
-                        </div>
-                    {% endfor %}
-                </fieldset>
-            </section>
-
-            <fieldset class="pp-cartao pp-secao">
-                <legend class="pp-secao-titulo"><span>3</span> Lugar no mural</legend>
-                <div class="pp-lugares">
-                    {% for l in d.lugares %}
-                        <label class="pp-tipo">
-                            <input type="radio" name="pp_pub_lugar" value="{{ l.chave }}" data-pp-rotulo="{{ l.rotulo }}"{% if l.chave == f.lugar %} checked{% endif %}>
-                            <span class="pp-tipo-corpo">
-                                <span class="pp-lugar-mini is-{{ l.chave }}" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-                                <strong>{{ l.rotulo }}</strong>
-                                <small>{{ l.descricao }}</small>
-                            </span>
-                        </label>
-                    {% endfor %}
-                </div>
-
-                <div class="pp-pub-fixar" data-pp-fixar-bloco>
-                    <label class="pp-marcar">
-                        <input type="checkbox" data-pp-fixar{% if f.fixar %} checked{% endif %}>
-                        <span><strong>Fixar no topo da área:</strong> fica acima das não fixadas enquanto estiver no período.</span>
-                    </label>
-                    <p class="pp-nota" data-pp-fixadas-info></p>
-                    <p class="pp-nota">Entre fixadas, a mais recente vem primeiro. Para devolver uma antiga ao topo, use “Trazer ao topo” na lista: ela passa à frente sem perder a data nem os comentários.</p>
-                </div>
-                <p class="pp-alerta-zero is-aviso" data-pp-so-lugar="destaque" hidden role="status">
-                    <i class="ti ti-info-circle" aria-hidden="true"></i>
-                    {% if d.destaque.titulo != '' %}
-                        Há um destaque por vez. Durante este período, esta publicação ocupa o lugar de “{{ d.destaque.titulo }}” ({{ d.destaque.periodo }}).
-                    {% else %}
-                        Há um destaque por vez, e o lugar está livre.
-                    {% endif %}
-                </p>
-
-                <div class="pp-linha-campos">
-                    <label class="pp-campo">
-                        <span>Exibir de</span>
-                        <input type="date" data-pp-inicio value="{{ f.inicio }}">
-                    </label>
-                    <label class="pp-campo">
-                        <span>até</span>
-                        <input type="date" data-pp-fim value="{{ f.fim }}">
-                    </label>
-                </div>
-                <p class="pp-nota">Fora do período a publicação não aparece para ninguém. Início no futuro fica agendada.</p>
-            </fieldset>
-
-            <section class="pp-cartao pp-secao">
-                <h2 class="pp-secao-titulo"><span>4</span> Público</h2>
-                <fieldset class="pp-campo">
-                    <legend class="pp-campo-rotulo">Grupos</legend>
-                    <div class="pp-grupos">
-                        {% for g in d.grupos %}
-                            <label class="pp-grupo">
-                                <input type="checkbox" checked data-pp-grupo data-pp-clt="{{ g.clt }}" data-pp-pj="{{ g.pj }}">
-                                <span>{{ g.nome }}</span>
-                                <small>{{ g.clt + g.pj }}</small>
-                            </label>
+            <div class="pp-novo-form">
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>1</span> Tipo</h2>
+                    <div class="pp-pub-tipos">
+                        {% for t in d.tipos %}
+                            <label class="pp-tipo"><input type="radio" name="tipo" value="{{ t.chave }}"{% if t.chave == f.tipo %} checked{% endif %}><span class="pp-tipo-corpo"><strong><i class="{{ t.icone }}" aria-hidden="true"></i> {{ t.rotulo }}</strong></span></label>
                         {% endfor %}
                     </div>
-                </fieldset>
-                <label class="pp-campo is-curto">
-                    <span>Vínculo</span>
-                    <select data-pp-vinculo>
-                        <option value="todos">Todos os vínculos</option>
-                        <option value="clt">Somente CLT</option>
-                        <option value="pj">Somente PJ</option>
-                    </select>
-                </label>
-                <div class="pp-contagem-publico" data-pp-resultado>
-                    <i class="ti ti-users-group" aria-hidden="true"></i>
-                    <span><strong data-pp-total>48</strong> pessoas veem no mural</span>
-                </div>
-                <p class="pp-alerta-zero" data-pp-zero hidden role="status">
-                    <i class="ti ti-alert-circle" aria-hidden="true"></i>
-                    Nenhum critério corresponde: ninguém vê. O Pessoas+ nunca trata “nada marcado” como “todos”.
-                </p>
-            </section>
+                </section>
 
-            <section class="pp-cartao pp-secao">
-                <h2 class="pp-secao-titulo"><span>5</span> Interação</h2>
-                <label class="pp-marcar">
-                    <input type="checkbox" data-pp-comentarios{% if f.comentarios %} checked{% endif %}>
-                    <span><strong>Comentários e curtidas,</strong> sempre identificados, com resposta em um nível.</span>
-                </label>
-                <label class="pp-marcar">
-                    <input type="checkbox" data-pp-depende-comentarios{% if f.aprovacao %} checked{% endif %}>
-                    <span>Comentário passa pela aprovação do RH antes de aparecer.</span>
-                </label>
-                <label class="pp-marcar">
-                    <input type="checkbox" data-pp-depende-comentarios{% if f.avisar %} checked{% endif %}>
-                    <span>Avisar o autor da publicação a cada comentário novo.</span>
-                </label>
-                <label class="pp-marcar pp-pub-concordancia" data-pp-so-tipo="reconhecimento" hidden>
-                    <input type="checkbox" data-pp-concordancia{% if f.id > 0 and f.tipo == 'reconhecimento' %} checked{% endif %}>
-                    <span><strong>A pessoa reconhecida concordou com a publicação.</strong> Sem a concordância, o reconhecimento não sai no mural.</span>
-                </label>
-                <p class="pp-nota">O RH e o autor da publicação podem ocultar qualquer comentário; quem comentou pode apagar o próprio. O comentário ocultado fica no histórico, com quem ocultou e quando.</p>
-            </section>
-        </div>
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>2</span> Conteúdo</h2>
+                    <label class="pp-campo"><span>Título <em class="pp-obrig">obrigatório</em></span><input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}" required></label>
+                    <label class="pp-campo"><span>Chamada <small class="pp-sub">aparece no mural · até 240 caracteres</small></span><textarea name="chamada" rows="3" maxlength="240" data-pp-chamada>{{ f.chamada }}</textarea></label>
+                    <div class="pp-campo"><span class="pp-campo-rotulo">Texto completo <small class="pp-sub">abre ao clicar na publicação; opcional</small></span><div class="pp-nativo pp-editor">{{ d.editor_html|raw }}</div></div>
+                </section>
 
-        <aside class="pp-novo-lateral">
-            <section class="pp-cartao">
-                <h2 class="pp-secao-titulo is-simples"><i class="ti ti-eye" aria-hidden="true"></i> Como o colaborador vai ver</h2>
-                <div class="pp-mapa" aria-label="Onde fica no mural">
-                    <span class="pp-mapa-zona is-destaque" data-pp-zona="destaque">Destaque fixo</span>
-                    <div class="pp-mapa-corpo">
-                        <div class="pp-mapa-principal">
-                            <span class="pp-mapa-zona is-grande" data-pp-zona="grande">Grande</span>
-                            <span class="pp-mapa-zona is-cartao" data-pp-zona="cartao">Cartões</span>
-                        </div>
-                        <span class="pp-mapa-zona is-lateral" data-pp-zona="lateral">Lateral</span>
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>3</span> Lugar no mural e período</h2>
+                    <div class="pp-pub-tipos">
+                        {% for l in d.lugares %}
+                            <label class="pp-tipo"><input type="radio" name="lugar" value="{{ l.chave }}" data-pp-lugar{% if l.chave == f.lugar %} checked{% endif %}><span class="pp-tipo-corpo"><strong>{{ l.rotulo }}</strong><small>{{ l.descricao }}</small></span></label>
+                        {% endfor %}
                     </div>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo is-curto"><span>Início <em class="pp-obrig">obrigatório</em></span><input type="date" name="inicio" value="{{ f.inicio }}" required></label>
+                        <label class="pp-campo is-curto"><span>Fim <small class="pp-sub">vazio = sem fim</small></span><input type="date" name="fim" value="{{ f.fim }}"></label>
+                    </div>
+                    {# O hidden vem ANTES do checkbox: com os dois enviados, o PHP fica com o ultimo (1). #}
+                    <input type="hidden" name="fixada" value="0">
+                    <label class="pp-marcar is-justo" data-pp-so-fixavel{% if f.lugar == 'destaque' %} hidden{% endif %}><input type="checkbox" name="fixada" value="1"{% if f.fixada %} checked{% endif %}><span><strong>Fixar no topo</strong> da área. Entre fixadas, a mais recente primeiro; "Trazer ao topo" na lista renova a fixação (D-59). O destaque não se fixa.</span></label>
+
+                    <div data-pp-so-imagem{% if f.lugar != 'grande' and f.lugar != 'cartao' %} hidden{% endif %}>
+                        {% if d.nova %}
+                            <p class="pp-nota">Salve o rascunho para anexar a imagem de capa (aba Imagem).</p>
+                        {% else %}
+                            <label class="pp-campo"><span>Imagem de capa</span>
+                                <select name="imagem" data-pp-buscavel>
+                                    <option value="0">Sem imagem: capa na cor do tipo</option>
+                                    {% for i in d.imagens %}<option value="{{ i.id }}"{% if i.escolhida %} selected{% endif %}>{{ i.nome }}</option>{% endfor %}
+                                </select>
+                                <small class="pp-dica">Imagens anexadas na aba Imagem. Falta uma? Anexe lá e volte aqui.</small>
+                            </label>
+                            {% if d.imagem_url != '' %}<img class="pp-pv-imagem-atual" src="{{ d.imagem_url }}" alt="{{ f.imagem_alt }}">{% endif %}
+                            <label class="pp-campo"><span>Descrição da imagem <small class="pp-sub">acessibilidade</small></span><input type="text" name="imagem_alt" maxlength="255" value="{{ f.imagem_alt }}"></label>
+                        {% endif %}
+                    </div>
+
+                    <div data-pp-so-botoes{% if f.lugar != 'grande' %} hidden{% endif %}>
+                        <fieldset class="pp-campo pp-links" data-pp-links>
+                            <legend class="pp-campo-rotulo">Botões <small class="pp-sub">até 2, só no lugar Grande</small></legend>
+                            <input type="hidden" name="botoes_json" value="{{ d.botoes_json|e('html_attr') }}" data-pp-links-campo>
+                            <script type="application/json" data-pp-links-json>{{ d.botoes_json|raw }}</script>
+                            <ul class="pp-publ-regras" data-pp-links-lista aria-live="polite">{% for b in d.botoes %}<li class="pp-chip is-fixo">{{ b.rotulo }}</li>{% else %}<li class="pp-sub" data-pp-links-vazio>Nenhum botão.</li>{% endfor %}</ul>
+                            <div class="pp-publ-nova">
+                                <label class="pp-campo"><span>Rótulo</span><input type="text" maxlength="120" data-pp-link-rotulo></label>
+                                <label class="pp-campo"><span>Endereço</span><input type="text" maxlength="500" placeholder="https://… ou /plugins/…" data-pp-link-url></label>
+                                <button type="button" class="pp-botao" data-pp-link-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar</span></button>
+                            </div>
+                        </fieldset>
+                    </div>
+                </section>
+
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>4</span> Quem vê</h2>
+                    {% if d.modelos|length > 0 %}
+                        <label class="pp-campo"><span>Começar de um público salvo</span>
+                            <select data-pp-modelo-select data-pp-buscavel><option value="0">Montar as regras aqui</option>{% for m in d.modelos %}<option value="{{ m.id }}" data-pp-regras="{{ m.regras|e('html_attr') }}"{% if m.id == f.publico_modelo_id %} selected{% endif %}>{{ m.nome }} ({{ m.total }})</option>{% endfor %}</select>
+                        </label>
+                    {% endif %}
+                    <ul class="pp-publ-regras" data-pp-regras-lista aria-live="polite">{% for r in d.regras %}<li class="pp-chip is-fixo{% if r.is_exclusao %} pp-publ-exclusao{% endif %}">{{ r.is_exclusao ? 'exceto ' : '' }}{{ r.rotulo_tipo|lower }}: {{ r.rotulo }}</li>{% else %}<li class="pp-sub" data-pp-regras-vazio>Nenhuma regra ainda.</li>{% endfor %}</ul>
+                    <div class="pp-publ-nova" data-pp-regra-nova>
+                        <label class="pp-campo is-curto"><span>Incluir por</span><select data-pp-regra-tipo>{% for t in d.tipos_regra %}<option value="{{ t.chave }}">{{ t.rotulo }}</option>{% endfor %}</select></label>
+                        <label class="pp-campo"><span>Valor</span><select data-pp-regra-valor data-pp-buscavel></select></label>
+                        <label class="pp-marcar is-justo" data-pp-regra-filhos-rotulo><input type="checkbox" data-pp-regra-filhos><span>Incluir subníveis</span></label>
+                        <label class="pp-marcar is-justo"><input type="checkbox" data-pp-regra-exclusao><span>Excluir</span></label>
+                        <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                        <small class="pp-dica pp-dica-criterio" data-pp-regra-dica>Grupo: quem está no grupo (setor) do GLPI. Perfil: quem tem esse perfil. Entidade: quem tem perfil nessa entidade. Usuário: uma pessoa. Vínculo e empregador: pela ficha do Fichário.</small>
+                    </div>
+                    <p class="pp-contagem-publico"><strong data-pp-previa-total>{{ d.previa.total }}</strong> <span data-pp-previa-rotulo>{{ d.previa.total == 1 ? 'pessoa vê' : 'pessoas veem' }}</span></p>
+                    <ul class="pp-publ-nomes" data-pp-previa-nomes>{% for n in d.previa.nomes %}<li>{{ n }}</li>{% endfor %}{% if d.previa.mais > 0 %}<li class="pp-sub">e mais {{ d.previa.mais }}</li>{% endif %}</ul>
+                    <p class="pp-nota">O público é recalculado a cada abertura do mural (D-72): quem entra no grupo passa a ver; quem sai, deixa de ver.</p>
+                </section>
+
+                <div class="pp-acoes-linha">
+                    {% if d.nova %}
+                        <button type="submit" name="add" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                    {% elseif not d.publicada %}
+                        <button type="submit" name="update" value="1" class="pp-botao"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                        <button type="submit" name="publicar" value="1" class="pp-botao is-primario"><i class="ti ti-send" aria-hidden="true"></i><span>Publicar</span></button>
+                        <button type="submit" name="delete" value="1" class="pp-botao is-perigo" data-pp-confirmar="Excluir esta publicação?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir</span></button>
+                    {% else %}
+                        <button type="submit" name="update" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar alterações</span></button>
+                        <button type="submit" name="despublicar" value="1" class="pp-botao is-perigo" data-pp-confirmar="Tirar do mural? Volta a rascunho; as visualizações ficam."><i class="ti ti-eye-off" aria-hidden="true"></i><span>Tirar do mural</span></button>
+                    {% endif %}
+                    <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
+                    {% if not d.nova %}<span class="pp-selo pp-tom-{{ d.estado == 'no_ar' ? 'ok' : (d.estado == 'agendada' ? 'info' : 'neutro') }}">{{ d.estado == 'no_ar' ? 'No ar' : (d.estado == 'agendada' ? 'Agendada' : (d.estado == 'encerrada' ? 'Encerrada' : 'Rascunho')) }}</span>{% endif %}
                 </div>
-                <article class="pp-pv" data-pp-pv>
-                    <img class="pp-pv-imagem" data-pp-pv-imagem alt="" hidden>
-                    <div class="pp-pv-capa" data-pp-pv-capa aria-hidden="true"><i data-pp-pv-icone></i></div>
-                    <div class="pp-pv-corpo">
-                        <span class="pp-pv-rotulo" data-pp-pv-rotulo></span>
-                        <strong class="pp-pv-titulo" data-pp-pv-titulo></strong>
-                        <p class="pp-pv-chamada" data-pp-pv-chamada></p>
-                        <div class="pp-pv-botoes" data-pp-pv-botoes></div>
-                        <span class="pp-pv-meta" data-pp-pv-meta></span>
-                    </div>
-                </article>
-                <p class="pp-nota"><span data-pp-prev-total>48</span> pessoas · Mural e aba Mural da página inicial, nas duas interfaces.</p>
-            </section>
-            <section class="pp-cartao pp-publicar">
-                <ul class="pp-pendencias" data-pp-pendencias hidden></ul>
-                <button type="button" class="pp-botao is-largo" data-pp-demo="Rascunho: salva sem mostrar a ninguém. Disponível na mobília (B3.1).">
-                    <i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span>
-                </button>
-                <button type="button" class="pp-botao is-primario is-largo" data-pp-publicar{% if publicada %} data-pp-rotulo-fixo{% endif %}
-                    data-pp-demo="{{ publicada ? 'Salvar alterações: a publicação continua no ar, com a mesma data e os mesmos comentários.' : 'Publicar: a publicação entra no mural do público no lugar escolhido; com início no futuro, fica agendada.' }} Disponível na mobília (B3.1).">
-                    <i class="ti ti-send" aria-hidden="true"></i><span data-pp-publicar-rotulo>{{ publicada ? 'Salvar alterações' : 'Publicar' }}</span>
-                </button>
-            </section>
-        </aside>
-    </div>
+            </div>
+        </form>
+    {% endif %}
 {% endblock %}

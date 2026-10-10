@@ -39,7 +39,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'bm2';
+    public const BUILD = 'bm3';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
