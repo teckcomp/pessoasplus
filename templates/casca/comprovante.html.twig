@@ -1,4 +1,4 @@
-{# Pessoas+ - comprovante de ciencia (Tela 12). PESSOASPLUS_BUILD_BP2B #}
+{# Pessoas+ - comprovante de ciencia (Tela 12). PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BM2 #}
 {# Pagina propria, sem a moldura do GLPI, para imprimir ou salvar em PDF.
    Sem icones Tabler: a fonte de icones do GLPI nao e carregada aqui. #}
 {% set id = pp.identidade %}
@@ -45,17 +45,16 @@
 
         <table class="pp-comp-tabela">
             <thead>
-                <tr><th scope="col">Colaborador</th><th scope="col">Grupo</th><th scope="col">Resposta</th><th scope="col">Data e hora</th><th scope="col">Interface</th><th scope="col">Avisos antes</th></tr>
+                <tr><th scope="col">Colaborador</th><th scope="col">Grupo</th><th scope="col">Resposta</th><th scope="col">Data e hora</th><th scope="col">Interface</th><th scope="col">Selo</th><th scope="col">Integridade</th></tr>
             </thead>
             <tbody>
                 {% for l in d.linhas %}
-                    <tr><td>{{ l.nome }}</td><td>{{ l.grupo }}</td><td>{{ l.resposta }}</td><td>{{ l.data }}</td><td>{{ l.interface }}</td><td>{{ l.avisos }}</td></tr>
+                    <tr><td>{{ l.nome }}</td><td>{{ l.grupo }}</td><td>{{ l.resposta }}</td><td>{{ l.data }}</td><td>{{ l.interface }}</td><td><code>{{ l.selo }}…</code></td><td>{{ l.avisos }}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
-        {% if d.omitidos > 0 %}
-            <p class="pp-comp-meta">Na demonstração a lista está resumida: mais {{ d.omitidos }} confirmações completam as 41.</p>
-        {% endif %}
+        {% if not d.individual %}<p class="pp-comp-meta">{{ d.linhas|length }} de {{ d.total }} destinatários com ciência registrada na data de emissão.</p>{% endif %}
+        {% if d.anexos|length > 0 %}<p class="pp-comp-meta">Anexos congelados: {% for a in d.anexos %}{{ a.nome }} (selo {{ a.hash }}…){% if not loop.last %}; {% endif %}{% endfor %}</p>{% endif %}
 
         <footer class="pp-comp-rodape">
             <span>Emitido em {{ d.emitido }} pelo {{ id.nome }}</span>

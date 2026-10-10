@@ -1,162 +1,168 @@
-{# Pessoas+ - novo comunicado / normativa do Codex+. PESSOASPLUS_BUILD_BP2C #}
+{# Pessoas+ - novo comunicado / rascunho / nova versao. PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 #}
+{# Usa pp.dados (front/comunicado_novo.php). Editor de publico igual ao de publico.html.twig (JS iniciarPublico). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
-    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
-        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Comunicados</span>
-    </a>
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Comunicados</span></a>
+    {% if pp.dados.url_painel != '' and pp.dados.publicado %}
+        <a class="pp-botao" href="{{ pp.dados.url_painel }}"><i class="ti ti-chart-bar" aria-hidden="true"></i><span>Acompanhamento</span></a>
+    {% endif %}
 {% endblock %}
 
 {% block conteudo %}
     {% set d = pp.dados %}
-    <div class="pp-novo" data-pp-novo>
-        <div class="pp-novo-form">
+    {% set f = d.f %}
+    {% set csrf = csrf_token() %}
 
-            <fieldset class="pp-cartao pp-secao">
-                <legend class="pp-secao-titulo"><span>1</span> Tipo</legend>
-                <div class="pp-tipos">
-                    {% for t in d.tipos %}
-                        <label class="pp-tipo">
-                            <input type="radio" name="pp_tipo" value="{{ t.valor }}" data-pp-resposta="{{ t.resposta }}" data-pp-rotulo="{{ t.rotulo }}"{% if t.valor == d.tipo_inicial %} checked{% endif %}>
-                            <span class="pp-tipo-corpo">
-                                <strong>{{ t.rotulo }}</strong>
-                                <small>{{ t.descricao }}</small>
-                                <em>Resposta: “{{ t.resposta }}”</em>
-                            </span>
-                        </label>
-                    {% endfor %}
-                </div>
-            </fieldset>
+    {% if d.revogado %}
+        <div class="pp-alerta pp-tom-atraso"><i class="ti ti-ban" aria-hidden="true"></i><div class="pp-alerta-texto"><strong>Revogado.</strong> Este comunicado não recebe nova versão. Para publicar de novo, crie um comunicado novo.</div></div>
+    {% endif %}
 
-            <section class="pp-cartao pp-secao">
-                <h2 class="pp-secao-titulo"><span>2</span> Conteúdo</h2>
-                <div data-pp-bloco-texto>
-                    <label class="pp-campo">
-                        <span>Título</span>
-                        <input type="text" data-pp-titulo maxlength="120" value="Escala de plantão do Dia de Finados">
-                    </label>
-                    <label class="pp-campo">
-                        <span>Texto</span>
-                        <textarea rows="7" data-pp-texto>Informamos a escala de plantão para 02/11. Confira seu horário na tabela anexa e confirme a ciência até a data indicada.</textarea>
-                    </label>
-                    <p class="pp-nota">Na versão final o texto usa o editor do GLPI, com formatação e imagens.</p>
-                    <label class="pp-campo">
-                        <span>Anexos</span>
-                        <input type="file" disabled>
-                        <small class="pp-sub">Anexos são copiados e selados na publicação: apagar o original depois não muda a versão publicada.</small>
-                    </label>
-                </div>
+    {% if not d.nova %}
+        <nav class="pp-cheg-abas" aria-label="Seções">
+            <a class="pp-cheg-aba{% if d.aba == 'conteudo' %} is-ativa{% endif %}" href="{{ d.url_aba.conteudo }}"><i class="ti ti-file-text" aria-hidden="true"></i> Conteúdo e público</a>
+            <a class="pp-cheg-aba{% if d.aba == 'anexos' %} is-ativa{% endif %}" href="{{ d.url_aba.anexos }}"><i class="ti ti-paperclip" aria-hidden="true"></i> Anexos</a>
+        </nav>
+    {% endif %}
 
-                <fieldset data-pp-bloco-codex hidden>
-                    <legend class="pp-campo-rotulo">Documento do Codex+</legend>
-                    <ul class="pp-codex">
-                        {% for c in d.codex %}
-                            <li>
-                                <label{% if c.distribuida %} class="is-desabilitado"{% endif %}>
-                                    <input type="radio" name="pp_codex" value="{{ c.codigo }}" data-pp-codex-titulo="{{ c.titulo }}"{% if c.distribuida %} disabled{% endif %}{% if c.codigo == 'NOR0007:01' %} checked{% endif %}>
-                                    <span class="pp-codex-codigo">{{ c.codigo }}</span>
-                                    <span class="pp-codex-titulo">{{ c.titulo }}</span>
-                                    <span class="pp-selo pp-tom-{{ c.tom }}">{{ c.situacao }}</span>
-                                </label>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    <p class="pp-nota">O texto vem do Codex+ e não é editável aqui. Quando o Codex+ publicar uma nova revisão, a ciência é pedida de novo, sem apagar as anteriores.</p>
-                </fieldset>
-            </section>
+    {% if d.aba == 'anexos' %}
+        <section class="pp-cartao pp-pasta-docs">
+            <p class="pp-nota">Anexe pela aba nativa de Documentos do GLPI. <strong>Ao publicar, cada anexo é copiado e congelado</strong> na versão, com selo SHA-256 (D-09): alterar ou excluir o documento original depois não muda o que foi publicado.</p>
+            {% if d.pode_documentos %}
+                <div class="pp-nativo">{{ d.anexos_html|raw }}</div>
+            {% else %}
+                <p class="pp-nota">Seu perfil não tem o direito "Documentos" do GLPI, necessário para anexar.</p>
+            {% endif %}
+        </section>
+    {% else %}
+        <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-comunicado data-pp-url-previa="{{ d.url_previa }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ d.revogado ? '0' : '1' }}">
+            <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+            {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% endif %}
+            <input type="hidden" name="regras_json" value="{{ d.regras_json|e('html_attr') }}" data-pp-regras-campo>
+            <input type="hidden" name="publico_modelo_id" value="{{ f.publico_modelo_id }}" data-pp-modelo-campo>
+            <input type="hidden" name="motivo" value="" data-pp-motivo-campo>
+            <script type="application/json" data-pp-regras-json>{{ d.regras_json|raw }}</script>
+            <script type="application/json" data-pp-opcoes-json>{{ d.opcoes_json|raw }}</script>
 
-            <section class="pp-cartao pp-secao">
-                <h2 class="pp-secao-titulo"><span>3</span> Público</h2>
-                <fieldset class="pp-campo">
-                    <legend class="pp-campo-rotulo">Grupos</legend>
-                    <div class="pp-grupos">
-                        {% for g in d.grupos %}
-                            <label class="pp-grupo">
-                                <input type="checkbox" checked data-pp-grupo data-pp-clt="{{ g.clt }}" data-pp-pj="{{ g.pj }}">
-                                <span>{{ g.nome }}</span>
-                                <small>{{ g.clt + g.pj }}</small>
+            <div class="pp-novo-form">
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>1</span> Tipo e título</h2>
+                    <div class="pp-pub-tipos">
+                        {% for t in d.tipos %}
+                            <label class="pp-tipo">
+                                <input type="radio" name="tipo" value="{{ t.chave }}"{% if t.chave == f.tipo %} checked{% endif %}{% if d.publicado or d.revogado %} disabled{% endif %}>
+                                <span class="pp-tipo-corpo"><strong>{{ t.rotulo }}</strong><small>{{ t.chave == 'normativa' ? 'Documento com vigência; entra no repositório da Minha área e pode ser exigido na admissão.' : 'Aviso que pede ciência até um prazo.' }}</small></span>
                             </label>
                         {% endfor %}
                     </div>
-                </fieldset>
-                <label class="pp-campo is-curto">
-                    <span>Vínculo</span>
-                    <select data-pp-vinculo>
-                        <option value="todos">Todos os vínculos</option>
-                        <option value="clt">Somente CLT</option>
-                        <option value="pj">Somente PJ</option>
-                    </select>
-                </label>
-                <label class="pp-marcar">
-                    <input type="checkbox" checked>
-                    <span><strong>Acompanha a empresa:</strong> quem entrar nesses grupos depois também recebe, com prazo próprio.</span>
-                </label>
-                <div class="pp-contagem-publico" data-pp-resultado>
-                    <i class="ti ti-users-group" aria-hidden="true"></i>
-                    <span><strong data-pp-total>48</strong> pessoas vão receber</span>
-                    <button type="button" class="pp-botao is-compacto" data-pp-demo="Lista nominal do público antes de publicar: disponível na mobília (B1.4).">Ver a lista</button>
-                </div>
-                <p class="pp-alerta-zero" data-pp-zero hidden role="status">
-                    <i class="ti ti-alert-circle" aria-hidden="true"></i>
-                    Nenhum critério corresponde: ninguém recebe. O Pessoas+ nunca trata “nada marcado” como “todos”.
-                </p>
-                <p class="pp-nota">Perfil RH: publica para qualquer público. Um gestor vê aqui apenas os grupos que gere, e o servidor recusa qualquer outro.</p>
-            </section>
+                    <label class="pp-campo">
+                        <span>Título <em class="pp-obrig">obrigatório</em></span>
+                        <input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}" required{% if d.revogado %} disabled{% endif %}>
+                    </label>
+                </section>
 
-            <section class="pp-cartao pp-secao">
-                <h2 class="pp-secao-titulo"><span>4</span> Prazo e lembretes</h2>
-                <div class="pp-linha-campos">
-                    <label class="pp-campo">
-                        <span>Prazo para a ciência</span>
-                        <input type="date" value="2026-10-10">
-                    </label>
-                    <label class="pp-campo">
-                        <span>Prazo de quem entrar depois</span>
-                        <select><option>{{ d.prazo_entrada }} dias após entrar no grupo</option><option>5 dias após entrar no grupo</option><option>15 dias após entrar no grupo</option></select>
-                    </label>
-                </div>
-                <div class="pp-linha-campos">
-                    <label class="pp-campo">
-                        <span>“Lembrar depois” adia por</span>
-                        <select>
-                            {% for h in [1, 2, 4, 8] %}
-                                <option{% if h == d.lembrete_horas %} selected{% endif %}>{{ h }} {{ h == 1 ? 'hora' : 'horas' }}</option>
-                            {% endfor %}
-                        </select>
-                    </label>
-                    <label class="pp-campo">
-                        <span>Exigir quiz antes da ciência</span>
-                        <select><option>Não exigir</option><option>Quiz · Política de uso de veículos</option></select>
-                    </label>
-                </div>
-                <p class="pp-nota">No dia do prazo e em atraso, o aviso volta a cada 1 hora. Enquanto houver pendência, o contador fica no topo das páginas do GLPI.</p>
-                <label class="pp-marcar">
-                    <input type="checkbox">
-                    <span><strong>Bloqueio parcial:</strong> em atraso, trava funções do Pessoas+ (como pedir férias) até a ciência. Nunca impede abrir chamado nem sair.</span>
-                </label>
-            </section>
-        </div>
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>2</span> Conteúdo</h2>
+                    <div class="pp-nativo pp-editor">{{ d.editor_html|raw }}</div>
+                    <p class="pp-nota">O texto é congelado ao publicar: o que cada pessoa confirma é exatamente esta versão, com selo de integridade.</p>
 
-        <aside class="pp-novo-lateral">
-            <section class="pp-cartao">
-                <h2 class="pp-secao-titulo is-simples"><i class="ti ti-eye" aria-hidden="true"></i> Como o destinatário vai ver</h2>
-                <div class="pp-previa">
-                    <span class="pp-previa-tipo" data-pp-prev-tipo>Comunicado</span>
-                    <strong data-pp-prev-titulo>Escala de plantão do Dia de Finados</strong>
-                    <p data-pp-prev-texto>Informamos a escala de plantão para 02/11.</p>
-                    <span class="pp-botao is-primario is-compacto pp-previa-botao" aria-hidden="true" data-pp-prev-resposta>Ciente</span>
-                </div>
-                <p class="pp-nota"><span data-pp-prev-total>48</span> pessoas · aviso ao entrar e na Minha área.</p>
-            </section>
-            <section class="pp-cartao pp-publicar">
-                <button type="button" class="pp-botao is-largo" data-pp-demo="Rascunho: salva sem publicar e sem pedir ciência. Disponível na mobília (B2.1).">
-                    <i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span>
-                </button>
-                <button type="button" class="pp-botao is-primario is-largo" data-pp-publicar data-pp-demo="Publicar: congela o texto e os anexos, calcula o selo SHA-256, grava a lista de destinatários e dispara o aviso. Disponível na mobília (B2.2).">
-                    <i class="ti ti-send" aria-hidden="true"></i><span>Publicar</span>
-                </button>
-                <p class="pp-nota">Depois de publicado, mudar o texto só por nova versão, com motivo obrigatório.</p>
-            </section>
-        </aside>
-    </div>
+                    <fieldset class="pp-campo pp-links" data-pp-links>
+                        <legend class="pp-campo-rotulo">Documentos relacionados <small class="pp-sub">botões abaixo do texto: manual, POP, documento do Codex+</small></legend>
+                        <input type="hidden" name="links_json" value="{{ d.links_json|e('html_attr') }}" data-pp-links-campo>
+                        <script type="application/json" data-pp-links-json>{{ d.links_json|raw }}</script>
+                        <ul class="pp-publ-regras" data-pp-links-lista aria-live="polite">
+                            {% for l in d.links %}<li class="pp-chip is-fixo">{{ l.codex ? 'Codex+: ' : '' }}{{ l.rotulo }}</li>{% else %}<li class="pp-sub" data-pp-links-vazio>Nenhum documento relacionado.</li>{% endfor %}
+                        </ul>
+                        {% if not d.revogado %}
+                            <div class="pp-publ-nova">
+                                <label class="pp-campo"><span>Rótulo do botão</span><input type="text" maxlength="120" placeholder="Ex.: Manual de treinamento MAN0004" data-pp-link-rotulo></label>
+                                <label class="pp-campo"><span>Endereço</span><input type="text" maxlength="500" placeholder="Cole a URL do documento (ex.: do Codex+)" data-pp-link-url></label>
+                                <button type="button" class="pp-botao" data-pp-link-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar</span></button>
+                            </div>
+                            <small class="pp-dica">No Codex+, abra o documento e copie o endereço da barra do navegador. Os links entram no selo da versão.</small>
+                        {% endif %}
+                    </fieldset>
+                </section>
+
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>3</span> Ciência</h2>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo is-curto">
+                            <span>Prazo para ciência (dias após publicar)</span>
+                            <input type="number" name="prazo_dias" min="1" max="365" value="{{ f.prazo_dias }}"{% if d.revogado %} disabled{% endif %}>
+                        </label>
+                        <label class="pp-marcar is-justo">
+                            <input type="checkbox" name="exige_concordancia" value="1"{% if f.exige_concordancia %} checked{% endif %}{% if d.revogado %} disabled{% endif %}>
+                            <span><strong>Pedir "de acordo"</strong> em vez de só "ciente". A pessoa pode responder "Não concordo" com justificativa, que fica registrada (D-04).</span>
+                        </label>
+                    </div>
+                    <div data-pp-so-normativa{% if f.tipo != 'normativa' %} hidden{% endif %}>
+                        <div class="pp-linha-campos">
+                            <label class="pp-campo is-curto"><span>Vigência: início</span><input type="date" name="vigencia_inicio" value="{{ f.vigencia_inicio }}"{% if d.revogado %} disabled{% endif %}></label>
+                            <label class="pp-campo is-curto"><span>Vigência: fim</span><input type="date" name="vigencia_fim" value="{{ f.vigencia_fim }}"{% if d.revogado %} disabled{% endif %}></label>
+                            <label class="pp-campo is-curto"><span>Referência (código, revisão)</span><input type="text" name="referencia" maxlength="100" value="{{ f.referencia }}"{% if d.revogado %} disabled{% endif %}></label>
+                        </div>
+                        <label class="pp-marcar is-justo">
+                            <input type="checkbox" name="exigir_admissao" value="1"{% if f.exigir_admissao %} checked{% endif %}{% if d.revogado %} disabled{% endif %}>
+                            <span><strong>Exigir na admissão:</strong> quem chegar depois recebe esta normativa como pendente (I-01).</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>4</span> Quem recebe</h2>
+                    {% if d.modelos|length > 0 %}
+                        <label class="pp-campo">
+                            <span>Começar de um público salvo</span>
+                            <select data-pp-modelo-select data-pp-buscavel>
+                                <option value="0">Montar as regras aqui</option>
+                                {% for m in d.modelos %}
+                                    <option value="{{ m.id }}" data-pp-regras="{{ m.regras|e('html_attr') }}"{% if m.id == f.publico_modelo_id %} selected{% endif %}>{{ m.nome }} ({{ m.total }} {{ m.total == 1 ? 'pessoa' : 'pessoas' }})</option>
+                                {% endfor %}
+                            </select>
+                            <small class="pp-dica">As regras do público salvo são copiadas para este comunicado; mudar aqui não altera o público salvo.</small>
+                        </label>
+                    {% endif %}
+                    <ul class="pp-publ-regras" data-pp-regras-lista aria-live="polite">
+                        {% for r in d.regras %}
+                            <li class="pp-chip is-fixo{% if r.is_exclusao %} pp-publ-exclusao{% endif %}">{{ r.is_exclusao ? 'exceto ' : '' }}{{ r.rotulo_tipo|lower }}: {{ r.rotulo }}</li>
+                        {% else %}
+                            <li class="pp-sub" data-pp-regras-vazio>Nenhuma regra ainda.</li>
+                        {% endfor %}
+                    </ul>
+                    {% if not d.revogado %}
+                        <div class="pp-publ-nova" data-pp-regra-nova>
+                            <label class="pp-campo is-curto"><span>Tipo</span>
+                                <select data-pp-regra-tipo>{% for t in d.tipos_regra %}<option value="{{ t.chave }}">{{ t.rotulo }}</option>{% endfor %}</select>
+                            </label>
+                            <label class="pp-campo"><span>Valor</span><select data-pp-regra-valor data-pp-buscavel></select></label>
+                            <label class="pp-marcar is-justo" data-pp-regra-filhos-rotulo><input type="checkbox" data-pp-regra-filhos><span>Incluir subníveis</span></label>
+                            <label class="pp-marcar is-justo"><input type="checkbox" data-pp-regra-exclusao><span>Excluir (não incluir)</span></label>
+                            <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                        </div>
+                    {% endif %}
+                    <p class="pp-contagem-publico" data-pp-previa-bloco><strong data-pp-previa-total>{{ d.previa.total }}</strong> <span data-pp-previa-rotulo>{{ d.previa.total == 1 ? 'pessoa receberá' : 'pessoas receberão' }}</span></p>
+                    <ul class="pp-publ-nomes" data-pp-previa-nomes>{% for n in d.previa.nomes %}<li>{{ n }}</li>{% endfor %}{% if d.previa.mais > 0 %}<li class="pp-sub">e mais {{ d.previa.mais }}</li>{% endif %}</ul>
+                    {% if d.publicado %}<p class="pp-nota">A lista congelada da versão atual não muda. O público acima vale para a <strong>próxima versão</strong>.</p>{% endif %}
+                </section>
+
+                {% if not d.revogado %}
+                    <div class="pp-acoes-linha">
+                        {% if d.nova %}
+                            <button type="submit" name="add" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                        {% elseif not d.publicado %}
+                            <button type="submit" name="update" value="1" class="pp-botao"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                            <button type="submit" name="publicar" value="1" class="pp-botao is-primario" data-pp-confirmar="Publicar agora? O conteúdo, os anexos e a lista de destinatários ficam congelados nesta versão."><i class="ti ti-send" aria-hidden="true"></i><span>Publicar</span></button>
+                            <button type="submit" name="delete" value="1" class="pp-botao is-perigo" data-pp-confirmar="Excluir este rascunho?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir rascunho</span></button>
+                        {% else %}
+                            <button type="submit" name="update" value="1" class="pp-botao"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar alterações</span></button>
+                            <button type="submit" name="publicar" value="1" class="pp-botao is-primario" data-pp-motivo="Motivo da nova versão (obrigatório). Ela reabre a pendência para todo o público; as ciências da versão {{ d.versao_atual }} continuam ligadas a ela."><i class="ti ti-versions" aria-hidden="true"></i><span>Publicar nova versão</span></button>
+                        {% endif %}
+                        <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
+                    </div>
+                    {% if d.nova %}<p class="pp-nota">Salve o rascunho primeiro: a aba Anexos e o botão Publicar aparecem depois.</p>{% endif %}
+                {% endif %}
+            </div>
+        </form>
+    {% endif %}
 {% endblock %}

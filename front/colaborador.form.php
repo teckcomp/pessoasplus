@@ -74,7 +74,7 @@ if ($nova) {
         $u = new User();
         if ($u->getFromDB($usersPre)) {
             $ficha['users_id'] = $usersPre;
-            $ficha['nome']     = trim((string) $u->fields['realname'] . ' ' . (string) $u->fields['firstname']) ?: (string) $u->fields['name'];
+            $ficha['nome']     = (string) formatUserName($usersPre, (string) $u->fields['name'], (string) $u->fields['realname'], (string) $u->fields['firstname']);
             $ficha['situacao'] = 'ativo';
             $emails = UserEmail::getAllForUser($usersPre);
             $ficha['email'] = (string) ($emails[0] ?? '');

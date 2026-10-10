@@ -1,4 +1,4 @@
-{# Pessoas+ - lista de comunicados e normativas. PESSOASPLUS_BUILD_BP0C PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 #}
+{# Pessoas+ - lista de comunicados e normativas. PESSOASPLUS_BUILD_BP0C PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B_2 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BM2 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -7,7 +7,7 @@
         <i class="ti ti-speakerphone" aria-hidden="true"></i><span>Novo comunicado</span>
     </a>
     <a class="pp-botao" href="{{ pp.dados.url_novo }}?tipo=normativa">
-        <i class="ti ti-books" aria-hidden="true"></i><span>Normativa do Codex+</span>
+        <i class="ti ti-books" aria-hidden="true"></i><span>Nova normativa</span>
     </a>
     {% endif %}
 {% endblock %}
@@ -42,11 +42,7 @@
                     {% for c in pp.dados.comunicados %}
                         <tr data-pp-item data-pp-situacao="{{ c.fase }}">
                             <td>
-                                {% if c.url != '' %}
-                                    <a class="pp-link-forte" href="{{ c.url }}">{{ c.titulo }}</a>
-                                {% else %}
-                                    <button type="button" class="pp-link-forte is-botao" data-pp-demo="Na demonstração, o acompanhamento completo é o da Política de uso de veículos.">{{ c.titulo }}</button>
-                                {% endif %}
+                                <a class="pp-link-forte" href="{{ c.url }}">{{ c.titulo }}</a>
                                 <small class="pp-sub">{{ c.tipo }} · {{ c.origem }}</small>
                             </td>
                             <td class="pp-publico">{{ c.publico }}</td>
@@ -59,21 +55,15 @@
                                     </div>
                                     <small class="pp-progresso-texto">{{ c.confirmados }} de {{ c.total }} · {{ c.percentual }}%</small>
                                 {% else %}
-                                    <small class="pp-progresso-texto">não publicado</small>
+                                    <small class="pp-progresso-texto">{{ c.fase == 'rascunho' ? 'não publicado' : '—' }}</small>
                                 {% endif %}
                             </td>
                             <td><span class="pp-selo pp-tom-{{ c.tom }}">{{ c.situacao }}</span></td>
                             <td class="pp-acoes-linha">
                                 {% if c.total > 0 %}
-                                    {% if c.url != '' %}
-                                        <a class="pp-botao is-compacto is-icone" href="{{ c.url }}" title="Acompanhar a ciência" aria-label="Acompanhar a ciência de {{ c.titulo }}"><i class="ti ti-chart-bar" aria-hidden="true"></i></a>
-                                    {% else %}
-                                        <button type="button" class="pp-botao is-compacto is-icone" title="Acompanhar a ciência" aria-label="Acompanhar a ciência de {{ c.titulo }}" data-pp-demo="Na demonstração, o acompanhamento completo é o da Política de uso de veículos."><i class="ti ti-chart-bar" aria-hidden="true"></i></button>
-                                    {% endif %}
+                                    <a class="pp-botao is-compacto is-icone" href="{{ c.url }}" title="Acompanhar a ciência" aria-label="Acompanhar a ciência de {{ c.titulo }}"><i class="ti ti-chart-bar" aria-hidden="true"></i></a>
                                     {% if c.url_comprovante != '' %}
                                         <a class="pp-botao is-compacto is-icone" href="{{ c.url_comprovante }}" target="_blank" rel="noopener" title="Comprovante coletivo" aria-label="Comprovante coletivo de {{ c.titulo }}"><i class="ti ti-file-certificate" aria-hidden="true"></i></a>
-                                    {% else %}
-                                        <button type="button" class="pp-botao is-compacto is-icone" title="Comprovante coletivo" aria-label="Comprovante coletivo de {{ c.titulo }}" data-pp-demo="Na demonstração, o comprovante completo é o da Política de uso de veículos."><i class="ti ti-file-certificate" aria-hidden="true"></i></button>
                                     {% endif %}
                                 {% endif %}
                             </td>
@@ -83,5 +73,6 @@
             </table>
         </div>
         <p class="pp-vazio" data-pp-vazio hidden>Nenhum comunicado com esse filtro.</p>
+        {% if pp.dados.comunicados|length == 0 %}<p class="pp-vazio">Nenhum comunicado ainda.{% if pp.pode.comunicados.gerenciar %} Crie o primeiro em "Novo comunicado".{% endif %}</p>{% endif %}
     </section>
 {% endblock %}

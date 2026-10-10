@@ -1655,3 +1655,21 @@ body.pp-pagina-impressao { margin: 0; background: #eef1f3; font-family: system-u
 .pp-casca .pp-jorn-trecho h3 .ti { color: var(--pp-acento); }
 .pp-casca .pp-jorn-trecho[hidden] { display: none; }
 @media (max-width: 760px) { .pp-casca .pp-jorn-rotulo { font-size: 20px; } .pp-casca .pp-jorn-total { font-size: 16px; } }
+
+/* BM.2: comunicados reais. PESSOASPLUS_BUILD_BM2 */
+.pp-casca .pp-editor .tox-tinymce { border-radius: 6px; border-color: var(--pp-borda); }
+.pp-casca .pp-editor textarea { width: 100%; box-sizing: border-box; }
+.pp-casca .pp-conteudo-rico { line-height: 1.6; }
+.pp-casca .pp-conteudo-rico img { max-width: 100%; height: auto; }
+.pp-casca .pp-conteudo-rico table { border-collapse: collapse; }
+.pp-casca .pp-conteudo-rico td, .pp-casca .pp-conteudo-rico th { border: 1px solid var(--pp-borda); padding: 4px 8px; }
+.pp-casca .pp-emissor > div { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pp-casca .pp-nota.pp-tom-atraso { color: var(--pp-atraso); }
+.pp-casca .pp-ciencia .pp-campo { margin-top: 8px; }
+.pp-casca .pp-ciencia form { display: flex; flex-direction: column; }
+
+/* BM.2-2: documentos relacionados. PESSOASPLUS_BUILD_BM2_2 */
+.pp-casca .pp-links { border: 0; padding: 0; margin-top: 14px; }
+.pp-casca .pp-links .pp-publ-nova .pp-campo input[type="text"] { width: 100%; box-sizing: border-box; }
+.pp-casca .pp-links-botoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.pp-casca .pp-botao.is-codex { border-color: var(--pp-acento); color: var(--pp-acento); }

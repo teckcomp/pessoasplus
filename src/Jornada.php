@@ -46,6 +46,7 @@ final class Jornada
     private const POR_ACAO = [
         'ficha_alterada' => 'dia_a_dia',
         'ficha_excluida' => 'saida',
+        'comunicado_criado' => 'dia_a_dia',
     ];
 
     /**

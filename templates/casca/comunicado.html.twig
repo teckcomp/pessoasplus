@@ -1,100 +1,119 @@
-{# Pessoas+ - painel do emissor (Tela 2 da proposta). PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2A_2 PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C_2 PESSOASPLUS_BUILD_BP0C #}
+{# Pessoas+ - painel do emissor (Tela 2), real. PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
-    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
-        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Todos os comunicados</span>
-    </a>
-    <button type="button" class="pp-botao" data-pp-demo="Exportar CSV: disponível a partir do bloco B2.3 (mobília).">
-        <i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span>Exportar CSV</span>
-    </button>
-    <a class="pp-botao" href="{{ pp.dados.url_comprovante }}" target="_blank" rel="noopener">
-        <i class="ti ti-file-certificate" aria-hidden="true"></i><span>Comprovante coletivo</span>
-    </a>
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Todos os comunicados</span></a>
+    <a class="pp-botao" href="{{ pp.dados.url_csv }}"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span>Exportar CSV</span></a>
+    <a class="pp-botao" href="{{ pp.dados.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-file-certificate" aria-hidden="true"></i><span>Comprovante coletivo</span></a>
+    {% if pp.dados.gerencia and pp.dados.tom_com != 'atraso' %}
+        <a class="pp-botao is-primario" href="{{ pp.dados.url_editar }}"><i class="ti ti-versions" aria-hidden="true"></i><span>Nova versão</span></a>
+    {% endif %}
 {% endblock %}
 
 {% block conteudo %}
     {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
     <div class="pp-emissor-topo">
         <span class="pp-rotulo-tela"><i class="ti ti-chart-bar" aria-hidden="true"></i> Acompanhamento da ciência</span>
-        <span class="pp-selo pp-tom-ok">{{ d.situacao }}</span>
-        <span class="pp-selo">{{ d.codigo }}</span>
-        <span class="pp-hash" title="Selo de integridade SHA-256 do conteúdo publicado"><i class="ti ti-shield-check" aria-hidden="true"></i> {{ d.selo|slice(0, 16) }}…</span>
+        <span class="pp-selo pp-tom-{{ d.tom_com }}">{{ d.situacao_com }}</span>
+        <span class="pp-selo pp-tom-{{ d.vigente ? 'ok' : 'neutro' }}">versão {{ d.numero }} · {{ d.situacao|lower }}</span>
+        <span class="pp-sub">publicada em {{ d.publicado }} · prazo {{ d.prazo }}</span>
+        <span class="pp-hash" title="Selo de integridade SHA-256 do conteúdo e dos anexos publicados"><i class="ti ti-shield-check" aria-hidden="true"></i> {{ d.selo|slice(0, 16) }}…</span>
     </div>
+    {% if d.motivo != '' %}<p class="pp-nota"><strong>Motivo desta versão:</strong> {{ d.motivo }}</p>{% endif %}
+    {% if d.motivo_encerramento != '' %}<p class="pp-nota"><strong>Encerrada:</strong> {{ d.motivo_encerramento }}</p>{% endif %}
 
     <section class="pp-indicadores is-quatro" aria-label="Números do comunicado">
         {% for n in d.numeros %}
-            <div class="pp-indicador pp-tom-{{ n.tom }}">
-                <div class="pp-indicador-valor">{{ n.valor }}</div>
-                <div class="pp-indicador-rotulo">{{ n.rotulo }}</div>
-            </div>
+            <div class="pp-indicador pp-tom-{{ n.tom }}"><div class="pp-indicador-valor">{{ n.valor }}</div><div class="pp-indicador-rotulo">{{ n.rotulo }}</div></div>
         {% endfor %}
     </section>
 
     <div class="pp-emissor">
-        <section class="pp-cartao">
-            <header class="pp-cartao-cabecalho">
-                <h2>Adesão por grupo</h2>
-                <span class="pp-referencia">{{ d.adesao }}% no total</span>
-            </header>
-            <ul class="pp-barras">
-                {% for g in d.por_grupo %}
-                    <li>
-                        <span class="pp-barras-rotulo">{{ g.grupo }}</span>
-                        <div class="pp-progresso is-largo" role="img" aria-label="{{ g.confirmados }} de {{ g.total }} confirmaram">
-                            <div class="pp-progresso-barra pp-tom-{{ g.tom }}" style="width: {{ g.percentual }}%"></div>
-                        </div>
-                        <span class="pp-barras-valor">{{ g.percentual }}%</span>
-                        <small class="pp-barras-detalhe">{{ g.confirmados }}/{{ g.total }}</small>
-                    </li>
-                {% endfor %}
-            </ul>
-        </section>
+        <div>
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Adesão por setor</h2><span class="pp-referencia">{{ d.adesao }}% no total</span></header>
+                <ul class="pp-barras">
+                    {% for g in d.por_grupo %}
+                        <li>
+                            <span class="pp-barras-rotulo">{{ g.grupo }}</span>
+                            <div class="pp-progresso is-largo" role="img" aria-label="{{ g.confirmados }} de {{ g.total }} confirmaram"><div class="pp-progresso-barra pp-tom-{{ g.tom }}" style="width: {{ g.percentual }}%"></div></div>
+                            <span class="pp-barras-valor">{{ g.percentual }}%</span>
+                            <small class="pp-barras-detalhe">{{ g.confirmados }}/{{ g.total }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Conteúdo publicado</h2></header>
+                <div class="pp-doc-secao pp-conteudo-rico">{{ d.conteudo_html|raw }}</div>
+                {% if d.links|length > 0 %}
+                <div class="pp-links-botoes">
+                    {% for l in d.links %}
+                        <a class="pp-botao{% if l.codex %} is-codex{% endif %}" href="{{ l.url }}" target="_blank" rel="noopener"><i class="ti {{ l.codex ? 'ti-books' : 'ti-external-link' }}" aria-hidden="true"></i><span>{{ l.rotulo }}</span></a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+                {% if d.anexos|length > 0 %}
+                    <div class="pp-anexos"><h2>Anexos congelados</h2>
+                        <ul>{% for a in d.anexos %}<li><i class="ti ti-paperclip" aria-hidden="true"></i> <a class="pp-link-forte" href="{{ a.url }}">{{ a.nome }}</a> <small>{{ a.tamanho }} · selo {{ a.hash }}…</small></li>{% endfor %}</ul>
+                    </div>
+                {% endif %}
+            </section>
+
+            {% if d.versoes|length > 1 %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho"><h2>Versões</h2></header>
+                    <ul class="pp-lista is-compacta">
+                        {% for v in d.versoes %}
+                            <li><div class="pp-lista-texto"><strong><a href="{{ v.url }}">Versão {{ v.numero }}</a></strong><span>{{ v.publicado }}{% if v.motivo != '' %} · {{ v.motivo }}{% endif %}</span></div><span class="pp-selo pp-tom-{{ v.tom }}">{{ v.situacao }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if d.pode_revogar %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho"><h2>Revogar</h2></header>
+                    <form method="post" action="{{ d.url_aqui }}" class="pp-publ-nova">
+                        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                        <input type="hidden" name="id" value="{{ d.comunicado_id }}">
+                        <label class="pp-campo"><span>Motivo <em class="pp-obrig">obrigatório</em></span><input type="text" name="motivo" maxlength="2000" required></label>
+                        <button type="submit" name="revogar" value="1" class="pp-botao is-perigo" data-pp-confirmar="Revogar? As pendências somem; as ciências já registradas ficam como evidência. Não há como desfazer."><i class="ti ti-ban" aria-hidden="true"></i><span>Revogar</span></button>
+                    </form>
+                </section>
+            {% endif %}
+        </div>
 
         <section class="pp-cartao" data-pp-filtravel>
-            <header class="pp-cartao-cabecalho">
-                <h2>Quem falta e quem já confirmou</h2>
-                {% if pp.pode.comunicados.gerenciar %}
-                <button type="button" class="pp-botao is-primario is-compacto pp-a-direita" data-pp-demo="Lembrar os 7 que faltam: o aviso volta para cada um (D-49). Disponível na mobília (B2.3).">
-                    <i class="ti ti-bell-ringing" aria-hidden="true"></i><span>Lembrar os 7</span>
-                </button>
-                {% endif %}
-            </header>
+            <header class="pp-cartao-cabecalho"><h2>Quem falta e quem já confirmou</h2></header>
             <div class="pp-filtros" role="group" aria-label="Filtrar pessoas">
-                <button type="button" class="pp-chip is-ativo" data-pp-filtro="faltam" aria-pressed="true">Faltam <strong>7</strong></button>
-                <button type="button" class="pp-chip" data-pp-filtro="atrasado" aria-pressed="false">Em atraso <strong>2</strong></button>
-                <button type="button" class="pp-chip" data-pp-filtro="pendente" aria-pressed="false">Pendentes <strong>5</strong></button>
-                <button type="button" class="pp-chip" data-pp-filtro="confirmado" aria-pressed="false">Confirmaram <strong>41</strong></button>
-                <label class="pp-busca">
-                    <i class="ti ti-search" aria-hidden="true"></i>
-                    <span class="pp-oculto">Buscar pessoa ou grupo</span>
-                    <input type="search" data-pp-busca placeholder="Pessoa ou grupo">
-                </label>
+                <button type="button" class="pp-chip is-ativo" data-pp-filtro="faltam" aria-pressed="true">Faltam <strong>{{ d.contagem.faltam }}</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="atrasado" aria-pressed="false">Em atraso <strong>{{ d.contagem.atrasado }}</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="confirmado" aria-pressed="false">Confirmaram <strong>{{ d.contagem.confirmado }}</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="discorda" aria-pressed="false">Não concordam <strong>{{ d.contagem.discorda }}</strong></button>
+                <button type="button" class="pp-chip" data-pp-filtro="todos" aria-pressed="false">Todos</button>
+                <label class="pp-busca"><i class="ti ti-search" aria-hidden="true"></i><span class="pp-oculto">Buscar pessoa ou setor</span><input type="search" data-pp-busca placeholder="Pessoa ou setor"></label>
             </div>
             <ul class="pp-pessoas">
                 {% for p in d.pessoas %}
-                    <li data-pp-item data-pp-situacao="{{ p.situacao }}{{ p.situacao != 'confirmado' ? ' faltam' : '' }}"{% if p.situacao == 'confirmado' %} hidden{% endif %}>
+                    <li data-pp-item data-pp-situacao="{{ p.situacao }}{% if p.situacao == 'pendente' or p.situacao == 'atrasado' %} faltam{% endif %}{% if p.situacao == 'discorda' %} confirmado{% endif %}"{% if p.situacao == 'confirmado' or p.situacao == 'discorda' %} hidden{% endif %}>
                         <span class="pp-avatar" aria-hidden="true">{{ p.iniciais }}</span>
                         <div class="pp-lista-texto">
                             <strong>{{ p.nome }}</strong>
                             <span>{{ p.grupo }} · {{ p.leitura }}{% if p.prazo != '' %} · {{ p.prazo }}{% endif %}</span>
-                            {% if p.avisos > 0 %}<em class="pp-nota"><i class="ti ti-bell" aria-hidden="true"></i> avisado {{ p.avisos }} {{ p.avisos == 1 ? 'vez' : 'vezes' }}</em>{% endif %}
+                            {% if p.justificativa != '' %}<em class="pp-nota">"{{ p.justificativa }}"</em>{% endif %}
+                            {% if not p.integro %}<em class="pp-nota pp-tom-atraso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> selo da ciência não confere: registro alterado fora do plugin</em>{% endif %}
                         </div>
                         <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.rotulo }}</span>
-                        {% if p.situacao != 'confirmado' %}
-                            {% if pp.pode.comunicados.gerenciar %}
-                                <button type="button" class="pp-botao is-compacto" data-pp-demo="Lembrar {{ p.nome }}: disponível na mobília (B2.3).">Lembrar</button>
-                            {% endif %}
-                        {% else %}
-                            <a class="pp-botao is-compacto" href="{{ d.url_comprovante }}&amp;p={{ loop.index0 }}" target="_blank" rel="noopener" title="Também anexado à pasta de {{ p.nome }} no Fichário (D-50)">
-                                <i class="ti ti-file-certificate" aria-hidden="true"></i><span>Comprovante</span>
-                            </a>
+                        {% if p.url_comprovante != '' %}
+                            <a class="pp-botao is-compacto" href="{{ p.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-file-certificate" aria-hidden="true"></i><span>Comprovante</span></a>
                         {% endif %}
                     </li>
                 {% endfor %}
             </ul>
             <p class="pp-vazio" data-pp-vazio hidden>Ninguém com esse filtro.</p>
-            <p class="pp-rodape-lista" data-pp-mostra-em="confirmado" hidden>E mais {{ d.omitidos }} que confirmaram. A lista completa sai na exportação.</p>
         </section>
     </div>
 {% endblock %}

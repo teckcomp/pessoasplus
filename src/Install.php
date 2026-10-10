@@ -7,6 +7,8 @@
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3C
  * PESSOASPLUS_BUILD_BM1
+ * PESSOASPLUS_BUILD_BM2
+ * PESSOASPLUS_BUILD_BM2_2
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -45,6 +47,11 @@ final class Install
         'glpi_plugin_pessoasplus_eventos',
         'glpi_plugin_pessoasplus_publicos',
         'glpi_plugin_pessoasplus_publicos_regras',
+        'glpi_plugin_pessoasplus_comunicados',
+        'glpi_plugin_pessoasplus_versoes',
+        'glpi_plugin_pessoasplus_anexos',
+        'glpi_plugin_pessoasplus_destinatarios',
+        'glpi_plugin_pessoasplus_ciencias',
     ];
 
     /**
@@ -187,7 +194,130 @@ final class Install
                 KEY `publico` (`plugin_pessoasplus_publicos_id`)
             ) $fim");
         }
+
+        // BM.2 - comunicados e normativas (M1).
+        $tabela = 'glpi_plugin_pessoasplus_comunicados';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `entities_id` int unsigned NOT NULL DEFAULT '0',
+                `tipo` varchar(20) NOT NULL DEFAULT 'comunicado',
+                `titulo` varchar(255) NOT NULL DEFAULT '',
+                `conteudo` longtext,
+                `situacao` varchar(20) NOT NULL DEFAULT 'rascunho',
+                `exige_concordancia` tinyint NOT NULL DEFAULT '0',
+                `prazo_dias` int NOT NULL DEFAULT '7',
+                `plugin_pessoasplus_publicos_id` int unsigned NOT NULL DEFAULT '0',
+                `publico_modelo_id` int unsigned NOT NULL DEFAULT '0',
+                `versao_atual` int NOT NULL DEFAULT '0',
+                `vigencia_inicio` date DEFAULT NULL,
+                `vigencia_fim` date DEFAULT NULL,
+                `exigir_admissao` tinyint NOT NULL DEFAULT '0',
+                `referencia` varchar(100) NOT NULL DEFAULT '',
+                `links` text,
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `is_deleted` tinyint NOT NULL DEFAULT '0',
+                `date_creation` timestamp NULL DEFAULT NULL,
+                `date_mod` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `situacao` (`situacao`),
+                KEY `tipo` (`tipo`),
+                KEY `users_id` (`users_id`),
+                KEY `is_deleted` (`is_deleted`)
+            ) $fim");
+        }
+
+        // Versao congelada: conteudo, hash do conteudo e selo (conteudo + anexos).
+        $tabela = 'glpi_plugin_pessoasplus_versoes';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_comunicados_id` int unsigned NOT NULL DEFAULT '0',
+                `numero` int NOT NULL DEFAULT '1',
+                `titulo` varchar(255) NOT NULL DEFAULT '',
+                `conteudo` longtext,
+                `hash_conteudo` char(64) NOT NULL DEFAULT '',
+                `links` text,
+                `selo` char(64) NOT NULL DEFAULT '',
+                `exige_concordancia` tinyint NOT NULL DEFAULT '0',
+                `motivo` text,
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `data_publicacao` timestamp NULL DEFAULT NULL,
+                `prazo` date DEFAULT NULL,
+                `situacao` varchar(20) NOT NULL DEFAULT 'vigente',
+                `data_encerramento` timestamp NULL DEFAULT NULL,
+                `motivo_encerramento` text,
+                PRIMARY KEY (`id`),
+                KEY `comunicado` (`plugin_pessoasplus_comunicados_id`,`numero`),
+                KEY `situacao` (`situacao`)
+            ) $fim");
+        }
+
+        $tabela = 'glpi_plugin_pessoasplus_anexos';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_versoes_id` int unsigned NOT NULL DEFAULT '0',
+                `nome` varchar(255) NOT NULL DEFAULT '',
+                `mime` varchar(255) NOT NULL DEFAULT '',
+                `tamanho` int unsigned NOT NULL DEFAULT '0',
+                `caminho` varchar(255) NOT NULL DEFAULT '',
+                `hash` char(64) NOT NULL DEFAULT '',
+                `documents_id` int unsigned NOT NULL DEFAULT '0',
+                PRIMARY KEY (`id`),
+                KEY `versao` (`plugin_pessoasplus_versoes_id`)
+            ) $fim");
+        }
+
+        // BM.2-2: documentos relacionados (links para o Codex+ ou qualquer URL).
+        // Idempotente: so adiciona onde a coluna ainda nao existe (T-05).
+        foreach (['glpi_plugin_pessoasplus_comunicados', 'glpi_plugin_pessoasplus_versoes'] as $t) {
+            if ($DB->tableExists($t) && !$DB->fieldExists($t, 'links')) {
+                $migration->addField($t, 'links', 'text');
+                $migration->migrationOneTable($t);
+            }
+        }
+
+        // Lista congelada de quem precisa dar ciencia na versao.
+        $tabela = 'glpi_plugin_pessoasplus_destinatarios';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_versoes_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `groups_id` int unsigned NOT NULL DEFAULT '0',
+                `data_inclusao` timestamp NULL DEFAULT NULL,
+                `origem` varchar(20) NOT NULL DEFAULT 'publicacao',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unicidade` (`plugin_pessoasplus_versoes_id`,`users_id`),
+                KEY `users_id` (`users_id`)
+            ) $fim");
+        }
+
+        // Ciencia: somente inclusao, com selo da propria linha.
+        $tabela = 'glpi_plugin_pessoasplus_ciencias';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_versoes_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `concorda` tinyint NOT NULL DEFAULT '1',
+                `justificativa` text,
+                `interface` varchar(10) NOT NULL DEFAULT '',
+                `data` timestamp NULL DEFAULT NULL,
+                `selo` char(64) NOT NULL DEFAULT '',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unicidade` (`plugin_pessoasplus_versoes_id`,`users_id`),
+                KEY `users_id` (`users_id`)
+            ) $fim");
+        }
     }
+
 
     /**
      * Cria os direitos do plugin.

@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -1285,6 +1285,163 @@
         });
     }
 
+
+    /* BM.2: formulario do comunicado e leitura com ciencia. */
+    function iniciarComunicado() {
+        document.querySelectorAll('.pp-casca [data-pp-comunicado]').forEach(function (raiz) {
+            /* O mesmo form ja foi marcado por iniciarPublico: marca propria. */
+            if (raiz.hasAttribute('data-pp-pronto-com')) {
+                return;
+            }
+            raiz.setAttribute('data-pp-pronto-com', '');
+            var soNormativa = raiz.querySelector('[data-pp-so-normativa]');
+            raiz.querySelectorAll('input[name="tipo"]').forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    if (soNormativa) {
+                        soNormativa.hidden = radio.value !== 'normativa' || !radio.checked;
+                    }
+                });
+            });
+            var motivoCampo = raiz.querySelector('[data-pp-motivo-campo]');
+            raiz.querySelectorAll('[data-pp-motivo]').forEach(function (botao) {
+                botao.addEventListener('click', function (evento) {
+                    var motivo = window.prompt(botao.getAttribute('data-pp-motivo') || 'Motivo:', '');
+                    if (motivo === null || motivo.trim() === '') {
+                        evento.preventDefault();
+                        return;
+                    }
+                    if (motivoCampo) {
+                        motivoCampo.value = motivo.trim();
+                    }
+                });
+            });
+        });
+        document.querySelectorAll('.pp-casca [data-pp-leitura]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var marcar = raiz.querySelector('[data-pp-ciencia-marcar]');
+            var botao = raiz.querySelector('[data-pp-ciencia-confirmar]');
+            var just = raiz.querySelector('[data-pp-justificativa]');
+            var radios = raiz.querySelectorAll('[data-pp-concorda]');
+            function discorda() {
+                var d = false;
+                radios.forEach(function (r) { if (r.checked && r.value === '0') { d = true; } });
+                return d;
+            }
+            function atualizar() {
+                if (just) {
+                    just.hidden = !discorda();
+                    var area = just.querySelector('textarea');
+                    if (area) {
+                        area.required = discorda();
+                    }
+                }
+                if (botao && marcar) {
+                    botao.disabled = !marcar.checked;
+                    var texto = botao.querySelector('span');
+                    if (texto && radios.length) {
+                        texto.textContent = discorda() ? 'Registrar "Não concordo"' : (botao.getAttribute('data-pp-texto') || texto.textContent);
+                    }
+                }
+            }
+            if (botao) {
+                var t = botao.querySelector('span');
+                if (t) {
+                    botao.setAttribute('data-pp-texto', t.textContent);
+                }
+            }
+            if (marcar) {
+                marcar.addEventListener('change', atualizar);
+            }
+            radios.forEach(function (r) { r.addEventListener('change', atualizar); });
+            atualizar();
+        });
+    }
+
+
+    /* BM.2-2: documentos relacionados (botoes com link) no comunicado. */
+    function iniciarLinks() {
+        document.querySelectorAll('.pp-casca [data-pp-links]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var campo = raiz.querySelector('[data-pp-links-campo]');
+            var lista = raiz.querySelector('[data-pp-links-lista]');
+            var links = [];
+            try {
+                var lidos = JSON.parse((raiz.querySelector('[data-pp-links-json]') || {}).textContent || '[]');
+                links = Array.isArray(lidos) ? lidos : [];
+            } catch (e) {
+                links = [];
+            }
+            var editavel = !!raiz.querySelector('[data-pp-link-adicionar]');
+            function render() {
+                if (campo) {
+                    campo.value = JSON.stringify(links);
+                }
+                if (!lista) {
+                    return;
+                }
+                lista.innerHTML = '';
+                if (links.length === 0) {
+                    var vazio = el('li', 'pp-sub', 'Nenhum documento relacionado.');
+                    vazio.setAttribute('data-pp-links-vazio', '');
+                    lista.appendChild(vazio);
+                }
+                links.forEach(function (l, i) {
+                    var li = el('li', 'pp-chip is-fixo');
+                    var codex = /\/plugins\/codexplus\//.test(l.url || '');
+                    li.appendChild(document.createTextNode((codex ? 'Codex+: ' : '') + (l.rotulo || l.url)));
+                    li.title = l.url || '';
+                    if (editavel) {
+                        var x = el('button', 'pp-publ-remover', '×');
+                        x.type = 'button';
+                        x.setAttribute('aria-label', 'Remover documento');
+                        x.addEventListener('click', function () {
+                            links.splice(i, 1);
+                            render();
+                        });
+                        li.appendChild(x);
+                    }
+                    lista.appendChild(li);
+                });
+            }
+            var adicionar = raiz.querySelector('[data-pp-link-adicionar]');
+            if (adicionar) {
+                var rotulo = raiz.querySelector('[data-pp-link-rotulo]');
+                var url = raiz.querySelector('[data-pp-link-url]');
+                var incluir = function () {
+                    var u = (url.value || '').trim();
+                    if (!/^(https?:\/\/\S+|\/\S*)$/i.test(u)) {
+                        avisar(raiz, 'Informe um endereço válido (http://, https:// ou começando com /).');
+                        url.focus();
+                        return;
+                    }
+                    if (links.length >= 10) {
+                        avisar(raiz, 'No máximo 10 documentos relacionados.');
+                        return;
+                    }
+                    links.push({ rotulo: (rotulo.value || '').trim(), url: u });
+                    rotulo.value = '';
+                    url.value = '';
+                    render();
+                    rotulo.focus();
+                };
+                adicionar.addEventListener('click', incluir);
+                [rotulo, url].forEach(function (c) {
+                    c.addEventListener('keydown', function (evento) {
+                        if (evento.key === 'Enter') {
+                            evento.preventDefault();
+                            incluir();
+                        }
+                    });
+                });
+            }
+            render();
+        });
+    }
+
     /* Confirmacao antes de acoes destrutivas: botoes com data-pp-confirmar. */
     function iniciarConfirmacoes() {
         document.querySelectorAll('.pp-casca [data-pp-confirmar]').forEach(function (botao) {
@@ -1612,6 +1769,29 @@
                 });
             }
 
+            /* BM.2: comunicado parte de um publico salvo (copia as regras). */
+            var modeloSelect = raiz.querySelector('[data-pp-modelo-select]');
+            var modeloCampo = raiz.querySelector('[data-pp-modelo-campo]');
+            if (modeloSelect) {
+                ouvirMudanca(modeloSelect, function () {
+                    var opcao = modeloSelect.options[modeloSelect.selectedIndex];
+                    if (modeloCampo) {
+                        modeloCampo.value = modeloSelect.value;
+                    }
+                    if (!opcao || modeloSelect.value === '0') {
+                        return;
+                    }
+                    try {
+                        var lidas = JSON.parse(opcao.getAttribute('data-pp-regras') || '[]');
+                        regras = Array.isArray(lidas) ? lidas : [];
+                    } catch (e) {
+                        regras = [];
+                    }
+                    render();
+                    previa();
+                });
+            }
+
             render();
         });
     }
@@ -1632,6 +1812,8 @@
         iniciarPublico();
         iniciarBuscaveis();
         iniciarJornada();
+        iniciarComunicado();
+        iniciarLinks();
     }
 
     if (document.readyState === 'loading') {

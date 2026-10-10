@@ -219,8 +219,8 @@ final class Fichario
             'LIMIT'  => 2000,
         ]);
         foreach ($it as $u) {
-            $nome = trim((string) $u['realname'] . ' ' . (string) $u['firstname']);
-            $usuarios[] = ['id' => (int) $u['id'], 'nome' => ($nome !== '' ? $nome : (string) $u['name']) . ' (' . $u['name'] . ')'];
+            $nome = (string) formatUserName((int) $u['id'], (string) $u['name'], (string) $u['realname'], (string) $u['firstname']);
+            $usuarios[] = ['id' => (int) $u['id'], 'nome' => $nome . ' (' . $u['name'] . ')'];
         }
         // Primeiro gestor (is_manager) de cada grupo, para sugerir ao escolher o setor.
         $gestores = [];

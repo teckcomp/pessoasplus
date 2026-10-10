@@ -7,6 +7,7 @@
  * PESSOASPLUS_BUILD_BP2D
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3C
+ * PESSOASPLUS_BUILD_BM2
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -33,6 +34,7 @@ namespace GlpiPlugin\Pessoasplus\Casca;
  * colaborador o aviso nao abre nem e gasto: abre uma vez, na primeira
  * pagina fora dele. O Mural ja mostra as pendencias no proprio resumo.
  */
+/* BM.2: as pendencias passaram a vir do banco (Comunicado::pendenciasDe). */
 final class Aviso
 {
     public const CHAVE_PROXIMO   = 'plugin_pessoasplus_aviso_proximo';
@@ -68,8 +70,14 @@ final class Aviso
             return ['mostrar' => false, 'pendentes' => 0];
         }
 
-        $conteudo  = Fontes::avisoEntrada();
-        $itens     = $conteudo['itens'];
+        $itens = [];
+        foreach (\GlpiPlugin\Pessoasplus\Comunicado::pendenciasDe((int) \Session::getLoginUserID()) as $p) {
+            $itens[] = ['id' => $p['id'], 'titulo' => $p['titulo'], 'detalhe' => $p['detalhe'], 'selo' => $p['selo'], 'tom' => $p['tom']];
+        }
+        $conteudo = [
+            'titulo'    => count($itens) . (count($itens) === 1 ? ' comunicado aguarda' : ' comunicados aguardam') . ' sua ciência',
+            'subtitulo' => 'Confirme para manter seus registros em dia',
+        ];
         $pendentes = count($itens);
         if ($pendentes === 0) {
             return ['mostrar' => false, 'pendentes' => 0];
@@ -100,7 +108,7 @@ final class Aviso
         return $base + [
             'mostrar'    => true,
             'volta_em'   => 0,
-            'demo'       => Fontes::emDemonstracao('minha_area'),
+            'demo'       => false,
             'titulo'     => $conteudo['titulo'],
             'subtitulo'  => $conteudo['subtitulo'],
             'itens'      => $itens,

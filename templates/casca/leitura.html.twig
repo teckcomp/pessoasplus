@@ -1,72 +1,75 @@
-{# Pessoas+ - leitura com ciencia. PESSOASPLUS_BUILD_BP2B #}
+{# Pessoas+ - leitura com ciencia, real. PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
-    <a class="pp-botao" href="{{ pp.dados.url_minha_area }}">
-        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Minha área</span>
-    </a>
+    <a class="pp-botao" href="{{ pp.dados.url_minha_area }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Minha área</span></a>
 {% endblock %}
 
 {% block conteudo %}
     {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
     <div class="pp-leitura">
         <article class="pp-cartao pp-documento">
             <div class="pp-emissor-topo">
-                <span class="pp-selo">{{ d.codigo }}</span>
-                <span class="pp-selo pp-tom-alerta">Prazo {{ d.prazo }}</span>
-                <span class="pp-hash" title="Selo de integridade SHA-256 do conteúdo publicado"><i class="ti ti-shield-check" aria-hidden="true"></i> conteúdo congelado · {{ d.selo|slice(0, 16) }}…</span>
+                <span class="pp-selo">{{ d.tipo }} · {{ d.codigo }}</span>
+                <span class="pp-selo pp-tom-{{ d.vigente ? 'ok' : 'neutro' }}">{{ d.situacao }}</span>
+                {% if d.vigente %}<span class="pp-selo pp-tom-{{ d.atrasado ? 'atraso' : 'alerta' }}">Prazo {{ d.prazo }}</span>{% endif %}
+                <span class="pp-hash" title="Selo de integridade SHA-256 do conteúdo e anexos publicados"><i class="ti ti-shield-check" aria-hidden="true"></i> conteúdo congelado · {{ d.selo|slice(0, 16) }}…</span>
             </div>
-            {% for s in d.secoes %}
-                <section class="pp-doc-secao">
-                    <h2>{{ s[0] }}</h2>
-                    <p>{{ s[1] }}</p>
-                </section>
-            {% endfor %}
-            <div class="pp-anexos">
-                <h2>Anexos</h2>
-                <ul>
-                    {% for a in d.anexos %}
-                        <li>
-                            <i class="ti ti-paperclip" aria-hidden="true"></i>
-                            <button type="button" class="pp-link-forte is-botao" data-pp-demo="Abrir anexo congelado: disponível na mobília (B1.7).">{{ a.nome }}</button>
-                            <small>{{ a.tamanho }} · selo {{ a.hash }}…</small>
-                        </li>
+            <p class="pp-sub">Publicado em {{ d.publicado }}</p>
+            <div class="pp-doc-secao pp-conteudo-rico">{{ d.conteudo_html|raw }}</div>
+            {% if d.links|length > 0 %}
+                <div class="pp-links-botoes">
+                    {% for l in d.links %}
+                        <a class="pp-botao{% if l.codex %} is-codex{% endif %}" href="{{ l.url }}" target="_blank" rel="noopener"><i class="ti {{ l.codex ? 'ti-books' : 'ti-external-link' }}" aria-hidden="true"></i><span>{{ l.rotulo }}</span></a>
                     {% endfor %}
-                </ul>
-            </div>
+                </div>
+            {% endif %}
+            {% if d.anexos|length > 0 %}
+                <div class="pp-anexos"><h2>Anexos</h2>
+                    <ul>{% for a in d.anexos %}<li><i class="ti ti-paperclip" aria-hidden="true"></i> <a class="pp-link-forte" href="{{ a.url }}">{{ a.nome }}</a> <small>{{ a.tamanho }} · selo {{ a.hash }}…</small></li>{% endfor %}</ul>
+                </div>
+            {% endif %}
         </article>
 
-        <aside class="pp-cartao pp-ciencia" data-pp-ciencia>
+        <aside class="pp-cartao pp-ciencia" data-pp-leitura>
             <h2>Sua ciência</h2>
             <p class="pp-ciencia-leitura"><i class="ti ti-eye" aria-hidden="true"></i> Leitura registrada ao abrir esta página.</p>
-            {% if d.quiz.exigido %}
-                <p class="pp-ciencia-quiz"><i class="ti ti-circle-check" aria-hidden="true"></i> Quiz exigido: aprovado com {{ d.quiz.nota }}% (mínimo {{ d.quiz.minima }}%).</p>
+            {% if d.ciencia is not null %}
+                <div class="pp-recibo">
+                    <div class="pp-recibo-titulo"><i class="ti {{ d.ciencia.concorda ? 'ti-circle-check' : 'ti-circle-x' }}" aria-hidden="true"></i> Ciência registrada</div>
+                    <dl>
+                        <div><dt>Resposta</dt><dd>{{ d.ciencia.resposta }}</dd></div>
+                        {% if d.ciencia.justificativa != '' %}<div><dt>Justificativa</dt><dd>{{ d.ciencia.justificativa }}</dd></div>{% endif %}
+                        <div><dt>Versão</dt><dd>{{ d.codigo }}</dd></div>
+                        <div><dt>Data e hora</dt><dd>{{ d.ciencia.data }}</dd></div>
+                        <div><dt>Selo</dt><dd class="pp-hash">{{ d.ciencia.selo|slice(0, 16) }}… {% if d.ciencia.integra %}<i class="ti ti-shield-check" title="Selo confere" aria-hidden="true"></i>{% else %}<span class="pp-tom-atraso">não confere</span>{% endif %}</dd></div>
+                    </dl>
+                    <a class="pp-botao is-largo" href="{{ d.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-file-certificate" aria-hidden="true"></i><span>Meu comprovante</span></a>
+                </div>
+            {% elseif d.destinatario and d.vigente %}
+                <form method="post" action="{{ d.url_aqui }}" data-pp-ciencia-form>
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                    <input type="hidden" name="id" value="{{ d.versao_id }}">
+                    <label class="pp-marcar">
+                        <input type="checkbox" data-pp-ciencia-marcar required>
+                        <span>Li e compreendi <strong>{{ d.titulo }}</strong>, {{ d.versao }}.</span>
+                    </label>
+                    {% if d.exige_concordancia %}
+                        <label class="pp-marcar is-justo"><input type="radio" name="concorda" value="1" checked data-pp-concorda><span>Estou de acordo</span></label>
+                        <label class="pp-marcar is-justo"><input type="radio" name="concorda" value="0" data-pp-concorda><span>Não concordo (justificativa obrigatória)</span></label>
+                        <label class="pp-campo" data-pp-justificativa hidden><span>Justificativa</span><textarea name="justificativa" rows="3" maxlength="2000"></textarea></label>
+                    {% else %}
+                        <input type="hidden" name="concorda" value="1">
+                    {% endif %}
+                    <button type="submit" name="confirmar" value="1" class="pp-botao is-primario is-largo" data-pp-ciencia-confirmar disabled><i class="ti ti-check" aria-hidden="true"></i><span>{{ d.resposta }}</span></button>
+                    <p class="pp-nota">A confirmação fica registrada com seu usuário, a data e a hora do servidor, a interface e esta versão do texto. Não pode ser editada nem apagada.</p>
+                </form>
+            {% elseif not d.vigente %}
+                <p class="pp-nota">Esta versão não está mais vigente. Se houver uma versão nova, ela aparece na Minha área.</p>
+            {% else %}
+                <p class="pp-nota">Você não está no público desta versão; está vendo como emissor.</p>
             {% endif %}
-
-            <div data-pp-ciencia-form>
-                <label class="pp-marcar">
-                    <input type="checkbox" data-pp-ciencia-marcar>
-                    <span>Li e compreendi a <strong>{{ d.titulo }}</strong>, {{ d.versao }}.</span>
-                </label>
-                <button type="button" class="pp-botao is-primario is-largo" data-pp-ciencia-confirmar disabled>
-                    <i class="ti ti-check" aria-hidden="true"></i><span>{{ d.resposta }}</span>
-                </button>
-                <p class="pp-nota">A confirmação fica registrada com seu usuário, a data e a hora do servidor e esta versão do texto. Não pode ser editada nem apagada.</p>
-            </div>
-
-            <div class="pp-recibo" data-pp-ciencia-ok hidden>
-                <div class="pp-recibo-titulo"><i class="ti ti-circle-check" aria-hidden="true"></i> Ciência registrada</div>
-                <dl>
-                    <div><dt>Resposta</dt><dd>{{ d.resposta }}</dd></div>
-                    <div><dt>Versão</dt><dd>{{ d.codigo }}</dd></div>
-                    <div><dt>Data e hora</dt><dd data-pp-ciencia-hora>—</dd></div>
-                    <div><dt>Selo</dt><dd class="pp-hash">{{ d.selo|slice(0, 16) }}…</dd></div>
-                </dl>
-                <p class="pp-nota">Na demonstração nada foi gravado. Na versão final o comprovante vai também para sua pasta no Fichário.</p>
-                <a class="pp-botao is-largo" href="{{ d.url_comprovante }}" target="_blank" rel="noopener">
-                    <i class="ti ti-file-certificate" aria-hidden="true"></i><span>Ver um comprovante de exemplo</span>
-                </a>
-            </div>
         </aside>
     </div>
 {% endblock %}

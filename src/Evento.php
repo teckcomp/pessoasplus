@@ -44,6 +44,14 @@ final class Evento extends CommonDBTM
         'publico_criado'     => 'Público criado',
         'publico_alterado'   => 'Público alterado',
         'publico_excluido'   => 'Público excluído',
+        'comunicado_criado'      => 'Comunicado criado',
+        'comunicado_publicado'   => 'Comunicado publicado',
+        'comunicado_nova_versao' => 'Nova versão publicada',
+        'comunicado_revogado'    => 'Comunicado revogado',
+        'comunicado_excluido'    => 'Rascunho excluído',
+        'leitura_registrada'     => 'Leitura registrada',
+        'ciencia_confirmada'     => 'Ciência confirmada',
+        'ciencia_nao_concorda'   => 'Ciência registrada com "Não concordo"',
     ];
 
     /**

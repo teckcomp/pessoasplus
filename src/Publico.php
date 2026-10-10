@@ -345,8 +345,8 @@ final class Publico extends CommonDBTM
                 'LIMIT'  => self::PREVIA_NOMES,
             ]);
             foreach ($it as $u) {
-                $nome = trim((string) $u['realname'] . ' ' . (string) $u['firstname']);
-                $nomes[] = $nome !== '' ? $nome : (string) $u['name'];
+                $nome = (string) formatUserName((int) $u['id'], (string) $u['name'], (string) $u['realname'], (string) $u['firstname']);
+                $nomes[] = $nome;
             }
         }
 
@@ -472,8 +472,8 @@ final class Publico extends CommonDBTM
             'LIMIT'  => 2000,
         ]);
         foreach ($it as $u) {
-            $nome = trim((string) $u['realname'] . ' ' . (string) $u['firstname']);
-            $usuarios[] = ['id' => (int) $u['id'], 'nome' => ($nome !== '' ? $nome : (string) $u['name']) . ' (' . $u['name'] . ')'];
+            $nome = (string) formatUserName((int) $u['id'], (string) $u['name'], (string) $u['realname'], (string) $u['firstname']);
+            $usuarios[] = ['id' => (int) $u['id'], 'nome' => $nome . ' (' . $u['name'] . ')'];
         }
 
         return [

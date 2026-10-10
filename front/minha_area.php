@@ -1,31 +1,37 @@
 <?php
 
 /**
- * Pessoas+ - Minha area do colaborador (casca), nas duas interfaces.
+ * Pessoas+ - Minha area do colaborador (BM.2, real).
  *
  * PESSOASPLUS_BUILD_BP1
- * PESSOASPLUS_BUILD_BP2B
+ * PESSOASPLUS_BUILD_BM2
+ *
+ * Pendencias de ciencia, normativas vigentes e comprovantes, nas duas
+ * interfaces. Ferias, pesquisas e tarefas ficam para depois de 13/10 (D-74).
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
 
 use Glpi\Application\View\TemplateRenderer;
-use GlpiPlugin\Pessoasplus\Casca\Fontes;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
+use GlpiPlugin\Pessoasplus\Colaborador;
+use GlpiPlugin\Pessoasplus\Comunicado;
 use GlpiPlugin\Pessoasplus\Menu;
 
 Session::checkRight(Menu::$rightname, READ);
 
-$nome = trim((string) ($_SESSION['glpifirstname'] ?? ''));
+$uid   = (int) Session::getLoginUserID();
+$nome  = trim((string) ($_SESSION['glpifirstname'] ?? ''));
+$ficha = Colaborador::porUsuario($uid);
 
-$dados = Fontes::minhaArea();
-foreach ($dados['ciencias'] as $i => $c) {
-    $leitura = Fontes::leitura((int) $c['id']);
-    $dados['ciencias'][$i]['url'] = $leitura === null
-        ? ''
-        : Pagina::url('/plugins/pessoasplus/front/leitura.php') . '?id=' . (int) $c['id'];
-}
+$dados = [
+    'ciencias'    => Comunicado::pendenciasDe($uid),
+    'normativas'  => Comunicado::normativasDe($uid),
+    'comprovantes' => Comunicado::cienciasDe($uid),
+    'ficha'       => $ficha === null ? null : $ficha->paraTela(),
+    'url_ficha'   => $ficha === null || Session::getCurrentInterface() === 'helpdesk' ? '' : Pagina::url(Colaborador::getFormURLWithID((int) $ficha->getID(), false)),
+];
 
 $pp = Pagina::contexto(
     'minha_area',
