@@ -47,7 +47,6 @@ final class Fontes
         'ferias',
         'desligamentos',
         'cautela',
-        'fichario',
         'registro',
         'desempenho',
         'indicadores',

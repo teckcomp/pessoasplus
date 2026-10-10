@@ -1,0 +1,91 @@
+{# Pessoas+ - formulario de publico salvo. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 #}
+{# Usa pp.dados (front/publico.form.php). O editor de regras e montado pelo JS a partir de regras_json e opcoes_json. #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Públicos</span>
+    </a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set edita = d.gerencia %}
+    {% set csrf = csrf_token() %}
+    <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-url-previa="{{ d.url_previa }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ edita ? '1' : '0' }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+        {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% endif %}
+        <input type="hidden" name="regras_json" value="{{ d.regras_json|e('html_attr') }}" data-pp-regras-campo>
+        <script type="application/json" data-pp-regras-json>{{ d.regras_json|raw }}</script>
+        <script type="application/json" data-pp-opcoes-json>{{ d.opcoes_json|raw }}</script>
+
+        <div class="pp-novo-form">
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>1</span> Nome</h2>
+                <label class="pp-campo">
+                    <span>Nome do público <em class="pp-obrig">obrigatório</em></span>
+                    <input type="text" name="nome" maxlength="255" value="{{ d.nome }}" required{% if not edita %} disabled{% endif %}>
+                    <small class="pp-dica">Ex.: Equipe de campo, Todos os CLT, Gestores.</small>
+                </label>
+            </section>
+
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>2</span> Regras</h2>
+                <p class="pp-nota">Inclusões somam; exclusões tiram quem foi incluído. Sem nenhuma inclusão o público é vazio: ninguém recebe por engano (T-10).</p>
+                <ul class="pp-publ-regras" data-pp-regras-lista aria-live="polite">
+                    {% for r in d.regras %}
+                        <li class="pp-chip is-fixo{% if r.is_exclusao %} pp-publ-exclusao{% endif %}">{{ r.is_exclusao ? 'exceto ' : '' }}{{ r.rotulo_tipo|lower }}: {{ r.rotulo }}</li>
+                    {% else %}
+                        <li class="pp-sub" data-pp-regras-vazio>Nenhuma regra ainda.</li>
+                    {% endfor %}
+                </ul>
+                {% if edita %}
+                    <div class="pp-publ-nova" data-pp-regra-nova>
+                        <label class="pp-campo is-curto">
+                            <span>Tipo</span>
+                            <select data-pp-regra-tipo>
+                                {% for t in d.tipos %}
+                                    <option value="{{ t.chave }}">{{ t.rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="pp-campo">
+                            <span>Valor</span>
+                            <select data-pp-regra-valor data-pp-buscavel></select>
+                        </label>
+                        <label class="pp-marcar is-justo" data-pp-regra-filhos-rotulo>
+                            <input type="checkbox" data-pp-regra-filhos>
+                            <span>Incluir subníveis</span>
+                        </label>
+                        <label class="pp-marcar is-justo">
+                            <input type="checkbox" data-pp-regra-exclusao>
+                            <span>Excluir (não incluir)</span>
+                        </label>
+                        <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="pp-cartao pp-secao" data-pp-previa-bloco>
+                <h2 class="pp-secao-titulo"><span>3</span> Quem recebe hoje</h2>
+                <p class="pp-contagem-publico"><strong data-pp-previa-total>{{ d.previa.total }}</strong> <span data-pp-previa-rotulo>{{ d.previa.total == 1 ? 'pessoa' : 'pessoas' }}</span></p>
+                <ul class="pp-publ-nomes" data-pp-previa-nomes>
+                    {% for n in d.previa.nomes %}<li>{{ n }}</li>{% endfor %}
+                    {% if d.previa.mais > 0 %}<li class="pp-sub">e mais {{ d.previa.mais }}</li>{% endif %}
+                </ul>
+            </section>
+
+            {% if edita %}
+                <div class="pp-acoes-linha">
+                    {% if d.nova %}
+                        <button type="submit" name="add" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Criar público</span></button>
+                    {% else %}
+                        <button type="submit" name="update" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar</span></button>
+                        <button type="submit" name="purge" value="1" class="pp-botao is-perigo" data-pp-confirmar="Excluir o público {{ d.nome }}? Comunicados já publicados não mudam."><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir</span></button>
+                    {% endif %}
+                    <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
+                </div>
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}

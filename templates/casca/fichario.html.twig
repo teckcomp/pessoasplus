@@ -1,0 +1,114 @@
+{# Pessoas+ - Fichario: grade de pastas por setor. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 #}
+{# Usa pp.dados (front/fichario.php). Dados reais (BM.1). #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    {% if pp.pode.fichario.gerenciar %}
+        <a class="pp-botao is-primario" href="{{ pp.dados.url_nova }}">
+            <i class="ti ti-user-plus" aria-hidden="true"></i><span>Nova ficha</span>
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set f = d.filtros %}
+
+    <form class="pp-cartao pp-fich-filtros" method="get" action="{{ d.url_base }}" role="search" aria-label="Filtrar o Fichário">
+        <label class="pp-busca">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <span class="pp-oculto">Buscar por nome, e-mail, matrícula, setor ou cargo</span>
+            <input type="search" name="busca" value="{{ f.busca }}" placeholder="Nome, e-mail, matrícula, setor ou cargo">
+        </label>
+        <label class="pp-campo is-curto">
+            <span>Setor</span>
+            <select name="setor" data-pp-buscavel>
+                <option value="0">Todos</option>
+                {% for s in d.opcoes_setor %}
+                    <option value="{{ s.id }}"{% if s.id == f.setor %} selected{% endif %}>{{ s.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="pp-campo is-curto">
+            <span>Situação</span>
+            <select name="situacao">
+                <option value="">Todas</option>
+                {% for s in d.situacoes %}
+                    <option value="{{ s.chave }}"{% if s.chave == f.situacao %} selected{% endif %}>{{ s.rotulo }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="pp-campo is-curto">
+            <span>Vínculo</span>
+            <select name="vinculo">
+                <option value="">Todos</option>
+                {% for v in d.vinculos %}
+                    <option value="{{ v.chave }}"{% if v.chave == f.vinculo %} selected{% endif %}>{{ v.rotulo }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="pp-fich-filtros-acoes">
+            <button type="submit" class="pp-botao is-primario"><i class="ti ti-filter" aria-hidden="true"></i><span>Filtrar</span></button>
+            {% if d.filtrado %}
+                <a class="pp-botao" href="{{ d.url_base }}">Limpar</a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="pp-pub-resumo" aria-label="Resumo">
+        <span class="pp-pub-chip"><strong>{{ d.total }}</strong> {{ d.total == 1 ? 'pasta' : 'pastas' }}{% if d.filtrado %} no filtro{% endif %}</span>
+        {% for s in d.situacoes %}
+            {% if s.total > 0 %}
+                <span class="pp-pub-chip"><strong>{{ s.total }}</strong> {{ s.rotulo|lower }}</span>
+            {% endif %}
+        {% endfor %}
+        {% if not d.escopo.tudo %}
+            <span class="pp-referencia">{% if d.escopo.grupos|length > 0 %}só os setores que você gere{% else %}só a sua pasta{% endif %}</span>
+        {% endif %}
+    </div>
+
+    {% if d.setores|length == 0 %}
+        <div class="pp-cartao pp-vazio">
+            <i class="ti ti-folders" aria-hidden="true"></i>
+            {% if d.filtrado %}
+                <p>Nenhuma pasta com esses filtros.</p>
+            {% elseif pp.pode.fichario.gerenciar %}
+                <p>O Fichário está vazio. Crie a primeira ficha, ou abra a aba Pessoas+ na ficha de um usuário do GLPI.</p>
+                <a class="pp-botao is-primario" href="{{ d.url_nova }}"><i class="ti ti-user-plus" aria-hidden="true"></i><span>Nova ficha</span></a>
+            {% else %}
+                <p>Nenhuma pasta no seu escopo.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% for setor in d.setores %}
+        <section class="pp-fich-setor" aria-labelledby="pp-setor-{{ setor.id }}">
+            <header class="pp-fich-setor-cabecalho">
+                <h2 id="pp-setor-{{ setor.id }}"><i class="ti ti-folder" aria-hidden="true"></i> {{ setor.nome }}</h2>
+                <span class="pp-contagem">{{ setor.pastas|length }}</span>
+            </header>
+            <div class="pp-fich-grade">
+                {% for p in setor.pastas %}
+                    <a class="pp-fich-pasta" href="{{ p.url|e('html_attr') }}" data-pp-pasta="{{ p.id }}">
+                        <span class="pp-fich-aba" aria-hidden="true"></span>
+                        <span class="pp-fich-capa">
+                            {% if p.foto != '' %}
+                                <img class="pp-fich-foto" src="{{ p.foto }}" alt="">
+                            {% else %}
+                                <span class="pp-avatar pp-fich-foto" aria-hidden="true">{{ p.iniciais }}</span>
+                            {% endif %}
+                            <span class="pp-fich-texto">
+                                <strong>{{ p.nome }}</strong>
+                                <small>{{ p.cargo != '' ? p.cargo : p.vinculo_rotulo }}</small>
+                            </span>
+                        </span>
+                        <span class="pp-fich-rodape">
+                            <span class="pp-selo pp-tom-{{ p.situacao_tom }}">{{ p.situacao_rotulo }}</span>
+                            {% if p.sem_usuario %}<span class="pp-sub" title="Pré-cadastro sem usuário do GLPI"><i class="ti ti-user-off" aria-hidden="true"></i> sem usuário</span>{% endif %}
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+{% endblock %}

@@ -17,6 +17,7 @@
  * PESSOASPLUS_BUILD_BP4A
  * PESSOASPLUS_BUILD_BP4B
  * PESSOASPLUS_BUILD_REPO2
+ * PESSOASPLUS_BUILD_BM1
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -37,7 +38,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'repo-2';
+    public const BUILD = 'bm1';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
@@ -77,7 +78,8 @@ final class Navegacao
                     self::item('ferias', 'Férias e ausências', 'ti ti-beach', null, 'BP.5'),
                     self::item('desligamentos', 'Desligamentos', 'ti ti-door-exit', null, 'BP.8'),
                     self::item('cautela', 'Itens em cautela', 'ti ti-tool', null, 'BP.10'),
-                    self::item('fichario', 'Fichário', 'ti ti-folders', null, 'BP.6'),
+                    self::item('fichario', 'Fichário', 'ti ti-folders', 'fichario.php', 'BM.1'),
+                    self::item('publicos', 'Públicos', 'ti ti-users', 'publicos.php', 'BM.1'),
                     self::item('registro', 'Registro funcional', 'ti ti-timeline', null, 'BP.8'),
                     self::item('desempenho', 'Desempenho e PDI', 'ti ti-target-arrow', null, 'BP.9'),
                     self::item('indicadores', 'Indicadores', 'ti ti-chart-line', null, 'BP.9'),

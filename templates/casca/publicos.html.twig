@@ -1,0 +1,53 @@
+{# Pessoas+ - publicos salvos. PESSOASPLUS_BUILD_BM1 #}
+{# Usa pp.dados (front/publicos.php). Dados reais (BM.1). #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    {% if pp.dados.gerencia %}
+        <a class="pp-botao is-primario" href="{{ pp.dados.url_novo }}">
+            <i class="ti ti-plus" aria-hidden="true"></i><span>Novo público</span>
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    <p class="pp-nota">Um público salvo é reutilizado em comunicados e publicações. O total é calculado agora, sobre os usuários ativos: quem entra num grupo passa a receber, quem sai deixa de receber (D-72).</p>
+
+    {% if d.modelos|length == 0 %}
+        <div class="pp-cartao pp-vazio">
+            <i class="ti ti-users" aria-hidden="true"></i>
+            <p>Nenhum público salvo ainda.</p>
+            {% if d.gerencia %}<a class="pp-botao is-primario" href="{{ d.url_novo }}"><i class="ti ti-plus" aria-hidden="true"></i><span>Novo público</span></a>{% endif %}
+        </div>
+    {% else %}
+        <div class="pp-cartao">
+            <div class="pp-tabela-rolagem">
+                <table class="pp-tabela pp-publ-tabela">
+                    <thead>
+                        <tr>
+                            <th scope="col">Público</th>
+                            <th scope="col">Regras</th>
+                            <th scope="col">Pessoas hoje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in d.modelos %}
+                            <tr>
+                                <td><a class="pp-link-forte" href="{{ m.url }}">{{ m.nome }}</a></td>
+                                <td>
+                                    {% for r in m.regras %}
+                                        <span class="pp-chip is-fixo{% if r.is_exclusao %} pp-publ-exclusao{% endif %}">{{ r.is_exclusao ? 'exceto ' : '' }}{{ r.rotulo_tipo|lower }}: {{ r.rotulo }}</span>
+                                    {% else %}
+                                        <span class="pp-sub">sem regras (ninguém)</span>
+                                    {% endfor %}
+                                </td>
+                                <td><strong>{{ m.total }}</strong></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -6,6 +6,7 @@
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3C
+ * PESSOASPLUS_BUILD_BM1
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -147,6 +148,8 @@ final class Permissoes
             'ouvidoria'         => self::usa(),
             'equipe'            => self::gestor(),
             'configuracao'      => self::configura(),
+            // BM.1: publicos sao de quem le comunicados, mural ou Fichario.
+            'publicos'          => self::le('comunicados') || self::le('mural') || self::le('fichario'),
         ];
         foreach (array_keys(self::MODULOS) as $modulo) {
             $saida[$modulo] = self::le($modulo);

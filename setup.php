@@ -9,6 +9,7 @@
  * PESSOASPLUS_BUILD_BP3A
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BP3C
+ * PESSOASPLUS_BUILD_BM1
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -17,6 +18,7 @@
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Pessoasplus\Casca\MenuSimplificado;
 use GlpiPlugin\Pessoasplus\Casca\MuralAba;
+use GlpiPlugin\Pessoasplus\Colaborador;
 use GlpiPlugin\Pessoasplus\EntradaMural;
 use GlpiPlugin\Pessoasplus\Install;
 use GlpiPlugin\Pessoasplus\Menu;
@@ -50,6 +52,12 @@ function plugin_init_pessoasplus(): void
     // sem SQL (B0.1b, D-29). Plugin::registerClass com 'addtabon' registra
     // a aba padrao em Profile (conferido no 11.0.6, Plugin.php:1726).
     Plugin::registerClass(PerfilDireitos::class, ['addtabon' => [Profile::class]]);
+
+    // BM.1: ficha do colaborador. 'document_types' poe a classe em
+    // $CFG_GLPI['document_types'] (Plugin.php:1702-1714), o que libera a aba
+    // nativa de Documentos (D-37); 'addtabon' User poe a aba "Pessoas+" na
+    // ficha do usuario. A classe confere o direito de novo ao exibir.
+    Plugin::registerClass(Colaborador::class, ['addtabon' => [User::class], 'document_types' => true]);
 
     // Daqui para baixo, so para usuario logado com o direito do Pessoas+.
     // A sessao ja esta aberta quando o plugin_init roda (T-36), entao quem

@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -1210,6 +1210,412 @@
         });
     }
 
+
+    /* ------------------------------------------------------------------
+     * BM.1 - Fichario e publicos (dados reais).
+     * ------------------------------------------------------------------ */
+
+
+    /* Selects com busca: o select2 vem no bundle base do GLPI em toda pagina
+     * (lib/bundles/base.js, T-67). Sem jQuery/select2 o select nativo segue
+     * funcionando. O select2 dispara 'change' pelo jQuery, que nao chega ao
+     * addEventListener nativo: ouvir e definir valor sempre por estes dois. */
+    function temSelect2() {
+        return !!(window.jQuery && window.jQuery.fn && window.jQuery.fn.select2);
+    }
+    function tornarBuscavel(select) {
+        if (!temSelect2() || !select) {
+            return;
+        }
+        var $s = window.jQuery(select);
+        if ($s.hasClass('select2-hidden-accessible')) {
+            $s.select2('destroy');
+        }
+        $s.select2({ width: '100%', dropdownParent: window.jQuery(select.closest('.pp-casca') || document.body) });
+    }
+    function ouvirMudanca(select, fn) {
+        if (temSelect2()) {
+            window.jQuery(select).on('change', fn);
+        } else {
+            select.addEventListener('change', fn);
+        }
+    }
+    function definirValor(select, valor) {
+        select.value = valor;
+        if (temSelect2() && window.jQuery(select).hasClass('select2-hidden-accessible')) {
+            window.jQuery(select).trigger('change.select2');
+        }
+    }
+    function iniciarBuscaveis() {
+        document.querySelectorAll('.pp-casca select[data-pp-buscavel]').forEach(function (select) {
+            if (!primeiraVez(select)) {
+                return;
+            }
+            tornarBuscavel(select);
+        });
+    }
+
+    /* Estrada da jornada (D-67): clique no marco mostra o trecho. */
+    function iniciarJornada() {
+        document.querySelectorAll('.pp-casca [data-pp-jornada]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            function mostrar(chave) {
+                raiz.querySelectorAll('[data-pp-trecho-corpo]').forEach(function (corpo) {
+                    corpo.hidden = corpo.getAttribute('data-pp-trecho-corpo') !== chave;
+                });
+                raiz.querySelectorAll('[data-pp-trecho]').forEach(function (marco) {
+                    marco.classList.toggle('is-aberto', marco.getAttribute('data-pp-trecho') === chave);
+                });
+            }
+            raiz.querySelectorAll('[data-pp-trecho]').forEach(function (marco) {
+                marco.addEventListener('click', function () { mostrar(marco.getAttribute('data-pp-trecho')); });
+                marco.addEventListener('keydown', function (evento) {
+                    if (evento.key === 'Enter' || evento.key === ' ') {
+                        evento.preventDefault();
+                        mostrar(marco.getAttribute('data-pp-trecho'));
+                    }
+                });
+            });
+            var atual = raiz.querySelector('[data-pp-trecho].is-atual');
+            if (atual) {
+                atual.classList.add('is-aberto');
+            }
+        });
+    }
+
+    /* Confirmacao antes de acoes destrutivas: botoes com data-pp-confirmar. */
+    function iniciarConfirmacoes() {
+        document.querySelectorAll('.pp-casca [data-pp-confirmar]').forEach(function (botao) {
+            if (!primeiraVez(botao)) {
+                return;
+            }
+            botao.addEventListener('click', function (evento) {
+                if (!window.confirm(botao.getAttribute('data-pp-confirmar') || 'Confirma?')) {
+                    evento.preventDefault();
+                }
+            });
+        });
+    }
+
+    /* POST de mesma origem com o token CSRF no cabecalho: o core valida e
+     * preserva o token em requisicoes AJAX (CheckCsrfListener, T-62). */
+    function postar(url, csrf, dados) {
+        var corpo = new URLSearchParams();
+        Object.keys(dados).forEach(function (k) { corpo.append(k, dados[k]); });
+        return fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-Glpi-Csrf-Token': csrf
+            },
+            body: corpo.toString()
+        }).then(function (r) {
+            return r.json().then(function (json) {
+                if (!r.ok) {
+                    throw new Error((json && json.erro) || ('Erro ' + r.status));
+                }
+                return json;
+            });
+        });
+    }
+
+    function avisar(raiz, texto) {
+        var casca = raiz.closest('.pp-casca');
+        var aviso = casca ? casca.querySelector('.pp-aviso') : null;
+        if (!aviso) {
+            return;
+        }
+        aviso.textContent = texto;
+        aviso.hidden = false;
+        setTimeout(function () { aviso.hidden = true; }, 5000);
+    }
+
+    /* Lista livre real (D-69): o "+" grava em ajax/lista.php e escolhe o item. */
+    function listaLivreReal(raiz, bloco, urlAjax, csrf) {
+        var select = bloco.querySelector('select');
+        var mais = bloco.querySelector('[data-pp-lista-mais]');
+        var chave = bloco.getAttribute('data-pp-lista-chave');
+        if (!select || !mais || !chave) {
+            return;
+        }
+        var rotulo = bloco.getAttribute('data-pp-lista') || 'item';
+        var linha = el('span', 'pp-lista-nova');
+        linha.hidden = true;
+        var campo = document.createElement('input');
+        campo.type = 'text';
+        campo.maxLength = 80;
+        campo.setAttribute('aria-label', 'Novo ' + rotulo.toLowerCase());
+        campo.placeholder = 'Novo ' + rotulo.toLowerCase();
+        var adicionar = el('button', 'pp-botao is-compacto is-primario', 'Adicionar');
+        adicionar.type = 'button';
+        var cancelar = el('button', 'pp-botao is-compacto', 'Cancelar');
+        cancelar.type = 'button';
+        linha.appendChild(campo);
+        linha.appendChild(adicionar);
+        linha.appendChild(cancelar);
+        bloco.appendChild(linha);
+        mais.setAttribute('aria-expanded', 'false');
+
+        function fechar() {
+            linha.hidden = true;
+            campo.value = '';
+            mais.setAttribute('aria-expanded', 'false');
+        }
+        function incluir() {
+            var texto = campo.value.trim();
+            if (texto === '') {
+                campo.focus();
+                return;
+            }
+            adicionar.disabled = true;
+            postar(urlAjax, csrf, { lista: chave, nome: texto }).then(function (json) {
+                var existente = null;
+                Array.prototype.forEach.call(select.options, function (o) {
+                    if (String(o.value) === String(json.id)) {
+                        existente = o;
+                    }
+                });
+                if (!existente) {
+                    existente = document.createElement('option');
+                    existente.value = String(json.id);
+                    existente.textContent = json.nome;
+                    select.appendChild(existente);
+                }
+                definirValor(select, String(json.id));
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                fechar();
+            }).catch(function (e) {
+                avisar(raiz, 'Não foi possível incluir: ' + e.message);
+            }).then(function () {
+                adicionar.disabled = false;
+            });
+        }
+        mais.addEventListener('click', function () {
+            linha.hidden = !linha.hidden;
+            mais.setAttribute('aria-expanded', linha.hidden ? 'false' : 'true');
+            if (!linha.hidden) {
+                campo.focus();
+            }
+        });
+        adicionar.addEventListener('click', incluir);
+        cancelar.addEventListener('click', fechar);
+        campo.addEventListener('keydown', function (evento) {
+            if (evento.key === 'Enter') {
+                evento.preventDefault();
+                incluir();
+            } else if (evento.key === 'Escape') {
+                fechar();
+            }
+        });
+    }
+
+    /* Formulario da ficha: listas livres reais e gestor sugerido pelo setor. */
+    function iniciarFicha() {
+        document.querySelectorAll('.pp-casca [data-pp-ficha]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var csrf = raiz.getAttribute('data-pp-csrf') || '';
+            var urlAjax = raiz.getAttribute('data-pp-ajax-lista') || '';
+            if (raiz.getAttribute('data-pp-gerencia') === '1') {
+                raiz.querySelectorAll('[data-pp-lista]').forEach(function (bloco) {
+                    listaLivreReal(raiz, bloco, urlAjax, csrf);
+                });
+            }
+            var gestores = lerJson(raiz, '[data-pp-gestores-json]');
+            var setor = raiz.querySelector('[data-pp-setor]');
+            var gestor = raiz.querySelector('[data-pp-gestor]');
+            if (setor && gestor) {
+                var sugerido = '';
+                ouvirMudanca(setor, function () {
+                    var novo = gestores[setor.value] ? String(gestores[setor.value]) : '';
+                    if (novo === '') {
+                        return;
+                    }
+                    if (gestor.value === '0' || gestor.value === '' || gestor.value === sugerido) {
+                        definirValor(gestor, novo);
+                        sugerido = novo;
+                    }
+                });
+            }
+        });
+    }
+
+    /* Editor de regras do publico + previa ao vivo. */
+    function iniciarPublico() {
+        document.querySelectorAll('.pp-casca [data-pp-publico]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var csrf = raiz.getAttribute('data-pp-csrf') || '';
+            var urlPrevia = raiz.getAttribute('data-pp-url-previa') || '';
+            var edita = raiz.getAttribute('data-pp-gerencia') === '1';
+            var campo = raiz.querySelector('[data-pp-regras-campo]');
+            var lista = raiz.querySelector('[data-pp-regras-lista]');
+            var opcoes = lerJson(raiz, '[data-pp-opcoes-json]');
+            var regras = [];
+            try {
+                var lidas = JSON.parse((raiz.querySelector('[data-pp-regras-json]') || {}).textContent || '[]');
+                regras = Array.isArray(lidas) ? lidas : [];
+            } catch (e) {
+                regras = [];
+            }
+            var tipos = {
+                todos: 'Todos os usuários ativos', grupo: 'Grupo (setor)', perfil: 'Perfil',
+                entidade: 'Entidade', usuario: 'Usuário', vinculo: 'Tipo de vínculo', empregador: 'Empregador'
+            };
+
+            function rotuloDe(r) {
+                if (r.rotulo) {
+                    return r.rotulo;
+                }
+                if (r.tipo === 'todos') {
+                    return 'Todos os usuários ativos';
+                }
+                var lista = Array.isArray(opcoes[r.tipo]) ? opcoes[r.tipo] : [];
+                var achado = '';
+                var alvo = r.tipo === 'vinculo' ? r.valor_texto : String(r.valor_id);
+                lista.forEach(function (o) {
+                    if (String(o.id) === String(alvo)) {
+                        achado = o.nome;
+                    }
+                });
+                return (achado || alvo) + (r.incluir_filhos ? ' (e subníveis)' : '');
+            }
+
+            function render() {
+                if (campo) {
+                    campo.value = JSON.stringify(regras);
+                }
+                if (!lista) {
+                    return;
+                }
+                lista.innerHTML = '';
+                if (regras.length === 0) {
+                    var vazio = el('li', 'pp-sub', 'Nenhuma regra ainda.');
+                    vazio.setAttribute('data-pp-regras-vazio', '');
+                    lista.appendChild(vazio);
+                }
+                regras.forEach(function (r, i) {
+                    var li = el('li', 'pp-chip is-fixo' + (r.is_exclusao ? ' pp-publ-exclusao' : ''));
+                    li.appendChild(document.createTextNode((r.is_exclusao ? 'exceto ' : '') + (tipos[r.tipo] || r.tipo).toLowerCase() + ': ' + rotuloDe(r)));
+                    if (edita) {
+                        var x = el('button', 'pp-publ-remover', '×');
+                        x.type = 'button';
+                        x.setAttribute('aria-label', 'Remover regra');
+                        x.addEventListener('click', function () {
+                            regras.splice(i, 1);
+                            render();
+                            previa();
+                        });
+                        li.appendChild(x);
+                    }
+                    lista.appendChild(li);
+                });
+            }
+
+            var tempo = null;
+            function previa() {
+                if (!urlPrevia) {
+                    return;
+                }
+                if (tempo) {
+                    clearTimeout(tempo);
+                }
+                tempo = setTimeout(function () {
+                    postar(urlPrevia, csrf, { regras_json: JSON.stringify(regras) }).then(function (json) {
+                        var total = raiz.querySelector('[data-pp-previa-total]');
+                        var rot = raiz.querySelector('[data-pp-previa-rotulo]');
+                        var nomes = raiz.querySelector('[data-pp-previa-nomes]');
+                        if (total) {
+                            total.textContent = String(json.total);
+                        }
+                        if (rot) {
+                            rot.textContent = json.total === 1 ? 'pessoa' : 'pessoas';
+                        }
+                        if (nomes) {
+                            nomes.innerHTML = '';
+                            (Array.isArray(json.nomes) ? json.nomes : []).forEach(function (n) {
+                                nomes.appendChild(el('li', '', n));
+                            });
+                            if (json.mais > 0) {
+                                nomes.appendChild(el('li', 'pp-sub', 'e mais ' + json.mais));
+                            }
+                        }
+                    }).catch(function (e) {
+                        avisar(raiz, 'Prévia indisponível: ' + e.message);
+                    });
+                }, 250);
+            }
+
+            var nova = raiz.querySelector('[data-pp-regra-nova]');
+            if (edita && nova) {
+                var tipo = nova.querySelector('[data-pp-regra-tipo]');
+                var valor = nova.querySelector('[data-pp-regra-valor]');
+                var filhos = nova.querySelector('[data-pp-regra-filhos]');
+                var filhosRotulo = nova.querySelector('[data-pp-regra-filhos-rotulo]');
+                var exclusao = nova.querySelector('[data-pp-regra-exclusao]');
+                var adicionar = nova.querySelector('[data-pp-regra-adicionar]');
+
+                var preencherValor = function () {
+                    valor.innerHTML = '';
+                    var t = tipo.value;
+                    var semValor = t === 'todos';
+                    valor.disabled = semValor;
+                    if (semValor) {
+                        valor.appendChild(new Option('—', ''));
+                    } else {
+                        (Array.isArray(opcoes[t]) ? opcoes[t] : []).forEach(function (o) {
+                            valor.appendChild(new Option(o.nome, String(o.id)));
+                        });
+                    }
+                    tornarBuscavel(valor);
+                    if (filhosRotulo) {
+                        filhosRotulo.hidden = !(t === 'grupo' || t === 'entidade');
+                    }
+                    if (exclusao) {
+                        exclusao.disabled = semValor;
+                        if (semValor) {
+                            exclusao.checked = false;
+                        }
+                    }
+                };
+                ouvirMudanca(tipo, preencherValor);
+                preencherValor();
+
+                adicionar.addEventListener('click', function () {
+                    var t = tipo.value;
+                    var r = { tipo: t, valor_id: 0, valor_texto: '', incluir_filhos: filhos && filhos.checked && (t === 'grupo' || t === 'entidade') ? 1 : 0, is_exclusao: exclusao && exclusao.checked ? 1 : 0 };
+                    if (t === 'vinculo') {
+                        r.valor_texto = valor.value;
+                    } else if (t !== 'todos') {
+                        r.valor_id = parseInt(valor.value, 10) || 0;
+                        if (r.valor_id <= 0) {
+                            avisar(raiz, 'Escolha um valor para a regra.');
+                            return;
+                        }
+                    }
+                    var repetida = regras.some(function (x) {
+                        return x.tipo === r.tipo && String(x.valor_id) === String(r.valor_id) && x.valor_texto === r.valor_texto && !!x.is_exclusao === !!r.is_exclusao;
+                    });
+                    if (repetida) {
+                        avisar(raiz, 'Essa regra já está na lista.');
+                        return;
+                    }
+                    regras.push(r);
+                    render();
+                    previa();
+                });
+            }
+
+            render();
+        });
+    }
+
     function tudo() {
         iniciar();
         iniciarFiltros();
@@ -1221,6 +1627,11 @@
         iniciarLateral();
         iniciarOuvidoria();
         iniciarAssistente();
+        iniciarConfirmacoes();
+        iniciarFicha();
+        iniciarPublico();
+        iniciarBuscaveis();
+        iniciarJornada();
     }
 
     if (document.readyState === 'loading') {

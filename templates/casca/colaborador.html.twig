@@ -1,0 +1,283 @@
+{# Pessoas+ - pasta do colaborador: capa, Jornada, Dados, Documentos, Historico. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 #}
+{# Usa pp.dados (front/colaborador.form.php). Dados reais (BM.1). #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i><span>Fichário</span>
+    </a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set f = d.ficha %}
+    {% set edita = d.gerencia %}
+    {% set csrf = csrf_token() %}
+
+    {% if not d.nova %}
+        <section class="pp-cartao pp-pasta-capa">
+            {% if f.foto != '' %}
+                <img class="pp-pasta-foto" src="{{ f.foto }}" alt="">
+            {% else %}
+                <span class="pp-avatar pp-pasta-foto" aria-hidden="true">{{ f.iniciais }}</span>
+            {% endif %}
+            <div class="pp-pasta-capa-texto">
+                <div class="pp-pasta-capa-linha">
+                    <span class="pp-selo pp-tom-{{ f.situacao_tom }}">{{ f.situacao_rotulo }}</span>
+                    <span class="pp-sub">{{ f.vinculo_rotulo }}</span>
+                    {% if f.matricula != '' %}<span class="pp-sub">matrícula {{ f.matricula }}</span>{% endif %}
+                </div>
+                <dl class="pp-pasta-dl">
+                    <div><dt>Cargo</dt><dd>{{ f.cargo != '' ? f.cargo : '—' }}</dd></div>
+                    <div><dt>Setor</dt><dd>{{ f.setor != '' ? f.setor : '—' }}</dd></div>
+                    <div><dt>Gestor</dt><dd>{{ f.gestor != '' ? f.gestor : '—' }}</dd></div>
+                    <div><dt>Empregador</dt><dd>{{ f.empregador != '' ? f.empregador : '—' }}</dd></div>
+                    <div><dt>Local</dt><dd>{{ f.local != '' ? f.local : '—' }}</dd></div>
+                    <div><dt>Início</dt><dd>{{ f.data_inicio != '' ? f.data_inicio|date('d/m/Y') : '—' }}</dd></div>
+                    <div><dt>Usuário do GLPI</dt><dd>{% if f.users_id > 0 %}<a href="{{ f.url_usuario }}">{{ f.usuario_login }}</a>{% if not f.usuario_ativo %} <span class="pp-selo pp-tom-alerta">inativo</span>{% endif %}{% else %}<span class="pp-selo pp-tom-info">pré-cadastro</span>{% endif %}</dd></div>
+                </dl>
+            </div>
+        </section>
+
+        <nav class="pp-cheg-abas" aria-label="Seções da pasta">
+            <a class="pp-cheg-aba{% if d.aba == 'jornada' %} is-ativa{% endif %}" href="{{ d.url_aba.jornada }}"{% if d.aba == 'jornada' %} aria-current="page"{% endif %}><i class="ti ti-road" aria-hidden="true"></i> Jornada</a>
+            <a class="pp-cheg-aba{% if d.aba == 'dados' %} is-ativa{% endif %}" href="{{ d.url_aba.dados }}"{% if d.aba == 'dados' %} aria-current="page"{% endif %}><i class="ti ti-id-badge-2" aria-hidden="true"></i> Dados</a>
+            <a class="pp-cheg-aba{% if d.aba == 'documentos' %} is-ativa{% endif %}" href="{{ d.url_aba.documentos }}"{% if d.aba == 'documentos' %} aria-current="page"{% endif %}><i class="ti ti-files" aria-hidden="true"></i> Documentos</a>
+            <a class="pp-cheg-aba{% if d.aba == 'historico' %} is-ativa{% endif %}" href="{{ d.url_aba.historico }}"{% if d.aba == 'historico' %} aria-current="page"{% endif %}><i class="ti ti-history" aria-hidden="true"></i> Histórico <span class="pp-contagem">{{ d.eventos|length }}</span></a>
+        </nav>
+    {% endif %}
+
+    {% if d.aba == 'jornada' %}
+        {% set j = d.jornada %}
+        <section class="pp-cartao pp-jorn" data-pp-jornada>
+            <header class="pp-cartao-cabecalho">
+                <h2>Jornada do colaborador</h2>
+                <span class="pp-sub">Seis trechos, do primeiro contato à saída (Figura 2 da proposta). Clique num marco para ver o que aconteceu ali.</span>
+            </header>
+            <svg class="pp-jorn-estrada" viewBox="0 0 1000 260" role="img" aria-label="Estrada da jornada com {{ j.trechos|length }} marcos">
+                <path class="pp-jorn-asfalto" d="M 20 150 C 90 150 90 95 172 95 S 254 150 336 150 S 418 95 500 95 S 582 150 664 150 S 746 95 828 95 S 910 150 980 150" />
+                <path class="pp-jorn-faixa" d="M 20 150 C 90 150 90 95 172 95 S 254 150 336 150 S 418 95 500 95 S 582 150 664 150 S 746 95 828 95 S 910 150 980 150" />
+                {% for t in j.trechos %}
+                    <g class="pp-jorn-marco{% if t.alcancado %} is-alcancado{% endif %}{% if t.atual %} is-atual{% endif %}" data-pp-trecho="{{ t.chave }}" tabindex="0" role="button" aria-label="{{ t.rotulo }}: {{ t.total }} {{ t.total == 1 ? 'evento' : 'eventos' }}">
+                        <circle cx="{{ t.x }}" cy="{{ t.y }}" r="22" class="pp-jorn-bola" />
+                        <text x="{{ t.x }}" y="{{ t.y + 6 }}" text-anchor="middle" class="pp-jorn-num">{{ loop.index }}</text>
+                        {% if t.atual %}
+                            <path class="pp-jorn-bandeira" d="M {{ t.x + 18 }} {{ t.y - 28 }} v -34 h 30 l -8 8 l 8 8 h -30" />
+                        {% endif %}
+                        <text x="{{ t.x }}" y="{{ t.y + (t.y > 120 ? 50 : -40) }}" text-anchor="middle" class="pp-jorn-rotulo">{{ t.rotulo }}</text>
+                        <text x="{{ t.x }}" y="{{ t.y + (t.y > 120 ? 68 : -58) }}" text-anchor="middle" class="pp-jorn-total">{{ t.total }} {{ t.total == 1 ? 'evento' : 'eventos' }}</text>
+                    </g>
+                {% endfor %}
+            </svg>
+            <div class="pp-jorn-trechos">
+                {% for t in j.trechos %}
+                    <section class="pp-jorn-trecho" data-pp-trecho-corpo="{{ t.chave }}"{% if not t.atual %} hidden{% endif %}>
+                        <h3><i class="{{ t.icone }}" aria-hidden="true"></i> {{ t.rotulo }} {% if t.atual %}<span class="pp-selo pp-tom-ok">trecho atual</span>{% elseif not t.alcancado %}<span class="pp-selo pp-tom-neutro">ainda não</span>{% endif %}</h3>
+                        <p class="pp-sub">{{ t.descricao }}</p>
+                        {% if t.eventos|length == 0 %}
+                            <p class="pp-nota">Nenhum evento neste trecho ainda. Os módulos alimentam a jornada conforme entram (comunicados, mural, férias, movimentações, desligamento).</p>
+                        {% else %}
+                            <ol class="pp-pasta-eventos">
+                                {% for e in t.eventos %}
+                                    <li class="pp-pasta-evento">
+                                        <time datetime="{{ e.data }}">{{ e.data|date('d/m/Y H:i') }}</time>
+                                        <div><strong>{{ e.rotulo }}</strong> <span class="pp-sub">por {{ e.autor }}</span></div>
+                                    </li>
+                                {% endfor %}
+                            </ol>
+                        {% endif %}
+                    </section>
+                {% endfor %}
+            </div>
+        </section>
+    {% elseif d.aba == 'dados' %}
+        <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-ficha data-pp-ajax-lista="{{ d.url_ajax_lista }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ edita ? '1' : '0' }}">
+            <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+            {% if not d.nova %}<input type="hidden" name="id" value="{{ f.id }}">{% endif %}
+            <script type="application/json" data-pp-gestores-json>{{ d.gestores_json|raw }}</script>
+
+            <div class="pp-novo-form">
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>1</span> Quem é</h2>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo">
+                            <span>Nome completo <em class="pp-obrig">obrigatório</em></span>
+                            <input type="text" name="nome" maxlength="255" value="{{ f.nome }}" required{% if not edita %} disabled{% endif %}>
+                        </label>
+                        <label class="pp-campo is-curto">
+                            <span>Matrícula</span>
+                            <input type="text" name="matricula" maxlength="50" value="{{ f.matricula }}"{% if not edita %} disabled{% endif %}>
+                        </label>
+                    </div>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo">
+                            <span>E-mail</span>
+                            <input type="email" name="email" maxlength="255" value="{{ f.email }}"{% if not edita %} disabled{% endif %}>
+                        </label>
+                        <label class="pp-campo is-curto">
+                            <span>Telefone</span>
+                            <input type="text" name="telefone" maxlength="50" value="{{ f.telefone }}"{% if not edita %} disabled{% endif %}>
+                        </label>
+                    </div>
+                    <label class="pp-campo">
+                        <span>Usuário do GLPI</span>
+                        <select data-pp-buscavel name="users_id"{% if not edita %} disabled{% endif %}>
+                            <option value="0">Sem usuário ainda (pré-cadastro)</option>
+                            {% for u in d.usuarios %}
+                                <option value="{{ u.id }}"{% if u.id == f.users_id %} selected{% endif %}>{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="pp-dica">A conta que a pessoa usa para entrar. É por ela que comunicados, mural e ciências chegam. Um usuário tem no máximo uma ficha.</small>
+                    </label>
+                </section>
+
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>2</span> Vínculo e lotação</h2>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo is-curto">
+                            <span>Vínculo</span>
+                            <select name="vinculo"{% if not edita %} disabled{% endif %}>
+                                {% for v in d.vinculos %}
+                                    <option value="{{ v.chave }}"{% if v.chave == f.vinculo %} selected{% endif %}>{{ v.rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="pp-campo is-curto">
+                            <span>Situação</span>
+                            <select name="situacao"{% if not edita %} disabled{% endif %}>
+                                {% for s in d.situacoes %}
+                                    <option value="{{ s.chave }}"{% if s.chave == f.situacao %} selected{% endif %}>{{ s.rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                    </div>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo">
+                            <span>Empregador</span>
+                            <span class="pp-lista-livre" data-pp-lista="Empregador" data-pp-lista-chave="empregador">
+                                <select name="plugin_pessoasplus_empregadores_id"{% if not edita %} disabled{% endif %}>
+                                    <option value="0">Escolha…</option>
+                                    {% for e in d.empregadores %}
+                                        <option value="{{ e.id }}"{% if e.id == f.empregador_id %} selected{% endif %}>{{ e.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if edita %}<button type="button" class="pp-botao is-icone" data-pp-lista-mais title="Adicionar empregador" aria-label="Adicionar empregador"><i class="ti ti-plus" aria-hidden="true"></i></button>{% endif %}
+                            </span>
+                            <small class="pp-dica">Lista livre do plugin (D-69). Falta um? Use o +.</small>
+                        </label>
+                        <label class="pp-campo">
+                            <span>Cargo</span>
+                            <span class="pp-lista-livre" data-pp-lista="Cargo" data-pp-lista-chave="cargo">
+                                <select name="plugin_pessoasplus_cargos_id"{% if not edita %} disabled{% endif %}>
+                                    <option value="0">Escolha…</option>
+                                    {% for c in d.cargos %}
+                                        <option value="{{ c.id }}"{% if c.id == f.cargo_id %} selected{% endif %}>{{ c.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if edita %}<button type="button" class="pp-botao is-icone" data-pp-lista-mais title="Adicionar cargo" aria-label="Adicionar cargo"><i class="ti ti-plus" aria-hidden="true"></i></button>{% endif %}
+                            </span>
+                        </label>
+                    </div>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo">
+                            <span>Setor <em class="pp-sub">grupo do GLPI</em></span>
+                            <select data-pp-buscavel name="groups_id" data-pp-setor{% if not edita %} disabled{% endif %}>
+                                <option value="0">Sem setor</option>
+                                {% for g in d.grupos %}
+                                    <option value="{{ g.id }}"{% if g.id == f.setor_id %} selected{% endif %}>{{ g.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="pp-dica">O setor é sempre um grupo do GLPI (D-35): é por ele que o gestor enxerga a equipe e que os comunicados do setor chegam.</small>
+                        </label>
+                        <label class="pp-campo">
+                            <span>Gestor</span>
+                            <select data-pp-buscavel name="users_id_gestor" data-pp-gestor{% if not edita %} disabled{% endif %}>
+                                <option value="0">Sem gestor</option>
+                                {% for u in d.usuarios %}
+                                    <option value="{{ u.id }}"{% if u.id == f.gestor_id %} selected{% endif %}>{{ u.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="pp-dica">Ao escolher o setor, o gestor do grupo é sugerido; você pode trocar.</small>
+                        </label>
+                    </div>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo">
+                            <span>Local de trabalho</span>
+                            <span class="pp-lista-livre" data-pp-lista="Local de trabalho" data-pp-lista-chave="local">
+                                <select name="plugin_pessoasplus_locais_id"{% if not edita %} disabled{% endif %}>
+                                    <option value="0">Escolha…</option>
+                                    {% for l in d.locais %}
+                                        <option value="{{ l.id }}"{% if l.id == f.local_id %} selected{% endif %}>{{ l.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if edita %}<button type="button" class="pp-botao is-icone" data-pp-lista-mais title="Adicionar local" aria-label="Adicionar local"><i class="ti ti-plus" aria-hidden="true"></i></button>{% endif %}
+                            </span>
+                        </label>
+                        <label class="pp-campo is-curto">
+                            <span>Início</span>
+                            <input type="date" name="data_inicio" value="{{ f.data_inicio }}"{% if not edita %} disabled{% endif %}>
+                        </label>
+                        <label class="pp-campo is-curto">
+                            <span>Fim</span>
+                            <input type="date" name="data_fim" value="{{ f.data_fim }}"{% if not edita %} disabled{% endif %}>
+                        </label>
+                    </div>
+                    <label class="pp-campo">
+                        <span>Observações</span>
+                        <textarea name="observacoes" rows="3" maxlength="5000"{% if not edita %} disabled{% endif %}>{{ f.observacoes }}</textarea>
+                        <small class="pp-dica">Nada de saúde aqui (CID, atestado, laudo): esses dados não entram no plugin.</small>
+                    </label>
+                </section>
+
+                {% if edita %}
+                    <div class="pp-acoes-linha">
+                        {% if d.nova %}
+                            <button type="submit" name="add" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Criar ficha</span></button>
+                        {% else %}
+                            <button type="submit" name="update" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar</span></button>
+                            <button type="submit" name="delete" value="1" class="pp-botao is-perigo" data-pp-confirmar="Excluir a ficha de {{ f.nome }}? Ela sai do Fichário; o histórico fica na trilha."><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir</span></button>
+                        {% endif %}
+                        <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
+                    </div>
+                {% else %}
+                    <p class="pp-nota">Você vê esta pasta no seu escopo (D-36). Alterações são feitas pelo RH.</p>
+                {% endif %}
+            </div>
+        </form>
+    {% elseif d.aba == 'documentos' %}
+        <section class="pp-cartao pp-pasta-docs">
+            {% if d.pode_documentos %}
+                <p class="pp-nota">Documentos nativos do GLPI ligados a esta ficha (D-37). O que for anexado aqui aparece também em Gestão → Documentos.</p>
+                <div class="pp-nativo">{{ d.documentos_html|raw }}</div>
+            {% else %}
+                <p class="pp-nota">Seu perfil não tem o direito "Documentos" do GLPI (Administração → Perfis → Gestão), necessário para ver e anexar documentos.</p>
+            {% endif %}
+        </section>
+    {% else %}
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Histórico</h2></header>
+            {% if d.eventos|length == 0 %}
+                <p class="pp-nota">Nenhum evento registrado.</p>
+            {% else %}
+                <ol class="pp-pasta-eventos">
+                    {% for e in d.eventos %}
+                        <li class="pp-pasta-evento">
+                            <time datetime="{{ e.data }}">{{ e.data|date('d/m/Y H:i') }}</time>
+                            <div>
+                                <strong>{{ e.rotulo }}</strong>
+                                <span class="pp-sub">por {{ e.autor }} · {{ e.modulo }}</span>
+                                {% if e.detalhes.campos is defined %}
+                                    <ul class="pp-pasta-mudancas">
+                                        {% for campo, m in e.detalhes.campos %}
+                                            <li><code>{{ campo }}</code>: {{ m.de is null or m.de == '' ? '—' : m.de }} → {{ m.para is null or m.para == '' ? '—' : m.para }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </section>
+    {% endif %}
+{% endblock %}
