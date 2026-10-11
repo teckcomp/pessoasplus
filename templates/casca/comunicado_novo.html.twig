@@ -1,4 +1,5 @@
-{# Pessoas+ - novo comunicado / rascunho / nova versao. PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 #}
+{# Pessoas+ - novo comunicado / rascunho / nova versao. PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM4_8 #}
+{# BM.4-8 (D-83): lateral "Como o destinatario vai ver" e pecas da casca ainda nao mobiliadas marcadas "em breve". #}
 {# Usa pp.dados (front/comunicado_novo.php). Editor de publico igual ao de publico.html.twig (JS iniciarPublico). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -50,14 +51,14 @@
                     <div class="pp-pub-tipos">
                         {% for t in d.tipos %}
                             <label class="pp-tipo">
-                                <input type="radio" name="tipo" value="{{ t.chave }}"{% if t.chave == f.tipo %} checked{% endif %}{% if d.publicado or d.revogado %} disabled{% endif %}>
+                                <input type="radio" name="tipo" value="{{ t.chave }}" data-pp-rotulo="{{ t.rotulo }}"{% if t.chave == f.tipo %} checked{% endif %}{% if d.publicado or d.revogado %} disabled{% endif %}>
                                 <span class="pp-tipo-corpo"><strong>{{ t.rotulo }}</strong><small>{{ t.chave == 'normativa' ? 'Documento com vigência; entra no repositório da Minha área e pode ser exigido na admissão.' : 'Aviso que pede ciência até um prazo.' }}</small></span>
                             </label>
                         {% endfor %}
                     </div>
                     <label class="pp-campo">
                         <span>Título <em class="pp-obrig">obrigatório</em></span>
-                        <input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}" required{% if d.revogado %} disabled{% endif %}>
+                        <input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}" required data-pp-titulo{% if d.revogado %} disabled{% endif %}>
                     </label>
                 </section>
 
@@ -92,7 +93,7 @@
                             <input type="number" name="prazo_dias" min="1" max="365" value="{{ f.prazo_dias }}"{% if d.revogado %} disabled{% endif %}>
                         </label>
                         <label class="pp-marcar is-justo">
-                            <input type="checkbox" name="exige_concordancia" value="1"{% if f.exige_concordancia %} checked{% endif %}{% if d.revogado %} disabled{% endif %}>
+                            <input type="checkbox" name="exige_concordancia" value="1" data-pp-exige-concordancia{% if f.exige_concordancia %} checked{% endif %}{% if d.revogado %} disabled{% endif %}>
                             <span><strong>Pedir "de acordo"</strong> em vez de só "ciente". A pessoa pode responder "Não concordo" com justificativa, que fica registrada (D-04).</span>
                         </label>
                     </div>
@@ -106,6 +107,16 @@
                             <input type="checkbox" name="exigir_admissao" value="1"{% if f.exigir_admissao %} checked{% endif %}{% if d.revogado %} disabled{% endif %}>
                             <span><strong>Exigir na admissão:</strong> quem chegar depois recebe esta normativa como pendente (I-01).</span>
                         </label>
+                    </div>
+                    <div class="pp-embreve-bloco is-embreve" data-pp-lembretes>
+                        <p class="pp-campo-rotulo">Lembretes e bloqueio <span class="pp-selo pp-tom-neutro">em breve</span></p>
+                        <div class="pp-linha-campos">
+                            <label class="pp-campo is-desabilitado"><span>Prazo de quem entrar depois</span><select disabled><option>dias após entrar no grupo</option></select></label>
+                            <label class="pp-campo is-desabilitado"><span>“Lembrar depois” adia por</span><select disabled><option>4 horas</option></select></label>
+                            <label class="pp-campo is-desabilitado"><span>Exigir quiz antes da ciência</span><select disabled><option>Não exigir</option></select></label>
+                        </div>
+                        <label class="pp-marcar is-desabilitado"><input type="checkbox" disabled><span><strong>Bloqueio parcial:</strong> em atraso, trava funções do Pessoas+ (como pedir férias) até a ciência. Nunca impede abrir chamado nem sair.</span></label>
+                        <p class="pp-nota">Nesta versão o aviso aparece ao entrar e a pendência fica na Minha área até a confirmação. A volta do aviso durante a sessão, a escalada no prazo, o quiz e o bloqueio parcial entram na etapa seguinte (D-49).</p>
                     </div>
                 </section>
 
@@ -147,23 +158,39 @@
                     {% if d.publicado %}<p class="pp-nota">A lista congelada da versão atual não muda. O público acima vale para a <strong>próxima versão</strong>.</p>{% endif %}
                 </section>
 
-                {% if not d.revogado %}
-                    <div class="pp-acoes-linha">
-                        {% if d.nova %}
-                            <button type="submit" name="add" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
-                        {% elseif not d.publicado %}
-                            <button type="submit" name="update" value="1" class="pp-botao"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
-                            <button type="submit" name="publicar" value="1" class="pp-botao is-primario" data-pp-confirmar="Publicar agora? O conteúdo, os anexos e a lista de destinatários ficam congelados nesta versão."><i class="ti ti-send" aria-hidden="true"></i><span>Publicar</span></button>
-                            <button type="submit" name="delete" value="1" class="pp-botao is-perigo" data-pp-confirmar="Excluir este rascunho?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir rascunho</span></button>
-                        {% else %}
-                            <button type="submit" name="update" value="1" class="pp-botao"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar alterações</span></button>
-                            <button type="submit" name="publicar" value="1" class="pp-botao is-primario" data-pp-motivo="Motivo da nova versão (obrigatório). Ela reabre a pendência para todo o público; as ciências da versão {{ d.versao_atual }} continuam ligadas a ela."><i class="ti ti-versions" aria-hidden="true"></i><span>Publicar nova versão</span></button>
-                        {% endif %}
-                        <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
-                    </div>
-                    {% if d.nova %}<p class="pp-nota">Salve o rascunho primeiro: a aba Anexos e o botão Publicar aparecem depois.</p>{% endif %}
-                {% endif %}
             </div>
+
+            <aside class="pp-novo-lateral">
+                <section class="pp-cartao">
+                    <h2 class="pp-secao-titulo is-simples"><i class="ti ti-eye" aria-hidden="true"></i> Como o destinatário vai ver</h2>
+                    <div class="pp-previa" data-pp-previa-com>
+                        <span class="pp-previa-tipo" data-pp-prev-tipo>{{ f.tipo == 'normativa' ? 'Normativa' : 'Comunicado' }}</span>
+                        <strong data-pp-prev-titulo>{{ f.titulo != '' ? f.titulo : 'Sem título' }}</strong>
+                        <p data-pp-prev-texto>{{ d.previa_texto != '' ? d.previa_texto : 'O começo do texto aparece aqui.' }}</p>
+                        <span class="pp-botao is-primario is-compacto pp-previa-botao" aria-hidden="true" data-pp-prev-resposta>{{ f.exige_concordancia ? 'De acordo' : 'Ciente' }}</span>
+                    </div>
+                    <p class="pp-nota"><span data-pp-prev-total>{{ d.previa.total }}</span> pessoas · aviso ao entrar e na Minha área.</p>
+                </section>
+                {% if not d.revogado %}
+                    <section class="pp-cartao pp-publicar">
+                        {% if d.nova %}
+                            <button type="submit" name="add" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                            <button type="button" class="pp-botao is-primario is-largo" disabled title="Salve o rascunho primeiro"><i class="ti ti-send" aria-hidden="true"></i><span>Publicar</span></button>
+                            <p class="pp-nota">Salve o rascunho primeiro: a aba Anexos e o botão Publicar aparecem depois.</p>
+                        {% elseif not d.publicado %}
+                            <button type="submit" name="update" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                            <button type="submit" name="publicar" value="1" class="pp-botao is-primario is-largo" data-pp-confirmar="Publicar agora? O conteúdo, os anexos e a lista de destinatários ficam congelados nesta versão."><i class="ti ti-send" aria-hidden="true"></i><span>Publicar</span></button>
+                            <button type="submit" name="delete" value="1" class="pp-botao is-perigo is-largo" data-pp-confirmar="Excluir este rascunho?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir rascunho</span></button>
+                            <p class="pp-nota">Publicar congela o texto e os anexos, calcula o selo SHA-256, grava a lista de destinatários e dispara o aviso.</p>
+                        {% else %}
+                            <button type="submit" name="update" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar alterações</span></button>
+                            <button type="submit" name="publicar" value="1" class="pp-botao is-primario is-largo" data-pp-motivo="Motivo da nova versão (obrigatório). Ela reabre a pendência para todo o público; as ciências da versão {{ d.versao_atual }} continuam ligadas a ela."><i class="ti ti-versions" aria-hidden="true"></i><span>Publicar nova versão</span></button>
+                            <p class="pp-nota">Depois de publicado, mudar o texto só por nova versão, com motivo obrigatório.</p>
+                        {% endif %}
+                        <a class="pp-botao is-largo" href="{{ d.url_lista }}">Cancelar</a>
+                    </section>
+                {% endif %}
+            </aside>
         </form>
     {% endif %}
 {% endblock %}

@@ -7,6 +7,7 @@
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM3_2
  * PESSOASPLUS_BUILD_BM4_2
+ * PESSOASPLUS_BUILD_BM4_8
  *
  * POST add | update | publicar | despublicar | delete; imagem (documents_id)
  * escolhe a capa entre as imagens anexadas pela aba nativa de Documentos.
@@ -65,7 +66,10 @@ if (isset($_POST['add'])) {
             }
         }
         if (isset($_POST['publicar'])) {
-            if ($pub->publicar()) {
+            // BM.4-8 (I-10): reconhecimento so sai no mural com a concordancia da pessoa.
+            if ((string) $pub->fields['tipo'] === 'reconhecimento' && (int) ($_POST['concordancia'] ?? 0) !== 1) {
+                Session::addMessageAfterRedirect('Confirme a concordância da pessoa reconhecida (seção Interação) antes de publicar.', false, ERROR);
+            } elseif ($pub->publicar()) {
                 Session::addMessageAfterRedirect('Publicado no mural.', false, INFO);
                 Html::redirect($urlLista);
             }
@@ -127,9 +131,39 @@ if (!$nova && $aba === 'imagem' && Document::canView()) {
 }
 
 $hex = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+// BM.4-8: descricoes do quadro 2 do canvas (so texto de tela).
+$descricoes = [
+    'aviso'          => 'Informação do dia a dia: escala, prazo, mudança de rotina.',
+    'evento'         => 'Reunião, confraternização, treinamento com data e lugar.',
+    'reconhecimento' => 'Elogio público a uma pessoa ou equipe, com a concordância dela.',
+    'treinamento'    => 'Conteúdo para aprender: vídeo, manual, trilha.',
+    'campanha'       => 'Campanha do mês, com arte e período longo.',
+    'celebracao'     => 'Data comemorativa da empresa, com arte própria.',
+];
 $tipos = [];
 foreach (Publicacao::TIPOS as $chave => $t) {
-    $tipos[] = ['chave' => $chave, 'rotulo' => $t[0], 'icone' => $t[1]];
+    $tipos[] = ['chave' => $chave, 'rotulo' => $t[0], 'icone' => $t[1], 'descricao' => $descricoes[$chave] ?? ''];
+}
+// BM.4-8: fixadas no ar por lugar (texto "Fixadas agora em ...") e destaque atual (D-63), sem a propria publicacao.
+$fixadasPorLugar = array_fill_keys(array_keys(Publicacao::LUGARES), []);
+$destaqueAtual   = ['titulo' => '', 'periodo' => ''];
+foreach (Publicacao::lista(['situacao' => 'no_ar', 'busca' => ''], $hoje)['publicacoes'] as $p) {
+    if ((int) $p['id'] === $id) {
+        continue;
+    }
+    if ($p['fixada'] && isset($fixadasPorLugar[$p['lugar']])) {
+        $fixadasPorLugar[$p['lugar']][] = $p['titulo'];
+    }
+    if ($p['lugar'] === 'destaque' && $destaqueAtual['titulo'] === '') {
+        $destaqueAtual = ['titulo' => $p['titulo'], 'periodo' => $p['periodo']];
+    }
+}
+$imagens  = $nova ? [] : $pub->imagensDisponiveis();
+$imagemId = 0;
+foreach ($imagens as $i) {
+    if (!empty($i['escolhida'])) {
+        $imagemId = (int) $i['id'];
+    }
 }
 $lugares = [];
 foreach (Publicacao::LUGARES as $chave => $l) {
@@ -166,11 +200,16 @@ $dados = [
         'inicio'  => (string) ($f['inicio'] ?? ''),
         'fim'     => (string) ($f['fim'] ?? ''),
         'fixada'  => (int) ($f['fixada'] ?? 0) === 1,
+        'concordancia' => ($f['situacao'] ?? '') === 'publicada' && ($f['tipo'] ?? '') === 'reconhecimento',
         'imagem_alt' => (string) ($f['imagem_alt'] ?? ''),
         'publico_modelo_id' => (int) ($f['publico_modelo_id'] ?? 0),
     ],
     'imagem_url'  => $nova ? '' : $pub->urlImagem(),
-    'imagens'     => $nova ? [] : $pub->imagensDisponiveis(),
+    'imagem_id'   => $imagemId,
+    'imagens'     => $imagens,
+    'hoje'        => $hoje,
+    'fixadas_json' => json_encode($fixadasPorLugar, $hex),
+    'destaque'    => $destaqueAtual,
     'botoes'      => $botoes,
     'botoes_json' => json_encode($botoes, $hex),
     'atalhos'     => $atalhos,

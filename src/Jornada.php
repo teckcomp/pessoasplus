@@ -4,6 +4,7 @@
  * Pessoas+ - jornada do colaborador em 6 trechos (Figura 2 da proposta, D-67).
  *
  * PESSOASPLUS_BUILD_BM1_2
+ * PESSOASPLUS_BUILD_BM4_8
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -47,6 +48,9 @@ final class Jornada
         'ficha_alterada' => 'dia_a_dia',
         'ficha_excluida' => 'saida',
         'comunicado_criado' => 'dia_a_dia',
+        // BM.4-8: foto da capa e evento do dia a dia, nao da chegada.
+        'foto_alterada' => 'dia_a_dia',
+        'foto_removida' => 'dia_a_dia',
     ];
 
     /**

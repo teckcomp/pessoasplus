@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_BM2
  * PESSOASPLUS_BUILD_BM2_2
+ * PESSOASPLUS_BUILD_BM4_8
  *
  * GET sem id: novo (?tipo=normativa pre-seleciona). GET ?id=: edita.
  * POST add | update | publicar (com motivo quando ja publicado) | delete.
@@ -143,6 +144,8 @@ $dados = [
     'aba'            => $aba,
     'url_aba'        => ['conteudo' => $urlForm . '?id=' . $id, 'anexos' => $urlForm . '?id=' . $id . '&aba=anexos'],
     'editor_html'    => $editorHtml,
+    // BM.4-8: comeco do texto, sem HTML, para a previa "Como o destinatario vai ver".
+    'previa_texto'   => mb_substr(trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags((string) ($f['conteudo'] ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?? ''), 0, 160),
     'anexos_html'    => $anexosHtml,
     'pode_documentos' => Document::canView(),
     'tipos'          => $tipos,

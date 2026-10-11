@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -1302,6 +1302,59 @@
                     }
                 });
             });
+            /* BM.4-8: previa "Como o destinatario vai ver" ao vivo. */
+            var prevTitulo = raiz.querySelector('[data-pp-prev-titulo]');
+            if (prevTitulo) {
+                var tituloCampo = raiz.querySelector('[data-pp-titulo]');
+                var exige = raiz.querySelector('[data-pp-exige-concordancia]');
+                var textoCampo = raiz.querySelector('textarea[name="conteudo"]');
+                var previaCom = function () {
+                    var tipoEl = raiz.querySelector('input[name="tipo"]:checked');
+                    var tipoNo = raiz.querySelector('[data-pp-prev-tipo]');
+                    if (tipoNo && tipoEl) {
+                        tipoNo.textContent = tipoEl.getAttribute('data-pp-rotulo') || tipoEl.value;
+                    }
+                    prevTitulo.textContent = (tituloCampo && tituloCampo.value.trim()) || 'Sem título';
+                    var resposta = raiz.querySelector('[data-pp-prev-resposta]');
+                    if (resposta) {
+                        resposta.textContent = exige && exige.checked ? 'De acordo' : 'Ciente';
+                    }
+                    var texto = raiz.querySelector('[data-pp-prev-texto]');
+                    if (texto) {
+                        var html = '';
+                        if (window.tinymce && textoCampo && window.tinymce.get(textoCampo.id)) {
+                            html = window.tinymce.get(textoCampo.id).getContent();
+                        } else if (textoCampo) {
+                            html = textoCampo.value || '';
+                        }
+                        var tmp = document.createElement('div');
+                        tmp.innerHTML = html;
+                        var plano = (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+                        texto.textContent = plano === '' ? 'O começo do texto aparece aqui.' : (plano.length > 160 ? plano.slice(0, 160) + '…' : plano);
+                    }
+                    var totalNo = raiz.querySelector('[data-pp-previa-total]');
+                    var prevTotal = raiz.querySelector('[data-pp-prev-total]');
+                    if (totalNo && prevTotal) {
+                        prevTotal.textContent = totalNo.textContent;
+                    }
+                };
+                raiz.addEventListener('input', previaCom);
+                raiz.addEventListener('change', previaCom);
+                raiz.addEventListener('pp:previa', previaCom);
+                if (window.tinymce && textoCampo) {
+                    /* O TinyMCE inicializa depois: ouve o editor quando ele nascer. */
+                    window.tinymce.on('AddEditor', function (e) {
+                        if (e.editor && e.editor.id === textoCampo.id) {
+                            e.editor.on('input change keyup', previaCom);
+                        }
+                    });
+                    var ja = window.tinymce.get(textoCampo.id);
+                    if (ja) {
+                        ja.on('input change keyup', previaCom);
+                    }
+                }
+                previaCom();
+            }
             var motivoCampo = raiz.querySelector('[data-pp-motivo-campo]');
             raiz.querySelectorAll('[data-pp-motivo]').forEach(function (botao) {
                 botao.addEventListener('click', function (evento) {
@@ -1376,6 +1429,9 @@
                 links = [];
             }
             var editavel = !!raiz.querySelector('[data-pp-link-adicionar]');
+            /* BM.4-8: o texto de "vazio" vem do template (botoes x documentos). */
+            var vazioInicial = raiz.querySelector('[data-pp-links-vazio]');
+            var textoVazio = vazioInicial ? vazioInicial.textContent : 'Nenhum documento relacionado.';
             function render() {
                 if (campo) {
                     campo.value = JSON.stringify(links);
@@ -1385,7 +1441,7 @@
                 }
                 lista.innerHTML = '';
                 if (links.length === 0) {
-                    var vazio = el('li', 'pp-sub', 'Nenhum documento relacionado.');
+                    var vazio = el('li', 'pp-sub', textoVazio);
                     vazio.setAttribute('data-pp-links-vazio', '');
                     lista.appendChild(vazio);
                 }
@@ -1401,6 +1457,7 @@
                         x.addEventListener('click', function () {
                             links.splice(i, 1);
                             render();
+                            raiz.dispatchEvent(new CustomEvent('pp:links', { bubbles: true }));
                         });
                         li.appendChild(x);
                     }
@@ -1428,6 +1485,7 @@
                     url.value = '';
                     render();
                     rotulo.focus();
+                    raiz.dispatchEvent(new CustomEvent('pp:links', { bubbles: true }));
                 };
                 adicionar.addEventListener('click', incluir);
                 var atalho = raiz.querySelector('[data-pp-link-atalho]');
@@ -1457,19 +1515,66 @@
     }
 
 
-    /* BM.3: formulario da publicacao real: o lugar decide imagem, botoes e fixacao. */
+    /* BM.3: formulario da publicacao real: o lugar decide imagem, botoes e fixacao.
+     * BM.4-8 (D-83): previa "Como o colaborador vai ver" (mapa + cartao), contador
+     * da chamada, texto das fixadas, pendencias e rotulo "Agendar para". */
     function iniciarPublicacaoReal() {
         document.querySelectorAll('.pp-casca [data-pp-pubreal]').forEach(function (raiz) {
             if (raiz.hasAttribute('data-pp-pronto-pub')) {
                 return;
             }
             raiz.setAttribute('data-pp-pronto-pub', '');
-            var imagem = raiz.querySelector('[data-pp-so-imagem]');
-            var botoes = raiz.querySelector('[data-pp-so-botoes]');
-            var fixavel = raiz.querySelector('[data-pp-so-fixavel]');
+            var q = function (sel) { return raiz.querySelector(sel); };
+            var imagem = q('[data-pp-so-imagem]');
+            var botoes = q('[data-pp-so-botoes]');
+            var fixavel = q('[data-pp-so-fixavel]');
+            var fixadasPorLugar = lerJson(raiz, '[data-pp-fixadas-json]');
+            var hoje = raiz.getAttribute('data-pp-hoje') || '';
+            var titulo = q('[data-pp-titulo]');
+            var chamada = q('[data-pp-chamada]');
+            var inicio = q('[data-pp-inicio]');
+            var fim = q('[data-pp-fim]');
+            var fixar = q('[data-pp-fixar]');
+            var concordancia = q('[data-pp-concordancia]');
+            var publicar = q('[data-pp-publicar]');
+            var pv = q('[data-pp-pv]');
+            var imagemSelect = q('[data-pp-imagem-select]');
+
+            function marcado(nome) {
+                return raiz.querySelector('input[name="' + nome + '"]:checked');
+            }
+
+            function definir(sel, texto) {
+                var no = q(sel);
+                if (no) {
+                    no.textContent = texto;
+                }
+            }
+
+            function lerBotoes() {
+                var campo = q('[data-pp-links-campo]');
+                try {
+                    var lidos = JSON.parse((campo && campo.value) || '[]');
+                    return Array.isArray(lidos) ? lidos : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function totalPrevia() {
+                var no = q('[data-pp-previa-total]');
+                return no ? (parseInt(no.textContent, 10) || 0) : 0;
+            }
+
             function aplicar() {
-                var marcado = raiz.querySelector('input[name="lugar"]:checked');
-                var lugar = marcado ? marcado.value : 'cartao';
+                var lugarEl = marcado('lugar');
+                var tipoEl = marcado('tipo');
+                var lugar = lugarEl ? lugarEl.value : 'cartao';
+                var tipo = tipoEl ? tipoEl.value : '';
+                var lugarRotulo = lugarEl ? (lugarEl.getAttribute('data-pp-rotulo') || lugar) : lugar;
+                var comImagem = lugar !== 'destaque';
+                var fixada = !!(fixar && fixar.checked) && lugar !== 'destaque';
+
                 if (imagem) {
                     imagem.hidden = lugar === 'destaque';
                     var dicaImagem = imagem.querySelector('[data-pp-imagem-dica]');
@@ -1493,12 +1598,130 @@
                     var caixa = fixavel.querySelector('input[type="checkbox"]');
                     if (caixa && lugar === 'destaque') {
                         caixa.checked = false;
+                        fixada = false;
                     }
                 }
+                raiz.querySelectorAll('[data-pp-so-lugar]').forEach(function (no) {
+                    no.hidden = no.getAttribute('data-pp-so-lugar') !== lugar;
+                });
+                raiz.querySelectorAll('[data-pp-so-tipo]').forEach(function (no) {
+                    no.hidden = no.getAttribute('data-pp-so-tipo') !== tipo;
+                });
+                definir('[data-pp-fixadas-info]', textoFixadas(lugarRotulo, fixadasPorLugar[lugar], fixada));
+                definir('[data-pp-contador]', String(chamada ? chamada.value.length : 0));
+
+                /* Mapa e previa */
+                raiz.querySelectorAll('[data-pp-zona]').forEach(function (zona) {
+                    zona.classList.toggle('is-alvo', zona.getAttribute('data-pp-zona') === lugar);
+                });
+                var corpo = chamada ? chamada.value.trim() : '';
+                if (pv) {
+                    pv.className = 'pp-pv is-' + lugar + ' pp-pv-tipo-' + tipo;
+                    var img = q('[data-pp-pv-imagem]');
+                    var capa = q('[data-pp-pv-capa]');
+                    var urlImagem = '';
+                    if (img) {
+                        var atual = img.getAttribute('data-pp-pv-atual') || '0';
+                        var escolhida = imagemSelect ? imagemSelect.value : atual;
+                        urlImagem = (escolhida !== '0' && escolhida === atual) ? (img.getAttribute('data-pp-pv-url') || '') : '';
+                    }
+                    var mostraImagem = comImagem && urlImagem !== '';
+                    if (img) {
+                        img.hidden = !mostraImagem;
+                        if (mostraImagem && img.getAttribute('src') !== urlImagem) {
+                            img.setAttribute('src', urlImagem);
+                        }
+                    }
+                    if (capa) {
+                        capa.hidden = mostraImagem || !comImagem;
+                    }
+                    var icone = q('[data-pp-pv-icone]');
+                    if (icone && tipoEl) {
+                        icone.className = tipoEl.getAttribute('data-pp-icone') || '';
+                    }
+                    var rotulo = tipoEl ? (tipoEl.getAttribute('data-pp-rotulo') || '') : '';
+                    if (lugar === 'destaque') {
+                        rotulo = 'Destaque fixo · ' + rotulo;
+                    } else if (fixada) {
+                        rotulo += ' · Fixada no topo';
+                    }
+                    definir('[data-pp-pv-rotulo]', rotulo);
+                    definir('[data-pp-pv-titulo]', (titulo && titulo.value.trim()) || 'Sem título');
+                    var limite = lugar === 'grande' || lugar === 'destaque' ? 240 : 120;
+                    definir('[data-pp-pv-chamada]', corpo.length > limite ? corpo.slice(0, limite) + '…' : corpo);
+                    var pvBotoes = q('[data-pp-pv-botoes]');
+                    if (pvBotoes) {
+                        while (pvBotoes.firstChild) {
+                            pvBotoes.removeChild(pvBotoes.firstChild);
+                        }
+                        if (lugar !== 'destaque') {
+                            lerBotoes().slice(0, lugar === 'grande' ? 2 : 1).forEach(function (b, i) {
+                                var texto = (b.rotulo || b.url || '').trim();
+                                if (texto !== '') {
+                                    pvBotoes.appendChild(el('span', 'pp-pv-botao' + (i === 0 ? ' is-primario' : ''), texto));
+                                }
+                            });
+                        }
+                        pvBotoes.hidden = pvBotoes.childNodes.length === 0;
+                    }
+                    var periodo = 'sem período';
+                    if (inicio && inicio.value) {
+                        periodo = fim && fim.value
+                            ? (inicio.value === fim.value ? 'em ' + dataCurta(inicio.value) : 'de ' + dataCurta(inicio.value) + ' a ' + dataCurta(fim.value))
+                            : 'desde ' + dataCurta(inicio.value);
+                    }
+                    definir('[data-pp-pv-meta]', 'RH · ' + periodo);
+                }
+
+                /* Publico, pendencias e rotulo do botao */
+                var total = totalPrevia();
+                definir('[data-pp-prev-total]', String(total));
+                var zero = q('[data-pp-zero]');
+                if (zero) {
+                    zero.hidden = total !== 0;
+                }
+                var pendencias = [];
+                if (titulo && titulo.value.trim() === '') {
+                    pendencias.push('Escreva o título.');
+                }
+                if (corpo === '') {
+                    pendencias.push('Escreva a chamada: é o que aparece no mural.');
+                }
+                if (!inicio || inicio.value === '') {
+                    pendencias.push('Informe o início do período de exibição.');
+                } else if (fim && fim.value !== '' && fim.value < inicio.value) {
+                    pendencias.push('O fim do período vem antes do início.');
+                }
+                if (total === 0) {
+                    pendencias.push('Monte o público: ninguém veria a publicação.');
+                }
+                if (tipo === 'reconhecimento' && !(concordancia && concordancia.checked)) {
+                    pendencias.push('Confirme a concordância da pessoa reconhecida.');
+                }
+                var lista = q('[data-pp-pendencias]');
+                if (lista) {
+                    while (lista.firstChild) {
+                        lista.removeChild(lista.firstChild);
+                    }
+                    pendencias.forEach(function (p) { lista.appendChild(el('li', null, p)); });
+                    lista.hidden = pendencias.length === 0;
+                }
+                if (publicar && !publicar.hasAttribute('data-pp-rotulo-fixo')) {
+                    /* Só o que o servidor também recusa (Publicacao::publicar) trava o botão. */
+                    publicar.disabled = pendencias.length > 0;
+                    var agendar = inicio && inicio.value !== '' && hoje !== '' && inicio.value > hoje;
+                    definir('[data-pp-publicar-rotulo]', agendar ? 'Agendar para ' + dataCurta(inicio.value) : 'Publicar');
+                }
             }
-            raiz.querySelectorAll('input[name="lugar"]').forEach(function (r) {
-                r.addEventListener('change', aplicar);
-            });
+
+            raiz.addEventListener('change', aplicar);
+            raiz.addEventListener('input', aplicar);
+            raiz.addEventListener('pp:links', aplicar);
+            raiz.addEventListener('pp:previa', aplicar);
+            if (imagemSelect && window.jQuery) {
+                /* select2 dispara change pelo jQuery (T-67). */
+                window.jQuery(imagemSelect).on('change', aplicar);
+            }
             aplicar();
         });
     }
@@ -1872,6 +2095,8 @@
                                 nomes.appendChild(el('li', 'pp-sub', 'e mais ' + json.mais));
                             }
                         }
+                        /* BM.4-8: a previa da publicacao e as pendencias ouvem o total novo. */
+                        raiz.dispatchEvent(new CustomEvent('pp:previa', { bubbles: true, detail: json }));
                     }).catch(function (e) {
                         avisar(raiz, 'Prévia indisponível: ' + e.message);
                     });

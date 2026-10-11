@@ -7,6 +7,7 @@
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
+ * PESSOASPLUS_BUILD_BM4_8
  */
 
 namespace GlpiPlugin\Pessoasplus;
@@ -62,6 +63,9 @@ final class Evento extends CommonDBTM
         'formulario_respondido'  => 'Formulário respondido',
         'ouvidoria_enviada'      => 'Envio à Ouvidoria (identificado)',
         'ouvidoria_tratada'      => 'Ouvidoria: tratamento registrado',
+        // BM.4-8: pendencia do BM.1-3 (foto da capa pela pasta, D-84).
+        'foto_alterada'          => 'Foto alterada',
+        'foto_removida'          => 'Foto removida',
     ];
 
     /**

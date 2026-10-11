@@ -1776,3 +1776,14 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-mc-embreve small { color: var(--pp-texto-2); font-size: 0.75rem; margin-left: 2px; }
 .pp-casca .pp-mc-aniversario.is-embreve .pp-mc-capa-auto { min-height: 120px; }
 .pp-casca .pp-celebracao.is-embreve .pp-celebracao-data { color: var(--pp-texto-2); font-weight: 500; }
+
+/* BM.4-8: formularios de publicacao e comunicado no layout da casca (D-83). PESSOASPLUS_BUILD_BM4_8 */
+.pp-casca .pp-secao-titulo .pp-selo { margin-left: 8px; vertical-align: middle; font-weight: 600; }
+.pp-casca .pp-marcar.is-desabilitado, .pp-casca .pp-campo.is-desabilitado { opacity: 0.6; cursor: not-allowed; }
+.pp-casca .pp-marcar.is-desabilitado input, .pp-casca .pp-campo.is-desabilitado select { cursor: not-allowed; }
+.pp-casca .pp-secao.is-embreve { opacity: 1; }
+.pp-casca .pp-secao.is-embreve .pp-marcar.is-desabilitado { opacity: 0.55; }
+.pp-casca .pp-embreve-bloco { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--pp-borda); }
+.pp-casca .pp-embreve-bloco .pp-campo-rotulo { margin-bottom: 8px; }
+.pp-casca .pp-publicar .pp-nota { margin: 8px 0 0; }
+.pp-casca .pp-novo-lateral .pp-pv-imagem { aspect-ratio: 2 / 1; object-fit: contain; background: var(--pp-fundo); }
