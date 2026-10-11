@@ -8,6 +8,7 @@
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  * PESSOASPLUS_BUILD_BM4_8
+ * PESSOASPLUS_BUILD_BM6
  */
 
 namespace GlpiPlugin\Pessoasplus;
@@ -66,6 +67,11 @@ final class Evento extends CommonDBTM
         // BM.4-8: pendencia do BM.1-3 (foto da capa pela pasta, D-84).
         'foto_alterada'          => 'Foto alterada',
         'foto_removida'          => 'Foto removida',
+        // BM.6-1: itens em cautela.
+        'cautela_criada'         => 'Termo de cautela criado',
+        'cautela_emitida'        => 'Termo de cautela emitido',
+        'cautela_assinada'       => 'Termo de cautela assinado',
+        'cautela_cancelada'      => 'Termo de cautela cancelado',
     ];
 
     /**

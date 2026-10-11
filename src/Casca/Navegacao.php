@@ -39,7 +39,7 @@ final class Navegacao
     public const RAIZ = '/plugins/pessoasplus/front/';
 
     /** Build da casca, usado para quebrar o cache do CSS e do JS. */
-    public const BUILD = 'bm5';
+    public const BUILD = 'bm6-1';
 
     /**
      * Grupos e areas, na ordem em que aparecem (menu por papel, D-55):
@@ -78,7 +78,7 @@ final class Navegacao
                     self::item('chegadas', 'Chegadas e checklists', 'ti ti-door-enter', 'chegadas.php', 'BP.4a'),
                     self::item('ferias', 'Férias e ausências', 'ti ti-beach', null, 'BP.5'),
                     self::item('desligamentos', 'Desligamentos', 'ti ti-door-exit', null, 'BP.8'),
-                    self::item('cautela', 'Itens em cautela', 'ti ti-tool', null, 'BP.10'),
+                    self::item('cautela', 'Itens em cautela', 'ti ti-tool', 'cautela.php', 'BM.6'),
                     self::item('fichario', 'Fichário', 'ti ti-folders', 'fichario.php', 'BM.1'),
                     self::item('publicos', 'Públicos', 'ti ti-users', 'publicos.php', 'BM.1'),
                     self::item('registro', 'Registro funcional', 'ti ti-timeline', null, 'BP.8'),

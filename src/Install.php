@@ -11,6 +11,7 @@
  * PESSOASPLUS_BUILD_BM2_2
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM6
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -62,6 +63,8 @@ final class Install
         'glpi_plugin_pessoasplus_respostas_itens',
         'glpi_plugin_pessoasplus_participacoes',
         'glpi_plugin_pessoasplus_limites',
+        'glpi_plugin_pessoasplus_cautela_termos',
+        'glpi_plugin_pessoasplus_cautela_itens',
     ];
 
     /**
@@ -488,6 +491,57 @@ final class Install
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `chave` (`chave`),
                 KEY `dia` (`dia`)
+            ) $fim");
+        }
+
+        // BM.6-1 - itens em cautela (Adendo 3, D-42): termo congelado com selo e ciencia imutavel.
+        $tabela = 'glpi_plugin_pessoasplus_cautela_termos';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `entities_id` int unsigned NOT NULL DEFAULT '0',
+                `plugin_pessoasplus_colaboradores_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id_rh` int unsigned NOT NULL DEFAULT '0',
+                `tipo` varchar(20) NOT NULL DEFAULT 'entrega',
+                `titulo` varchar(255) NOT NULL DEFAULT '',
+                `observacoes` text,
+                `situacao` varchar(20) NOT NULL DEFAULT 'rascunho',
+                `emitido_em` timestamp NULL DEFAULT NULL,
+                `selo` char(64) NOT NULL DEFAULT '',
+                `ciencia_data` timestamp NULL DEFAULT NULL,
+                `ciencia_interface` varchar(20) NOT NULL DEFAULT '',
+                `ciencia_selo` char(64) NOT NULL DEFAULT '',
+                `motivo_cancelamento` varchar(500) NOT NULL DEFAULT '',
+                `is_deleted` tinyint NOT NULL DEFAULT '0',
+                `date_creation` timestamp NULL DEFAULT NULL,
+                `date_mod` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `colaborador` (`plugin_pessoasplus_colaboradores_id`),
+                KEY `usuario` (`users_id`,`situacao`),
+                KEY `situacao` (`situacao`)
+            ) $fim");
+        }
+
+        $tabela = 'glpi_plugin_pessoasplus_cautela_itens';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_cautela_termos_id` int unsigned NOT NULL DEFAULT '0',
+                `ordem` int NOT NULL DEFAULT '0',
+                `origem` varchar(10) NOT NULL DEFAULT 'livre',
+                `itemtype` varchar(100) NOT NULL DEFAULT '',
+                `items_id` int unsigned NOT NULL DEFAULT '0',
+                `descricao` varchar(255) NOT NULL DEFAULT '',
+                `patrimonio` varchar(100) NOT NULL DEFAULT '',
+                `serie` varchar(100) NOT NULL DEFAULT '',
+                `quantidade` int NOT NULL DEFAULT '1',
+                `foto_obrigatoria` tinyint NOT NULL DEFAULT '0',
+                PRIMARY KEY (`id`),
+                KEY `termo` (`plugin_pessoasplus_cautela_termos_id`,`ordem`),
+                KEY `item` (`itemtype`,`items_id`)
             ) $fim");
         }
 

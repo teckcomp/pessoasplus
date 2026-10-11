@@ -40,7 +40,6 @@ final class Fontes
         'chegadas',
         'ferias',
         'desligamentos',
-        'cautela',
         'registro',
         'desempenho',
         'indicadores',

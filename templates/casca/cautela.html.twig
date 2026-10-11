@@ -1,0 +1,44 @@
+{# Pessoas+ - Itens em cautela (gestao do RH). PESSOASPLUS_BUILD_BM6 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    {% if pp.dados.gerencia %}
+        <form class="pp-inline pp-novo-termo" method="get" action="{{ pp.dados.url_termo }}" data-pp-novo-termo>
+            <select name="colaborador" data-pp-buscavel required aria-label="Colaborador">
+                <option value="">Novo termo para…</option>
+                {% for c in pp.dados.colaboradores %}<option value="{{ c.id }}">{{ c.nome }}{% if not c.com_usuario %} (sem usuário no GLPI){% endif %}</option>{% endfor %}
+            </select>
+            <button type="submit" class="pp-botao is-primario"><i class="ti ti-plus" aria-hidden="true"></i><span>Novo termo</span></button>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    <div class="pp-mc-resumo" role="group" aria-label="Filtrar por situação">
+        <a class="pp-pub-chip{% if d.situacao == '' %} is-ativo{% endif %}" href="{{ d.url_aqui }}"><strong>{{ d.total }}</strong> no total</a>
+        {% for c in d.chips %}<a class="pp-pub-chip{% if d.situacao == c.chave %} is-ativo{% endif %}" href="{{ d.url_aqui }}?situacao={{ c.chave }}"><strong>{{ c.total }}</strong> {{ c.rotulo|lower }}</a>{% endfor %}
+    </div>
+
+    <section class="pp-cartao">
+        <header class="pp-cartao-cabecalho"><h2>Termos</h2><span class="pp-contagem">{{ d.termos|length }}</span></header>
+        {% if d.termos|length == 0 %}
+            <p class="pp-nota">Nenhum termo{% if d.situacao != '' %} nessa situação{% endif %}.{% if d.gerencia %} Escolha um colaborador em "Novo termo para…": o termo lista os ativos do GLPI que já estão no nome da pessoa e aceita itens livres (ferramenta, chave, uniforme). EPI fica fora (D-42).{% endif %}</p>
+        {% endif %}
+        <ul class="pp-lista">
+            {% for t in d.termos %}
+                <li>
+                    <i class="{{ t.icone }} pp-lista-icone" aria-hidden="true"></i>
+                    <div class="pp-lista-texto"><strong><a href="{{ t.url }}">{{ t.titulo }}</a></strong><span>{{ t.colaborador }}{% if t.setor != '' %} · {{ t.setor }}{% endif %} · {{ t.total_itens }} {{ t.total_itens == 1 ? 'item' : 'itens' }}{% if t.emitido_em != '' %} · emitido em {{ t.emitido_em }}{% endif %}{% if t.ciencia_data != '' %} · ciência em {{ t.ciencia_data }}{% endif %}</span></div>
+                    <span class="pp-selo pp-tom-{{ t.tom }}">{{ t.situacao_rotulo }}</span>
+                    {% if t.situacao == 'emitido' or t.situacao == 'assinado' %}<a class="pp-botao is-compacto" href="{{ t.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-printer" aria-hidden="true"></i><span>Comprovante</span></a>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="pp-cartao pp-secao is-embreve">
+        <header class="pp-cartao-cabecalho"><h2>Conferência periódica <span class="pp-selo pp-tom-neutro">em breve</span></h2></header>
+        <p class="pp-nota">Campanha de conferência por público e prazo, com o colaborador respondendo item a item pelo celular (foto pela câmera) e divergências viradas em pendência para o RH (D-60). Entra na parte seguinte deste bloco.</p>
+    </section>
+{% endblock %}

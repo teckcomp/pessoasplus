@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -2234,8 +2234,186 @@
         });
     }
 
+    /* BM.6-1: termo de cautela. Lista unica de itens (JSON no campo oculto):
+     * ativos do GLPI por caixa de marcar + itens livres digitados. */
+    function iniciarCautela() {
+        document.querySelectorAll('.pp-casca [data-pp-cautela]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var editavel = raiz.getAttribute('data-pp-editavel') === '1';
+            var campo = raiz.querySelector('[data-pp-itens-campo]');
+            var lista = raiz.querySelector('[data-pp-itens-lista]');
+            var itens = [];
+            try {
+                /* lerJson so aceita objeto; aqui a lista e um array. */
+                var noJson = raiz.querySelector('[data-pp-itens-json]');
+                itens = JSON.parse((noJson && noJson.textContent) || '[]');
+                if (!Array.isArray(itens)) {
+                    itens = [];
+                }
+            } catch (e) {
+                itens = [];
+            }
+            function chave(i) {
+                return i.origem === 'glpi' ? i.itemtype + '#' + i.items_id : '';
+            }
+            function render() {
+                if (!lista) {
+                    return;
+                }
+                while (lista.firstChild) {
+                    lista.removeChild(lista.firstChild);
+                }
+                if (!itens.length) {
+                    var tr = el('tr', null, null);
+                    tr.setAttribute('data-pp-itens-vazio', '');
+                    var td = el('td', 'pp-sub', 'Nenhum item ainda.');
+                    td.setAttribute('colspan', '7');
+                    tr.appendChild(td);
+                    lista.appendChild(tr);
+                }
+                itens.forEach(function (i, idx) {
+                    var tr = el('tr', null, null);
+                    var tdDesc = el('td', null, null);
+                    if (i.url) {
+                        var a = el('a', null, i.descricao);
+                        a.href = i.url;
+                        a.target = '_blank';
+                        a.rel = 'noopener';
+                        tdDesc.appendChild(a);
+                    } else {
+                        tdDesc.textContent = i.descricao;
+                    }
+                    tr.appendChild(tdDesc);
+                    tr.appendChild(el('td', null, i.origem === 'glpi' ? (i.tipo_rotulo || 'Ativo do GLPI') : 'Item livre'));
+                    tr.appendChild(el('td', null, i.patrimonio || ''));
+                    tr.appendChild(el('td', null, i.serie || ''));
+                    tr.appendChild(el('td', null, String(i.quantidade || 1)));
+                    var tdFoto = el('td', null, null);
+                    if (editavel) {
+                        var foto = el('input', null, null);
+                        foto.type = 'checkbox';
+                        foto.checked = !!i.foto_obrigatoria;
+                        foto.setAttribute('aria-label', 'Exigir foto na conferência');
+                        foto.addEventListener('change', function () {
+                            i.foto_obrigatoria = foto.checked ? 1 : 0;
+                            gravar();
+                        });
+                        tdFoto.appendChild(foto);
+                    } else {
+                        tdFoto.textContent = i.foto_obrigatoria ? 'sim' : 'não';
+                    }
+                    tr.appendChild(tdFoto);
+                    if (editavel) {
+                        var tdX = el('td', null, null);
+                        var x = el('button', 'pp-botao is-compacto', null);
+                        x.type = 'button';
+                        x.setAttribute('aria-label', 'Tirar ' + i.descricao);
+                        x.appendChild(el('i', 'ti ti-x', null));
+                        x.addEventListener('click', function () {
+                            itens.splice(idx, 1);
+                            if (i.origem === 'glpi') {
+                                raiz.querySelectorAll('[data-pp-ativo]').forEach(function (c) {
+                                    if (c.getAttribute('data-pp-itemtype') + '#' + c.getAttribute('data-pp-items-id') === chave(i)) {
+                                        c.checked = false;
+                                    }
+                                });
+                            }
+                            render();
+                            gravar();
+                        });
+                        tdX.appendChild(x);
+                        tr.appendChild(tdX);
+                    }
+                    lista.appendChild(tr);
+                });
+                var total = raiz.querySelector('[data-pp-itens-total]');
+                if (total) {
+                    total.textContent = String(itens.length);
+                }
+                var pv = raiz.querySelector('[data-pp-previa-itens]');
+                if (pv) {
+                    pv.textContent = String(itens.length);
+                }
+                var pend = raiz.querySelector('[data-pp-pendencias]');
+                var emitir = raiz.querySelector('[data-pp-emitir]');
+                if (pend) {
+                    while (pend.firstChild) {
+                        pend.removeChild(pend.firstChild);
+                    }
+                    if (!itens.length) {
+                        pend.appendChild(el('li', null, 'Inclua pelo menos um item.'));
+                    }
+                    pend.hidden = itens.length > 0;
+                }
+                if (emitir && !emitir.hasAttribute('title')) {
+                    emitir.disabled = itens.length === 0;
+                }
+            }
+            function gravar() {
+                if (campo) {
+                    campo.value = JSON.stringify(itens.map(function (i) {
+                        return { origem: i.origem, itemtype: i.itemtype || '', items_id: i.items_id || 0, descricao: i.descricao, patrimonio: i.patrimonio || '', serie: i.serie || '', quantidade: i.quantidade || 1, foto_obrigatoria: i.foto_obrigatoria ? 1 : 0 };
+                    }));
+                }
+            }
+            raiz.querySelectorAll('[data-pp-ativo]').forEach(function (caixa) {
+                caixa.addEventListener('change', function () {
+                    var k = caixa.getAttribute('data-pp-itemtype') + '#' + caixa.getAttribute('data-pp-items-id');
+                    var pos = -1;
+                    itens.forEach(function (i, idx) { if (chave(i) === k) { pos = idx; } });
+                    if (caixa.checked && pos < 0) {
+                        var rotuloTipo = caixa.closest('label');
+                        var small = rotuloTipo ? rotuloTipo.querySelector('small') : null;
+                        var ligacao = rotuloTipo && rotuloTipo.parentNode ? rotuloTipo.parentNode.querySelector('a[href]') : null;
+                        itens.push({ origem: 'glpi', itemtype: caixa.getAttribute('data-pp-itemtype'), items_id: parseInt(caixa.getAttribute('data-pp-items-id'), 10) || 0, descricao: caixa.getAttribute('data-pp-descricao') || '', patrimonio: caixa.getAttribute('data-pp-patrimonio') || '', serie: caixa.getAttribute('data-pp-serie') || '', quantidade: 1, foto_obrigatoria: 0, tipo_rotulo: small ? small.textContent.split(' · ')[0] : 'Ativo do GLPI', url: ligacao ? ligacao.getAttribute('href') : '' });
+                    } else if (!caixa.checked && pos >= 0) {
+                        itens.splice(pos, 1);
+                    }
+                    render();
+                    gravar();
+                });
+            });
+            var adicionar = raiz.querySelector('[data-pp-livre-adicionar]');
+            if (adicionar) {
+                var desc = raiz.querySelector('[data-pp-livre-descricao]');
+                var pat = raiz.querySelector('[data-pp-livre-patrimonio]');
+                var ser = raiz.querySelector('[data-pp-livre-serie]');
+                var qtd = raiz.querySelector('[data-pp-livre-quantidade]');
+                var incluir = function () {
+                    var d = (desc.value || '').trim();
+                    if (d === '') {
+                        desc.focus();
+                        return;
+                    }
+                    itens.push({ origem: 'livre', itemtype: '', items_id: 0, descricao: d.slice(0, 255), patrimonio: (pat.value || '').trim().slice(0, 100), serie: (ser.value || '').trim().slice(0, 100), quantidade: Math.max(1, Math.min(9999, parseInt(qtd.value, 10) || 1)), foto_obrigatoria: 0 });
+                    desc.value = '';
+                    pat.value = '';
+                    ser.value = '';
+                    qtd.value = '1';
+                    render();
+                    gravar();
+                    desc.focus();
+                };
+                adicionar.addEventListener('click', incluir);
+                [desc, pat, ser, qtd].forEach(function (c) {
+                    c.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            incluir();
+                        }
+                    });
+                });
+            }
+            render();
+            gravar();
+        });
+    }
+
     function tudo() {
         iniciar();
+        iniciarCautela();
         iniciarResultado();
         iniciarFiltros();
         iniciarCiencia();

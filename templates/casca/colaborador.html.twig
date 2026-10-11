@@ -1,3 +1,4 @@
+{# PESSOASPLUS_BUILD_BM6 #}
 {# Pessoas+ - pasta do colaborador: capa, Jornada, Dados, Documentos, Historico. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM1_3 #}
 {# BM.1-3 (D-84): foto da capa com botao de camera e janela, em _foto.html.twig; CSS/JS proprios (foto.css, foto.js). #}
 {# Usa pp.dados (front/colaborador.form.php). Dados reais (BM.1). #}
@@ -42,6 +43,7 @@
             <a class="pp-cheg-aba{% if d.aba == 'dados' %} is-ativa{% endif %}" href="{{ d.url_aba.dados }}"{% if d.aba == 'dados' %} aria-current="page"{% endif %}><i class="ti ti-id-badge-2" aria-hidden="true"></i> Dados</a>
             <a class="pp-cheg-aba{% if d.aba == 'documentos' %} is-ativa{% endif %}" href="{{ d.url_aba.documentos }}"{% if d.aba == 'documentos' %} aria-current="page"{% endif %}><i class="ti ti-files" aria-hidden="true"></i> Documentos</a>
             <a class="pp-cheg-aba{% if d.aba == 'historico' %} is-ativa{% endif %}" href="{{ d.url_aba.historico }}"{% if d.aba == 'historico' %} aria-current="page"{% endif %}><i class="ti ti-history" aria-hidden="true"></i> Histórico <span class="pp-contagem">{{ d.eventos|length }}</span></a>
+            <a class="pp-cheg-aba{% if d.aba == 'cautela' %} is-ativa{% endif %}" href="{{ d.url_aba.cautela }}"{% if d.aba == 'cautela' %} aria-current="page"{% endif %}><i class="ti ti-tool" aria-hidden="true"></i> Cautela</a>
         </nav>
     {% endif %}
 
@@ -242,6 +244,38 @@
                 {% endif %}
             </div>
         </form>
+    {% elseif d.aba == 'cautela' %}
+        {# BM.6-1: itens em cautela da pessoa (Adendo 3). #}
+        {% set c = d.cautela %}
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Em posse agora</h2><span class="pp-contagem">{{ c.posse|length }}</span>{% if c.gerencia %}<a class="pp-botao is-primario is-compacto" href="{{ c.url_novo }}"><i class="ti ti-plus" aria-hidden="true"></i><span>Novo termo</span></a>{% endif %}</header>
+            {% if c.posse|length == 0 %}<p class="pp-nota">Nenhum item com ciência de entrega registrada. Entregas assinadas aparecem aqui; devoluções assinadas tiram o item da lista.</p>{% endif %}
+            {% if c.posse|length > 0 %}
+                <table class="pp-tabela pp-caut-tabela">
+                    <thead><tr><th>Item</th><th>Origem</th><th>Patrimônio</th><th>Série</th><th>Qtd.</th><th>Desde</th></tr></thead>
+                    <tbody>{% for i in c.posse %}<tr><td>{% if i.url != '' %}<a href="{{ i.url }}" target="_blank" rel="noopener">{{ i.descricao }}</a>{% else %}{{ i.descricao }}{% endif %}</td><td>{{ i.origem == 'glpi' ? i.tipo_rotulo : 'Item livre' }}</td><td>{{ i.patrimonio }}</td><td>{{ i.serie }}</td><td>{{ i.quantidade }}</td><td>{{ i.desde }}</td></tr>{% endfor %}</tbody>
+                </table>
+            {% endif %}
+        </section>
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Termos</h2><span class="pp-contagem">{{ c.termos|length }}</span></header>
+            {% if c.termos|length == 0 %}<p class="pp-nota">Nenhum termo ainda.</p>{% endif %}
+            <ul class="pp-lista">
+                {% for t in c.termos %}
+                    <li><i class="{{ t.icone }} pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong><a href="{{ t.url }}">{{ t.titulo }}</a></strong><span>{{ t.total_itens }} {{ t.total_itens == 1 ? 'item' : 'itens' }}{% if t.emitido_em != '' %} · emitido em {{ t.emitido_em }}{% endif %}{% if t.ciencia_data != '' %} · ciência em {{ t.ciencia_data }}{% endif %}</span></div><span class="pp-selo pp-tom-{{ t.tom }}">{{ t.situacao_rotulo }}</span>{% if t.situacao == 'emitido' or t.situacao == 'assinado' %}<a class="pp-botao is-compacto" href="{{ t.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-printer" aria-hidden="true"></i><span>Comprovante</span></a>{% endif %}</li>
+                {% endfor %}
+            </ul>
+        </section>
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Ativos do GLPI no nome da pessoa</h2><span class="pp-contagem">{{ c.ativos|length }}</span></header>
+            {% if c.ativos|length == 0 %}<p class="pp-nota">{% if d.ficha.users_id > 0 %}Nenhum computador, telefone, periférico, monitor, impressora ou ativo personalizado com o campo Usuário apontando para esta pessoa.{% else %}A ficha não tem usuário do GLPI ligado; sem ele não há ativos para listar.{% endif %}</p>{% endif %}
+            <ul class="pp-lista is-compacta">
+                {% for a in c.ativos %}
+                    <li><i class="{{ a.icone }} pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong>{% if a.url != '' %}<a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.nome }}</a>{% else %}{{ a.nome }}{% endif %}</strong><span>{{ a.tipo_rotulo }}{% if a.patrimonio != '' %} · patrimônio {{ a.patrimonio }}{% endif %}{% if a.serie != '' %} · série {{ a.serie }}{% endif %}{% if a.estado != '' %} · {{ a.estado }}{% endif %}</span></div></li>
+                {% endfor %}
+            </ul>
+            <p class="pp-nota">Lido do inventário do GLPI (campo Usuário do ativo). Entrar aqui não é cautela: a cautela é o termo com ciência.</p>
+        </section>
     {% elseif d.aba == 'documentos' %}
         <section class="pp-cartao pp-pasta-docs">
             {% if d.pode_documentos %}

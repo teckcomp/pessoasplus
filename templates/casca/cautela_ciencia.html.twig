@@ -1,0 +1,64 @@
+{# Pessoas+ - termo de cautela com ciencia do colaborador (duas interfaces). PESSOASPLUS_BUILD_BM6 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_minha_area }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Minha área</span></a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
+    <div class="pp-leitura">
+        <article class="pp-cartao pp-documento">
+            <div class="pp-emissor-topo">
+                <span class="pp-selo">{{ d.tipo_rotulo }}</span>
+                <span class="pp-selo pp-tom-{{ d.tom }}">{{ d.situacao_rotulo }}</span>
+                {% if d.selo != '' %}<span class="pp-hash" title="Selo de integridade SHA-256 da lista congelada"><i class="ti ti-shield-check" aria-hidden="true"></i> lista congelada · {{ d.selo|slice(0, 16) }}…</span>{% endif %}
+            </div>
+            <p class="pp-sub">{% if d.emitido_em != '' %}Emitido em {{ d.emitido_em }}{% if d.emitido_por != '' %} por {{ d.emitido_por }}{% endif %} para {{ d.colaborador }}{% else %}Rascunho ainda não emitido{% endif %}</p>
+            <div class="pp-doc-secao">
+                <h2>{{ d.tipo == 'devolucao' ? 'Itens devolvidos' : 'Itens entregues' }} <span class="pp-contagem">{{ d.total_itens }}</span></h2>
+                <table class="pp-tabela pp-caut-tabela">
+                    <thead><tr><th>Item</th><th>Patrimônio</th><th>Série</th><th>Qtd.</th></tr></thead>
+                    <tbody>{% for i in d.itens %}<tr><td>{{ i.descricao }}{% if i.origem == 'glpi' %} <small class="pp-sub">{{ i.tipo_rotulo }}</small>{% endif %}</td><td>{{ i.patrimonio != '' ? i.patrimonio : '—' }}</td><td>{{ i.serie != '' ? i.serie : '—' }}</td><td>{{ i.quantidade }}</td></tr>{% endfor %}</tbody>
+                </table>
+            </div>
+            {% if d.observacoes != '' %}<div class="pp-doc-secao"><h2>Observações</h2><p>{{ d.observacoes|nl2br }}</p></div>{% endif %}
+            <div class="pp-doc-secao"><p class="pp-nota">{{ d.tipo == 'devolucao' ? 'Ao confirmar, você declara que devolveu os itens listados nas condições descritas.' : 'Ao confirmar, você declara que recebeu os itens listados, que eles ficam sob sua guarda e que vai comunicar o RH em caso de perda, avaria ou troca.' }} Ponto a validar com o jurídico: o texto desta declaração (D-42).</p></div>
+        </article>
+
+        <aside class="pp-cartao pp-ciencia" data-pp-leitura>
+            <h2>Sua ciência</h2>
+            {% if d.situacao == 'assinado' %}
+                <div class="pp-recibo">
+                    <div class="pp-recibo-titulo"><i class="ti ti-circle-check" aria-hidden="true"></i> Ciência registrada</div>
+                    <dl>
+                        <div><dt>Resposta</dt><dd>{{ d.tipo == 'devolucao' ? 'Confirmo a devolução' : 'Confirmo que recebi' }}</dd></div>
+                        <div><dt>Data e hora</dt><dd>{{ d.ciencia_data }}</dd></div>
+                        <div><dt>Interface</dt><dd>{{ d.ciencia_interface }}</dd></div>
+                        <div><dt>Selo</dt><dd class="pp-hash">{{ d.ciencia_selo|slice(0, 16) }}… {% if d.integridade.termo and d.integridade.ciencia %}<i class="ti ti-shield-check" title="Selo confere" aria-hidden="true"></i>{% else %}<span class="pp-tom-atraso">não confere</span>{% endif %}</dd></div>
+                    </dl>
+                    <a class="pp-botao is-largo" href="{{ d.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-file-certificate" aria-hidden="true"></i><span>Meu comprovante</span></a>
+                </div>
+            {% elseif d.situacao == 'emitido' and d.dono %}
+                <form method="post" action="{{ d.url_aqui }}" data-pp-ciencia-form>
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                    <input type="hidden" name="id" value="{{ d.id }}">
+                    <input type="hidden" name="concorda" value="1">
+                    <label class="pp-marcar">
+                        <input type="checkbox" name="confirmo" value="1" data-pp-ciencia-marcar required>
+                        <span>{{ d.tipo == 'devolucao' ? 'Confirmo que devolvi' : 'Confirmo que recebi' }} os <strong>{{ d.total_itens }} {{ d.total_itens == 1 ? 'item' : 'itens' }}</strong> listados.</span>
+                    </label>
+                    <button type="submit" name="confirmar" value="1" class="pp-botao is-primario is-largo" data-pp-ciencia-confirmar disabled><i class="ti ti-check" aria-hidden="true"></i><span>{{ d.tipo == 'devolucao' ? 'Confirmo a devolução' : 'Confirmo que recebi' }}</span></button>
+                    <p class="pp-nota">A confirmação fica registrada com seu usuário, a data e a hora do servidor, a interface e a lista congelada. Não pode ser editada nem apagada. Algo errado na lista? Não confirme e avise o RH.</p>
+                </form>
+            {% elseif d.situacao == 'emitido' %}
+                <p class="pp-nota">Aguardando a ciência de {{ d.colaborador }}. Você está vendo como RH ou gestor.</p>
+            {% elseif d.situacao == 'cancelado' %}
+                <p class="pp-nota">Termo cancelado pelo RH{% if d.motivo_cancelamento != '' %}: {{ d.motivo_cancelamento }}{% endif %}. Não há ciência a registrar.</p>
+            {% else %}
+                <p class="pp-nota">Rascunho: o RH ainda não emitiu este termo.</p>
+            {% endif %}
+        </aside>
+    </div>
+{% endblock %}

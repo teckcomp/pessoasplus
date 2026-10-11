@@ -6,6 +6,7 @@
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM1_2
  * PESSOASPLUS_BUILD_BM1_3 (D-84: foto da capa pela pasta; foto_cheia, url_foto, foto.css/js)
+ * PESSOASPLUS_BUILD_BM6 (aba Cautela)
  *
  * URL derivada pelo core de GlpiPlugin\Pessoasplus\Colaborador
  * (Toolbox::getItemTypeFormURL). GET ?id= abre a pasta; sem id (ou ?users_id=)
@@ -19,6 +20,7 @@
 use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Pessoasplus\Cargo;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
+use GlpiPlugin\Pessoasplus\Cautela;
 use GlpiPlugin\Pessoasplus\Colaborador;
 use GlpiPlugin\Pessoasplus\Empregador;
 use GlpiPlugin\Pessoasplus\Evento;
@@ -92,7 +94,7 @@ if ($nova) {
     $colaborador->check($id, READ); // 403 se nao pode ver (D-36)
     $ficha = $colaborador->paraTela();
     // D-67: a Jornada e a aba inicial da pasta; Dados, Documentos e Historico por ?aba=.
-    $aba   = in_array($_GET['aba'] ?? '', ['dados', 'documentos', 'historico'], true) ? $_GET['aba'] : 'jornada';
+    $aba   = in_array($_GET['aba'] ?? '', ['dados', 'documentos', 'historico', 'cautela'], true) ? $_GET['aba'] : 'jornada';
 }
 
 $opcoes = Fichario::opcoesFormulario();
@@ -137,6 +139,7 @@ $dados = [
         'dados'      => $nova ? $urlForm : $urlForm . '?id=' . $id . '&aba=dados',
         'documentos' => $urlForm . '?id=' . $id . '&aba=documentos',
         'historico'  => $urlForm . '?id=' . $id . '&aba=historico',
+        'cautela'    => $urlForm . '?id=' . $id . '&aba=cautela',
     ],
     'url_form'        => $urlForm,
     'url_lista'       => $urlLista,
@@ -152,6 +155,14 @@ $dados = [
     'documentos_html' => $documentosHtml,
     'pode_documentos' => $podeDocumentos,
     'eventos'         => $nova ? [] : Evento::doColaborador($id),
+    // BM.6-1: aba Cautela: ativos do GLPI no nome da pessoa (V-13), itens em posse e termos.
+    'cautela'         => $nova || $aba !== 'cautela' ? null : [
+        'ativos'      => Cautela::ativosDoUsuario((int) $ficha['users_id']),
+        'posse'       => Cautela::emPosseDe($id),
+        'termos'      => Cautela::lista(['plugin_pessoasplus_colaboradores_id' => $id]),
+        'gerencia'    => Permissoes::gerencia('cautela'),
+        'url_novo'    => Pagina::url('/plugins/pessoasplus/front/cautela_termo.php') . '?colaborador=' . $id,
+    ],
     // BM.1-3 (D-84): foto da capa. Imagem cheia na pasta (a miniatura do core tem 71 px);
     // envio/remocao por front/foto.php; estaticos proprios para nao tocar nos do servidor.
     'url_foto'        => Pagina::url('/plugins/pessoasplus/front/foto.php'),

@@ -1,0 +1,139 @@
+{# Pessoas+ - termo de cautela (rascunho, emitido, assinado, cancelado). PESSOASPLUS_BUILD_BM6 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Itens em cautela</span></a>
+    {% if pp.dados.colab.id > 0 %}<a class="pp-botao" href="{{ pp.dados.colab.url_pasta }}"><i class="ti ti-folder" aria-hidden="true"></i><span>Pasta</span></a>{% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set f = d.f %}
+    {% set csrf = csrf_token() %}
+
+    {% if not d.nova %}
+        <div class="pp-mc-resumo">
+            <span class="pp-selo pp-tom-{{ d.tom }}">{{ d.situacao_rotulo }}</span>
+            {% if d.emitido_em != '' %}<span class="pp-pub-chip">emitido em <strong>{{ d.emitido_em }}</strong>{% if d.emitido_por != '' %} por {{ d.emitido_por }}{% endif %}</span>{% endif %}
+            {% if d.ciencia_data != '' %}<span class="pp-pub-chip">ciência em <strong>{{ d.ciencia_data }}</strong> · interface {{ d.ciencia_interface }}</span>{% endif %}
+            {% if d.situacao == 'cancelado' %}<span class="pp-pub-chip">motivo: {{ d.motivo_cancelamento }}</span>{% endif %}
+            {% if not d.integridade.termo or not d.integridade.ciencia %}<span class="pp-selo pp-tom-atraso">SELO DIVERGE</span>{% endif %}
+        </div>
+    {% endif %}
+
+    <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-cautela data-pp-editavel="{{ d.editavel ? 1 : 0 }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+        {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% else %}<input type="hidden" name="plugin_pessoasplus_colaboradores_id" value="{{ d.colab.id }}">{% endif %}
+        <input type="hidden" name="itens_json" value="{{ d.itens_json|e('html_attr') }}" data-pp-itens-campo>
+        <script type="application/json" data-pp-itens-json>{{ d.itens_json|raw }}</script>
+
+        <div class="pp-novo-form">
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>1</span> Colaborador e tipo</h2>
+                <div class="pp-pessoa">
+                    <span class="pp-avatar" aria-hidden="true">{{ d.colab.nome|slice(0, 1)|upper }}</span>
+                    <div><strong>{{ d.colab.nome }}</strong><small>{{ d.colab.cargo != '' ? d.colab.cargo : 'sem cargo' }}{% if d.colab.setor != '' %} · {{ d.colab.setor }}{% endif %}</small></div>
+                </div>
+                {% if not d.colab.com_usuario %}<p class="pp-alerta-zero is-aviso" role="status"><i class="ti ti-alert-circle" aria-hidden="true"></i> A ficha não tem usuário do GLPI ligado: dá para montar o rascunho, mas a emissão exige um usuário para dar ciência. Vincule na pasta (aba Dados).</p>{% endif %}
+                <div class="pp-pub-tipos">
+                    {% for t in d.tipos %}
+                        <label class="pp-tipo">
+                            <input type="radio" name="tipo" value="{{ t.chave }}"{% if t.chave == f.tipo %} checked{% endif %}{% if not d.editavel %} disabled{% endif %}>
+                            <span class="pp-tipo-corpo"><strong><i class="{{ t.icone }}" aria-hidden="true"></i> {{ t.rotulo }}</strong><small>{{ t.chave == 'entrega' ? 'A pessoa recebe os itens e dá ciência de que estão com ela.' : 'A pessoa devolve os itens; a ciência fecha a cautela deles.' }}</small></span>
+                        </label>
+                    {% endfor %}
+                </div>
+                <label class="pp-campo"><span>Título <small class="pp-sub">opcional; sem título fica o tipo</small></span><input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}"{% if not d.editavel %} disabled{% endif %}></label>
+            </section>
+
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>2</span> Itens</h2>
+                {% if d.editavel %}
+                    {% if d.ativos|length > 0 %}
+                        <p class="pp-campo-rotulo">Ativos do GLPI no nome da pessoa <small class="pp-sub">marque os que entram no termo</small></p>
+                        <ul class="pp-lista is-compacta pp-caut-ativos">
+                            {% for a in d.ativos %}
+                                <li>
+                                    <label class="pp-marcar">
+                                        <input type="checkbox" data-pp-ativo data-pp-itemtype="{{ a.itemtype }}" data-pp-items-id="{{ a.items_id }}" data-pp-descricao="{{ a.descricao }}" data-pp-patrimonio="{{ a.patrimonio }}" data-pp-serie="{{ a.serie }}"{% if a.marcado %} checked{% endif %}>
+                                        <span><i class="{{ a.icone }}" aria-hidden="true"></i> <strong>{{ a.nome }}</strong> <small class="pp-sub">{{ a.tipo_rotulo }}{% if a.patrimonio != '' %} · patrimônio {{ a.patrimonio }}{% endif %}{% if a.serie != '' %} · série {{ a.serie }}{% endif %}{% if a.estado != '' %} · {{ a.estado }}{% endif %}</small></span>
+                                    </label>
+                                    {% if a.url != '' %}<a class="pp-botao is-compacto" href="{{ a.url }}" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i></a>{% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="pp-nota">{% if d.colab.com_usuario %}Nenhum ativo do GLPI no nome desta pessoa (computador, telefone, periférico, monitor, impressora ou ativo personalizado com o campo Usuário preenchido).{% else %}Sem usuário ligado à ficha não há ativos do GLPI para listar.{% endif %} Use itens livres abaixo.</p>
+                    {% endif %}
+
+                    <fieldset class="pp-campo pp-links" data-pp-livres>
+                        <legend class="pp-campo-rotulo">Itens livres <small class="pp-sub">ferramenta, chave, uniforme, crachá; EPI não entra (D-42)</small></legend>
+                        <div class="pp-publ-nova pp-caut-nova">
+                            <label class="pp-campo"><span>Descrição</span><input type="text" maxlength="255" data-pp-livre-descricao placeholder="Ex.: Furadeira Bosch GSB 13"></label>
+                            <label class="pp-campo is-curto"><span>Patrimônio</span><input type="text" maxlength="100" data-pp-livre-patrimonio></label>
+                            <label class="pp-campo is-curto"><span>Série</span><input type="text" maxlength="100" data-pp-livre-serie></label>
+                            <label class="pp-campo is-curto"><span>Qtd.</span><input type="number" min="1" max="9999" value="1" data-pp-livre-quantidade></label>
+                            <button type="button" class="pp-botao" data-pp-livre-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar</span></button>
+                        </div>
+                    </fieldset>
+                {% endif %}
+
+                <p class="pp-campo-rotulo">Lista do termo <span class="pp-contagem" data-pp-itens-total>{{ d.total_itens }}</span></p>
+                <table class="pp-tabela pp-caut-tabela">
+                    <thead><tr><th>Item</th><th>Origem</th><th>Patrimônio</th><th>Série</th><th>Qtd.</th><th>Foto na conferência</th>{% if d.editavel %}<th></th>{% endif %}</tr></thead>
+                    <tbody data-pp-itens-lista>
+                        {% for i in d.itens %}
+                            <tr><td>{% if i.url != '' %}<a href="{{ i.url }}" target="_blank" rel="noopener">{{ i.descricao }}</a>{% else %}{{ i.descricao }}{% endif %}</td><td>{{ i.origem == 'glpi' ? i.tipo_rotulo : 'Item livre' }}</td><td>{{ i.patrimonio }}</td><td>{{ i.serie }}</td><td>{{ i.quantidade }}</td><td>{{ i.foto_obrigatoria ? 'sim' : 'não' }}</td>{% if d.editavel %}<td></td>{% endif %}</tr>
+                        {% else %}
+                            <tr data-pp-itens-vazio><td colspan="7" class="pp-sub">Nenhum item ainda.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p class="pp-nota">"Foto na conferência" marca os itens que vão exigir foto quando a conferência periódica existir (parte seguinte).</p>
+            </section>
+
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>3</span> Observações</h2>
+                <label class="pp-campo"><span>Condições, acessórios, avarias já existentes</span><textarea name="observacoes" rows="3" maxlength="5000"{% if not d.editavel %} disabled{% endif %}>{{ f.observacoes }}</textarea></label>
+                <p class="pp-nota">Ao emitir, a lista e as observações são congeladas e ganham selo SHA-256. Alteração depois disso só por novo termo.</p>
+            </section>
+        </div>
+
+        <aside class="pp-novo-lateral">
+            <section class="pp-cartao">
+                <h2 class="pp-secao-titulo is-simples"><i class="ti ti-eye" aria-hidden="true"></i> Como o colaborador vai ver</h2>
+                <div class="pp-previa">
+                    <span class="pp-previa-tipo">{{ d.tipo_rotulo }}</span>
+                    <strong>{{ d.titulo }}</strong>
+                    <p><span data-pp-previa-itens>{{ d.total_itens }}</span> {{ d.total_itens == 1 ? 'item' : 'itens' }} listados com patrimônio e série.</p>
+                    <span class="pp-botao is-primario is-compacto pp-previa-botao" aria-hidden="true">{{ f.tipo == 'devolucao' ? 'Confirmo a devolução' : 'Confirmo que recebi' }}</span>
+                </div>
+                <p class="pp-nota">Aparece na Minha área, nas duas interfaces, até a ciência. Depois vira comprovante.</p>
+            </section>
+            <section class="pp-cartao pp-publicar">
+                {% if d.editavel %}
+                    <ul class="pp-pendencias" data-pp-pendencias hidden></ul>
+                    {% if d.nova %}
+                        <button type="submit" name="add" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                        <button type="button" class="pp-botao is-primario is-largo" disabled title="Salve o rascunho primeiro"><i class="ti ti-send" aria-hidden="true"></i><span>Emitir</span></button>
+                    {% else %}
+                        <button type="submit" name="update" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                        <button type="submit" name="emitir" value="1" class="pp-botao is-primario is-largo" data-pp-emitir data-pp-confirmar="Emitir o termo? A lista é congelada com selo e o colaborador recebe a pendência de ciência."{% if not d.colab.com_usuario %} disabled title="A ficha precisa de usuário do GLPI"{% endif %}><i class="ti ti-send" aria-hidden="true"></i><span>Emitir</span></button>
+                        <button type="submit" name="delete" value="1" class="pp-botao is-perigo is-largo" data-pp-confirmar="Excluir este rascunho?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir rascunho</span></button>
+                    {% endif %}
+                {% elseif d.gerencia and d.situacao == 'emitido' %}
+                    <p class="pp-nota">Aguardando a ciência de {{ d.colaborador }}. Para corrigir a lista, cancele e emita outro.</p>
+                    <label class="pp-campo"><span>Motivo do cancelamento</span><input type="text" name="motivo" maxlength="500"></label>
+                    <button type="submit" name="cancelar" value="1" class="pp-botao is-perigo is-largo" data-pp-confirmar="Cancelar o termo? Ele deixa de aguardar ciência e fica no histórico."><i class="ti ti-x" aria-hidden="true"></i><span>Cancelar termo</span></button>
+                {% elseif d.gerencia and d.situacao == 'assinado' and d.tipo == 'entrega' %}
+                    <button type="submit" name="devolucao" value="1" class="pp-botao is-primario is-largo"><i class="ti ti-package-import" aria-hidden="true"></i><span>Registrar devolução</span></button>
+                    <p class="pp-nota">Cria um rascunho de devolução com os mesmos itens; retire o que não voltou e emita.</p>
+                {% endif %}
+                {% if d.situacao == 'emitido' or d.situacao == 'assinado' %}
+                    <a class="pp-botao is-largo" href="{{ d.url_comprovante }}" target="_blank" rel="noopener"><i class="ti ti-printer" aria-hidden="true"></i><span>Comprovante</span></a>
+                {% endif %}
+                <a class="pp-botao is-largo" href="{{ d.url_lista }}">Voltar</a>
+            </section>
+        </aside>
+    </form>
+{% endblock %}

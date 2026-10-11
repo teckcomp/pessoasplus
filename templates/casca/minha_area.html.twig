@@ -1,3 +1,4 @@
+{# PESSOASPLUS_BUILD_BM6 #}
 {# Pessoas+ - Minha area do colaborador, real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_7 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -19,6 +20,20 @@
                     {% endfor %}
                 </ul>
             </section>
+
+            {% if d.cautelas|length > 0 or d.cautelas_assinadas|length > 0 %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho"><h2>Itens em cautela</h2><span class="pp-contagem">{{ d.cautelas|length }}</span></header>
+                    <ul class="pp-lista">
+                        {% for t in d.cautelas %}
+                            <li><i class="{{ t.icone }} pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong>{{ t.titulo }}</strong><span>{{ t.total_itens }} {{ t.total_itens == 1 ? 'item' : 'itens' }} · emitido em {{ t.emitido_em }}</span></div><span class="pp-selo pp-tom-{{ t.tom }}">{{ t.situacao_rotulo }}</span><a class="pp-botao is-primario is-compacto" href="{{ t.url_ciencia }}">Conferir e confirmar</a></li>
+                        {% endfor %}
+                        {% for t in d.cautelas_assinadas %}
+                            <li><i class="{{ t.icone }} pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong>{{ t.titulo }}</strong><span>{{ t.total_itens }} {{ t.total_itens == 1 ? 'item' : 'itens' }} · ciência em {{ t.ciencia_data }}</span></div><span class="pp-selo pp-tom-{{ t.tom }}">{{ t.situacao_rotulo }}</span><a class="pp-botao is-compacto" href="{{ t.url_comprovante }}" target="_blank" rel="noopener">Comprovante</a></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
 
             <section class="pp-cartao">
                 <header class="pp-cartao-cabecalho"><h2>Pesquisas e quiz</h2><span class="pp-contagem">{{ d.pesquisas|length }}</span></header>
