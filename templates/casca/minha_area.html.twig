@@ -1,4 +1,4 @@
-{# PESSOASPLUS_BUILD_BM6 #}
+{# PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 #}
 {# Pessoas+ - Minha area do colaborador, real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_7 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -21,10 +21,13 @@
                 </ul>
             </section>
 
-            {% if d.cautelas|length > 0 or d.cautelas_assinadas|length > 0 %}
+            {% if d.cautelas|length > 0 or d.cautelas_assinadas|length > 0 or d.conferencias|length > 0 %}
                 <section class="pp-cartao">
-                    <header class="pp-cartao-cabecalho"><h2>Itens em cautela</h2><span class="pp-contagem">{{ d.cautelas|length }}</span></header>
+                    <header class="pp-cartao-cabecalho"><h2>Itens em cautela</h2><span class="pp-contagem">{{ d.cautelas|length + (d.conferencias|filter(c => not c.concluida)|length) }}</span></header>
                     <ul class="pp-lista">
+                        {% for c in d.conferencias %}
+                            <li><i class="ti ti-clipboard-check pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong>{{ c.titulo }}</strong><span>Conferência de itens · {{ c.periodo }} · {{ c.respondidos }} de {{ c.itens }} {{ c.itens == 1 ? 'item' : 'itens' }}</span></div><span class="pp-selo pp-tom-{{ c.concluida ? 'ok' : (c.atrasada ? 'atraso' : 'alerta') }}">{{ c.concluida ? 'Concluída' : 'Pendente' }}</span><a class="pp-botao is-compacto{% if not c.concluida %} is-primario{% endif %}" href="{{ c.url_conferir }}">{{ c.concluida ? 'Rever' : 'Conferir meus itens' }}</a></li>
+                        {% endfor %}
                         {% for t in d.cautelas %}
                             <li><i class="{{ t.icone }} pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong>{{ t.titulo }}</strong><span>{{ t.total_itens }} {{ t.total_itens == 1 ? 'item' : 'itens' }} · emitido em {{ t.emitido_em }}</span></div><span class="pp-selo pp-tom-{{ t.tom }}">{{ t.situacao_rotulo }}</span><a class="pp-botao is-primario is-compacto" href="{{ t.url_ciencia }}">Conferir e confirmar</a></li>
                         {% endfor %}

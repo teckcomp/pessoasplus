@@ -1777,7 +1777,7 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-mc-aniversario.is-embreve .pp-mc-capa-auto { min-height: 120px; }
 .pp-casca .pp-celebracao.is-embreve .pp-celebracao-data { color: var(--pp-texto-2); font-weight: 500; }
 
-/* BM.4-8: formularios de publicacao e comunicado no layout da casca (D-83). PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6 */
+/* BM.4-8: formularios de publicacao e comunicado no layout da casca (D-83). PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 */
 .pp-casca .pp-secao-titulo .pp-selo { margin-left: 8px; vertical-align: middle; font-weight: 600; }
 .pp-casca .pp-marcar.is-desabilitado, .pp-casca .pp-campo.is-desabilitado { opacity: 0.6; cursor: not-allowed; }
 .pp-casca .pp-marcar.is-desabilitado input, .pp-casca .pp-campo.is-desabilitado select { cursor: not-allowed; }
@@ -1822,3 +1822,24 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-caut-tabela td, .pp-casca .pp-caut-tabela th { vertical-align: middle; }
 .pp-casca .pp-caut-tabela td:last-child { text-align: right; white-space: nowrap; }
 .pp-casca .pp-caut-tabela input[type="checkbox"] { width: 18px; height: 18px; }
+
+/* BM.6-2: conferencia item a item, celular primeiro. PESSOASPLUS_BUILD_BM6_2 */
+.pp-casca .pp-conf-topo .pp-progresso { max-width: none; margin: 8px 0 12px; }
+.pp-casca .pp-conf-item { border-left: 4px solid var(--pp-borda); }
+.pp-casca .pp-conf-item.is-comigo { border-left-color: var(--pp-ok); }
+.pp-casca .pp-conf-item.is-avaria { border-left-color: var(--pp-alerta); }
+.pp-casca .pp-conf-item.is-nao_esta { border-left-color: var(--pp-atraso); }
+.pp-casca .pp-conf-form { margin-top: 12px; display: grid; gap: 10px; }
+.pp-casca .pp-conf-opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 575px) { .pp-casca .pp-conf-opcoes { grid-template-columns: minmax(0, 1fr); } }
+.pp-casca .pp-conf-opcao { position: relative; display: block; }
+.pp-casca .pp-conf-opcao input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.pp-casca .pp-conf-opcao span { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 10px; border: 2px solid var(--pp-borda); border-radius: 10px; font-weight: 600; cursor: pointer; min-height: 52px; }
+.pp-casca .pp-conf-opcao input:checked + span { border-color: var(--pp-acento); background: var(--pp-acento-claro); color: var(--pp-acento-escuro); }
+.pp-casca .pp-conf-opcao.is-avaria input:checked + span { border-color: #b86e00; background: #fff4e5; color: #7a4a00; }
+.pp-casca .pp-conf-opcao.is-nao_esta input:checked + span { border-color: #a0284f; background: #fdeef2; color: #7a1d3b; }
+.pp-casca .pp-conf-opcao input:focus-visible + span { outline: 3px solid var(--pp-acento); outline-offset: 2px; }
+.pp-casca .pp-conf-camera input[type="file"] { display: block; width: 100%; padding: 10px; border: 1px dashed var(--pp-borda); border-radius: 8px; background: var(--pp-fundo); }
+.pp-casca .pp-conf-foto { display: inline-block; margin: 8px 0 0; }
+.pp-casca .pp-conf-foto img { max-width: 240px; max-height: 240px; border-radius: 8px; border: 1px solid var(--pp-borda); display: block; }
+.pp-casca .pp-conf-form .pp-botao.is-largo { min-height: 48px; }

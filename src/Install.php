@@ -12,6 +12,8 @@
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM4
  * PESSOASPLUS_BUILD_BM6
+ * PESSOASPLUS_BUILD_BM6_2
+ * PESSOASPLUS_BUILD_BM6_3
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -65,6 +67,8 @@ final class Install
         'glpi_plugin_pessoasplus_limites',
         'glpi_plugin_pessoasplus_cautela_termos',
         'glpi_plugin_pessoasplus_cautela_itens',
+        'glpi_plugin_pessoasplus_cautela_conferencias',
+        'glpi_plugin_pessoasplus_cautela_conferencias_respostas',
     ];
 
     /**
@@ -545,8 +549,82 @@ final class Install
             ) $fim");
         }
 
+        // BM.6-2 - conferencia periodica (D-60): campanha por publico e prazo; resposta por item com foto.
+        $tabela = 'glpi_plugin_pessoasplus_cautela_conferencias';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `entities_id` int unsigned NOT NULL DEFAULT '0',
+                `titulo` varchar(255) NOT NULL DEFAULT '',
+                `orientacoes` text,
+                `situacao` varchar(20) NOT NULL DEFAULT 'rascunho',
+                `inicio` date DEFAULT NULL,
+                `fim` date DEFAULT NULL,
+                `plugin_pessoasplus_publicos_id` int unsigned NOT NULL DEFAULT '0',
+                `publico_modelo_id` int unsigned NOT NULL DEFAULT '0',
+                `publico_modo` varchar(10) NOT NULL DEFAULT 'todos',
+                `recorrencia` varchar(12) NOT NULL DEFAULT 'nenhuma',
+                `plugin_pessoasplus_cautela_conferencias_id_origem` int unsigned NOT NULL DEFAULT '0',
+                `users_id_rh` int unsigned NOT NULL DEFAULT '0',
+                `aberta_em` timestamp NULL DEFAULT NULL,
+                `encerrada_em` timestamp NULL DEFAULT NULL,
+                `is_deleted` tinyint NOT NULL DEFAULT '0',
+                `date_creation` timestamp NULL DEFAULT NULL,
+                `date_mod` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `situacao` (`situacao`,`fim`)
+            ) $fim");
+        }
+
+        // BM.6-3: colunas novas numa base que ja tinha o BM.6-2 (mesmo caminho do `links`, BM.2).
+        foreach (['publico_modo' => "varchar(10) NOT NULL DEFAULT 'todos'", 'recorrencia' => "varchar(12) NOT NULL DEFAULT 'nenhuma'", 'plugin_pessoasplus_cautela_conferencias_id_origem' => "int unsigned NOT NULL DEFAULT '0'"] as $coluna => $tipo) {
+            if (!$DB->fieldExists($tabela, $coluna)) {
+                $migration->addField($tabela, $coluna, $tipo);
+            }
+        }
+        $migration->migrationOneTable($tabela);
+
+        $tabela = 'glpi_plugin_pessoasplus_cautela_conferencias_respostas';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_cautela_conferencias_id` int unsigned NOT NULL DEFAULT '0',
+                `plugin_pessoasplus_colaboradores_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `chave` char(32) NOT NULL DEFAULT '',
+                `plugin_pessoasplus_cautela_termos_id` int unsigned NOT NULL DEFAULT '0',
+                `origem` varchar(10) NOT NULL DEFAULT 'livre',
+                `itemtype` varchar(100) NOT NULL DEFAULT '',
+                `items_id` int unsigned NOT NULL DEFAULT '0',
+                `descricao` varchar(255) NOT NULL DEFAULT '',
+                `patrimonio` varchar(100) NOT NULL DEFAULT '',
+                `serie` varchar(100) NOT NULL DEFAULT '',
+                `quantidade` int NOT NULL DEFAULT '1',
+                `situacao` varchar(20) NOT NULL DEFAULT '',
+                `observacao` varchar(1000) NOT NULL DEFAULT '',
+                `foto_arquivo` varchar(255) NOT NULL DEFAULT '',
+                `foto_hash` char(64) NOT NULL DEFAULT '',
+                `data` timestamp NULL DEFAULT NULL,
+                `users_id_resposta` int unsigned NOT NULL DEFAULT '0',
+                `interface` varchar(20) NOT NULL DEFAULT '',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unicidade` (`plugin_pessoasplus_cautela_conferencias_id`,`plugin_pessoasplus_colaboradores_id`,`chave`),
+                KEY `colaborador` (`plugin_pessoasplus_colaboradores_id`),
+                KEY `situacao` (`plugin_pessoasplus_cautela_conferencias_id`,`situacao`)
+            ) $fim");
+        }
+
         // Ouvidoria: as quatro portas nascem abertas (idempotente).
         Formulario::semearOuvidoria($DB);
+
+        // BM.6-3: tarefa automatica diaria (CronTask::register ja evita duplicata, CronTask.php:975).
+        \CronTask::register(Conferencia::class, 'conferencias', DAY_TIMESTAMP, [
+            'state'   => \CronTask::STATE_WAITING,
+            'mode'    => \CronTask::MODE_INTERNAL,
+            'comment' => 'Pessoas+: encerra conferencias de cautela vencidas e abre as recorrentes',
+        ]);
     }
 
 
@@ -594,6 +672,8 @@ final class Install
         global $DB;
 
         ProfileRight::deleteProfileRights(Permissoes::todosOsDireitos());
+        // BM.6-3: o core nao desregistra o cron do plugin na desinstalacao (Plugin.php nao chama unregister).
+        $DB->delete('glpi_crontasks', ['itemtype' => Conferencia::class]);
 
         foreach (array_reverse(self::TABELAS) as $tabela) {
             if ($DB->tableExists($tabela)) {

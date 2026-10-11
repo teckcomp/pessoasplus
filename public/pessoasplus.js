@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 PESSOASPLUS_BUILD_BM6_3
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -2411,8 +2411,134 @@
         });
     }
 
+    /* BM.6-2: conferencia item a item. A foto e reduzida no aparelho (canvas,
+     * lado maior 1280 px, JPEG 0,82) e devolvida ao <input type=file> por
+     * DataTransfer, como o foto.js do Fichario; onde nao der, vai inteira.
+     * Observacao vira obrigatoria em "com avaria" e "nao esta comigo". */
+    function iniciarConferencia() {
+        var LADO = 1280;
+        document.querySelectorAll('.pp-casca [data-pp-conf-form]').forEach(function (form) {
+            if (!primeiraVez(form)) {
+                return;
+            }
+            var obs = form.querySelector('[data-pp-conf-obs] input');
+            var dica = form.querySelector('[data-pp-conf-obs-dica]');
+            var foto = form.querySelector('[data-pp-conf-foto]');
+            var info = form.querySelector('[data-pp-conf-foto-info]');
+            var enviar = form.querySelector('[data-pp-conf-enviar]');
+            var max = parseInt(form.getAttribute('data-pp-foto-max'), 10) || 3145728;
+            function situacao() {
+                var r = form.querySelector('[data-pp-conf-situacao]:checked');
+                return r ? r.value : '';
+            }
+            function atualizar() {
+                var s = situacao();
+                if (obs) {
+                    obs.required = s !== '' && s !== 'comigo';
+                }
+                if (dica) {
+                    dica.textContent = s !== '' && s !== 'comigo' ? 'obrigatória' : 'opcional';
+                }
+                if (enviar) {
+                    enviar.disabled = s === '';
+                }
+            }
+            form.querySelectorAll('[data-pp-conf-situacao]').forEach(function (r) {
+                r.addEventListener('change', atualizar);
+            });
+            atualizar();
+            if (!foto) {
+                return;
+            }
+            var podeReduzir = !!(window.DataTransfer && window.File && window.URL && window.URL.createObjectURL && document.createElement('canvas').getContext);
+            foto.addEventListener('change', function () {
+                var arquivo = foto.files && foto.files[0];
+                if (!arquivo) {
+                    return;
+                }
+                if (!podeReduzir || !/^image\//.test(arquivo.type)) {
+                    if (info) {
+                        info.textContent = arquivo.size > max ? 'Foto muito grande (' + Math.round(arquivo.size / 1024 / 1024) + ' MB) e este navegador não reduz: tente outra.' : 'Foto pronta para enviar.';
+                    }
+                    return;
+                }
+                var img = new Image();
+                var url = window.URL.createObjectURL(arquivo);
+                img.onload = function () {
+                    var w = img.naturalWidth;
+                    var h = img.naturalHeight;
+                    var esc = Math.min(1, LADO / Math.max(w, h));
+                    var canvas = document.createElement('canvas');
+                    canvas.width = Math.round(w * esc);
+                    canvas.height = Math.round(h * esc);
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    window.URL.revokeObjectURL(url);
+                    canvas.toBlob(function (blob) {
+                        if (!blob) {
+                            return;
+                        }
+                        try {
+                            var dt = new DataTransfer();
+                            dt.items.add(new File([blob], 'foto.jpg', { type: 'image/jpeg' }));
+                            foto.files = dt.files;
+                            if (info) {
+                                info.textContent = 'Foto reduzida para ' + canvas.width + '×' + canvas.height + ' (' + Math.round(blob.size / 1024) + ' KB).';
+                            }
+                        } catch (e) {
+                            if (info) {
+                                info.textContent = 'Foto pronta para enviar (sem redução neste navegador).';
+                            }
+                        }
+                    }, 'image/jpeg', 0.82);
+                };
+                img.onerror = function () {
+                    window.URL.revokeObjectURL(url);
+                    if (info) {
+                        info.textContent = 'Não foi possível ler a imagem; escolha outra.';
+                    }
+                };
+                img.src = url;
+            });
+            form.addEventListener('submit', function () {
+                if (enviar) {
+                    enviar.disabled = true;
+                    var t = enviar.querySelector('span');
+                    if (t) {
+                        t.textContent = 'Enviando…';
+                    }
+                }
+            });
+        });
+    }
+
+    /* BM.6-3: campanha de conferencia: modo do publico e nota da recorrencia. */
+    function iniciarConferenciaCampanha() {
+        document.querySelectorAll('.pp-casca [data-pp-publico-modo]').forEach(function (radio) {
+            var raiz = radio.closest('form');
+            if (!raiz || raiz.hasAttribute('data-pp-pronto-modo')) {
+                return;
+            }
+            raiz.setAttribute('data-pp-pronto-modo', '');
+            function aplicar() {
+                var m = raiz.querySelector('[data-pp-publico-modo]:checked');
+                var recorte = m && m.value === 'recorte';
+                raiz.querySelectorAll('[data-pp-so-recorte]').forEach(function (n) { n.hidden = !recorte; });
+                raiz.querySelectorAll('[data-pp-so-todos]').forEach(function (n) { n.hidden = recorte; });
+            }
+            raiz.querySelectorAll('[data-pp-publico-modo]').forEach(function (r) { r.addEventListener('change', aplicar); });
+            var rec = raiz.querySelector('[data-pp-recorrencia]');
+            var nota = raiz.querySelector('[data-pp-recorrencia-nota]');
+            if (rec && nota) {
+                rec.addEventListener('change', function () { nota.hidden = rec.value === 'nenhuma'; });
+            }
+            aplicar();
+        });
+    }
+
     function tudo() {
         iniciar();
+        iniciarConferenciaCampanha();
+        iniciarConferencia();
         iniciarCautela();
         iniciarResultado();
         iniciarFiltros();

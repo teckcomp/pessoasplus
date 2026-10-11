@@ -1,0 +1,54 @@
+{# Pessoas+ - conferir itens em cautela, item a item, celular primeiro. PESSOASPLUS_BUILD_BM6_2 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.por_outro ? pp.dados.url_campanha : pp.dados.url_minha_area }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>{{ pp.dados.por_outro ? 'Campanha' : 'Minha área' }}</span></a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
+    <section class="pp-cartao pp-conf-topo">
+        <div class="pp-progresso-texto"><strong>{{ d.respondidos }} de {{ d.total }}</strong> {{ d.total == 1 ? 'item conferido' : 'itens conferidos' }}{% if d.por_outro %} · registrando por <strong>{{ d.colaborador }}</strong>{% endif %}</div>
+        <div class="pp-progresso" role="progressbar" aria-valuemin="0" aria-valuemax="{{ d.total }}" aria-valuenow="{{ d.respondidos }}"><div class="pp-progresso-barra" style="width: {{ d.total > 0 ? (d.respondidos * 100 / d.total)|round : 0 }}%"></div></div>
+        {% if d.orientacoes != '' %}<p class="pp-nota">{{ d.orientacoes|nl2br }}</p>{% endif %}
+        {% if d.concluida %}<p class="pp-alerta-zero is-aviso" role="status"><i class="ti ti-circle-check" aria-hidden="true"></i> Conferência concluída. Enquanto a campanha estiver aberta você pode corrigir qualquer item.</p>{% endif %}
+        {% if not d.recebe %}<p class="pp-alerta-zero" role="status"><i class="ti ti-lock" aria-hidden="true"></i> Esta campanha não está recebendo respostas ({{ d.situacao_rotulo|lower }}).</p>{% endif %}
+        {% if d.total == 0 %}<p class="pp-nota">Nenhum item em cautela com ciência registrada para esta pessoa.</p>{% endif %}
+    </section>
+
+    {% for i in d.itens %}
+        <section class="pp-cartao pp-conf-item{% if i.resposta != '' %} is-{{ i.resposta }}{% endif %}" id="item-{{ i.chave|slice(0, 12) }}" data-pp-conf-item>
+            <header class="pp-cartao-cabecalho">
+                <h2>{{ loop.index }}. {{ i.descricao }}</h2>
+                <span class="pp-selo pp-tom-{{ i.resposta_tom }}">{{ i.resposta_rotulo }}</span>
+            </header>
+            <p class="pp-sub">{{ i.origem == 'glpi' ? i.tipo_rotulo : 'Item livre' }}{% if i.patrimonio != '' %} · patrimônio {{ i.patrimonio }}{% endif %}{% if i.serie != '' %} · série {{ i.serie }}{% endif %}{% if i.quantidade > 1 %} · {{ i.quantidade }} unidades{% endif %} · em cautela desde {{ i.desde }}{% if i.foto_obrigatoria %} · <strong>foto obrigatória</strong>{% endif %}</p>
+            {% if i.resposta != '' %}
+                <p class="pp-sub">Conferido em {{ i.respondido_em }} por {{ i.respondido_por }}{% if i.observacao != '' %} · {{ i.observacao }}{% endif %}</p>
+                {% if i.foto %}<a class="pp-conf-foto" href="{{ i.foto_url }}" target="_blank" rel="noopener"><img src="{{ i.foto_url }}" alt="Foto do item {{ i.descricao }}" loading="lazy"></a>{% endif %}
+            {% endif %}
+            {% if d.recebe %}
+                <form method="post" action="{{ d.url_aqui }}" enctype="multipart/form-data" class="pp-conf-form" data-pp-conf-form data-pp-foto-max="{{ d.foto_max }}">
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                    <input type="hidden" name="id" value="{{ d.id }}">
+                    {% if d.por_outro %}<input type="hidden" name="colaborador" value="{{ d.colaborador_id }}">{% endif %}
+                    <input type="hidden" name="chave" value="{{ i.chave }}">
+                    <div class="pp-conf-opcoes" role="group" aria-label="Situação do item">
+                        {% for r in d.respostas %}
+                            <label class="pp-conf-opcao is-{{ r.chave }}"><input type="radio" name="situacao" value="{{ r.chave }}"{% if i.resposta == r.chave %} checked{% endif %} required data-pp-conf-situacao><span><i class="{{ r.icone }}" aria-hidden="true"></i> {{ r.rotulo }}</span></label>
+                        {% endfor %}
+                    </div>
+                    <label class="pp-campo" data-pp-conf-obs{% if i.resposta == '' or i.resposta == 'comigo' %}{% endif %}><span>Observação <small class="pp-sub" data-pp-conf-obs-dica>{{ i.resposta == 'comigo' or i.resposta == '' ? 'opcional' : 'obrigatória' }}</small></span><input type="text" name="observacao" maxlength="1000" value="{{ i.observacao }}" placeholder="Estado, acessórios, onde está…"></label>
+                    <label class="pp-campo pp-conf-camera"><span>Foto {{ i.foto_obrigatoria ? '(obrigatória, exceto "não está comigo")' : '(opcional)' }}{% if i.foto %} <small class="pp-sub">enviar outra substitui a atual</small>{% endif %}</span>
+                        <input type="file" name="foto" accept="image/*" capture="environment" data-pp-conf-foto>
+                        <small class="pp-dica" data-pp-conf-foto-info>A foto é reduzida no aparelho antes de enviar.</small>
+                    </label>
+                    <button type="submit" name="responder" value="1" class="pp-botao is-primario is-largo" data-pp-conf-enviar><i class="ti ti-check" aria-hidden="true"></i><span>{{ i.resposta == '' ? 'Registrar este item' : 'Corrigir este item' }}</span></button>
+                </form>
+            {% endif %}
+        </section>
+    {% endfor %}
+
+    <p class="pp-nota">Cada item é gravado na hora: pode parar e continuar depois. O registro guarda quem respondeu, a interface, a data e a hora do servidor e o selo da foto.</p>
+{% endblock %}

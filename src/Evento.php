@@ -9,6 +9,7 @@
  * @license   GPL-2.0-or-later
  * PESSOASPLUS_BUILD_BM4_8
  * PESSOASPLUS_BUILD_BM6
+ * PESSOASPLUS_BUILD_BM6_2
  */
 
 namespace GlpiPlugin\Pessoasplus;
@@ -72,6 +73,8 @@ final class Evento extends CommonDBTM
         'cautela_emitida'        => 'Termo de cautela emitido',
         'cautela_assinada'       => 'Termo de cautela assinado',
         'cautela_cancelada'      => 'Termo de cautela cancelado',
+        'conferencia_divergencia' => 'Conferência: divergência registrada',
+        'conferencia_concluida'  => 'Conferência de itens concluída',
     ];
 
     /**

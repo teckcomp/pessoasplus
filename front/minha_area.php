@@ -8,6 +8,7 @@
  * PESSOASPLUS_BUILD_BM4
  * PESSOASPLUS_BUILD_BM4_7
  * PESSOASPLUS_BUILD_BM6
+ * PESSOASPLUS_BUILD_BM6_2
  *
  * Pendencias de ciencia, normativas vigentes e comprovantes, nas duas
  * interfaces. Ferias, pesquisas e tarefas ficam para depois de 13/10 (D-74).
@@ -20,6 +21,7 @@ use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Cautela;
 use GlpiPlugin\Pessoasplus\Colaborador;
+use GlpiPlugin\Pessoasplus\Conferencia;
 use GlpiPlugin\Pessoasplus\Comunicado;
 use GlpiPlugin\Pessoasplus\Formulario;
 use GlpiPlugin\Pessoasplus\Menu;
@@ -38,6 +40,7 @@ $dados = [
     // BM.6-1: termos de cautela aguardando ciencia e os ja assinados (comprovantes).
     'cautelas'    => Cautela::pendentesDe($uid),
     'cautelas_assinadas' => Cautela::lista(['users_id' => $uid, 'situacao' => 'assinado']),
+    'conferencias' => Conferencia::abertasPara($uid),
     'ficha'       => $ficha === null ? null : $ficha->paraTela(),
     'registros'   => [],
     'url_ficha'   => $ficha === null || Session::getCurrentInterface() === 'helpdesk' ? '' : Pagina::url(Colaborador::getFormURLWithID((int) $ficha->getID(), false)),

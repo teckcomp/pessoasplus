@@ -1,0 +1,152 @@
+{# Pessoas+ - campanha de conferencia de itens em cautela (RH). PESSOASPLUS_BUILD_BM6_2 PESSOASPLUS_BUILD_BM6_3 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Itens em cautela</span></a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set f = d.f %}
+    {% set csrf = csrf_token() %}
+
+    {% if not d.nova %}
+        <div class="pp-mc-resumo">
+            <span class="pp-selo pp-tom-{{ d.tom }}">{{ d.situacao_rotulo }}</span>
+            <span class="pp-pub-chip">{{ d.periodo }}</span>
+            <span class="pp-pub-chip">{{ d.publico_modo_rotulo }}</span>
+            {% if d.recorrencia != 'nenhuma' %}<span class="pp-pub-chip"><i class="ti ti-repeat" aria-hidden="true"></i> {{ d.recorrencia_rotulo }}</span>{% endif %}
+            {% if d.situacao != 'rascunho' %}
+                <span class="pp-pub-chip"><strong>{{ d.resumo.pessoas }}</strong> {{ d.resumo.pessoas == 1 ? 'pessoa' : 'pessoas' }} com itens</span>
+                <span class="pp-pub-chip"><strong>{{ d.resumo.conferiram }}</strong> conferiram</span>
+                <span class="pp-pub-chip"><strong>{{ d.resumo.parciais }}</strong> parciais</span>
+                <span class="pp-pub-chip"><strong>{{ d.resumo.nao_conferiram }}</strong> não conferiram</span>
+                <span class="pp-pub-chip"><strong>{{ d.resumo.divergencias }}</strong> divergências</span>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if d.situacao != 'rascunho' %}
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Divergências</h2><span class="pp-contagem">{{ d.divergencias|length }}</span></header>
+            {% if d.divergencias|length == 0 %}<p class="pp-nota">Nenhuma avaria ou item fora de posse registrado.</p>{% endif %}
+            <ul class="pp-lista">
+                {% for v in d.divergencias %}
+                    <li>
+                        <i class="ti ti-alert-triangle pp-lista-icone" aria-hidden="true"></i>
+                        <div class="pp-lista-texto"><strong>{{ v.descricao }}{% if v.patrimonio != '' %} · {{ v.patrimonio }}{% endif %}</strong><span><a href="{{ v.url_pasta }}">{{ v.colaborador }}</a> · {{ v.data }}{% if v.observacao != '' %} · {{ v.observacao }}{% endif %}</span></div>
+                        <span class="pp-selo pp-tom-{{ v.tom }}">{{ v.rotulo }}</span>
+                        {% if v.foto_url != '' %}<a class="pp-botao is-compacto" href="{{ v.foto_url }}" target="_blank" rel="noopener"><i class="ti ti-photo" aria-hidden="true"></i><span>Foto</span></a>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="pp-nota">Tratamento da divergência (reposição, desconto, boletim) fica fora do Pessoas+ nesta versão; registre o desfecho na pasta ou num termo de devolução.</p>
+        </section>
+
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Pessoas</h2><span class="pp-contagem">{{ d.pessoas|length }}</span></header>
+            {% if d.pessoas|length == 0 %}<p class="pp-nota">Ninguém do público tem itens em cautela (entrega assinada).</p>{% endif %}
+            <div class="pp-tabela-rolagem"><table class="pp-tabela">
+                <thead><tr><th>Pessoa</th><th>Setor</th><th>Itens</th><th>Conferidos</th><th>Divergentes</th><th>Situação</th><th></th></tr></thead>
+                <tbody>{% for p in d.pessoas %}<tr><td>{{ p.nome }}</td><td>{{ p.setor }}</td><td>{{ p.itens }}</td><td>{{ p.respondidos }}</td><td>{{ p.divergentes }}</td><td><span class="pp-selo pp-tom-{{ p.tom }}">{{ p.situacao }}</span></td><td>{% if d.gerencia %}<a class="pp-botao is-compacto" href="{{ p.url_conferir }}"><i class="ti ti-clipboard-check" aria-hidden="true"></i><span>{{ p.respondidos == 0 ? 'Registrar por ela' : 'Ver' }}</span></a>{% endif %}</td></tr>{% endfor %}</tbody>
+            </table></div>
+            <p class="pp-nota">"Registrar por ela": o RH responde pela pessoa na conferência presencial; o registro diz quem respondeu.</p>
+        </section>
+    {% endif %}
+
+    <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-url-previa="{{ d.url_previa }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ d.editavel ? '1' : '0' }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+        {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% endif %}
+        <input type="hidden" name="regras_json" value="{{ d.regras_json|e('html_attr') }}" data-pp-regras-campo>
+        <input type="hidden" name="publico_modelo_id" value="{{ f.publico_modelo_id }}" data-pp-modelo-campo>
+        <script type="application/json" data-pp-regras-json>{{ d.regras_json|raw }}</script>
+        <script type="application/json" data-pp-opcoes-json>{{ d.opcoes_json|raw }}</script>
+
+        <div class="pp-novo-form">
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>1</span> Campanha e prazo</h2>
+                <label class="pp-campo"><span>Título</span><input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}" placeholder="Ex.: Conferência semestral 2026/2"{% if not d.editavel %} disabled{% endif %}></label>
+                <div class="pp-linha-campos">
+                    <label class="pp-campo is-curto"><span>Início <em class="pp-obrig">obrigatório</em></span><input type="date" name="inicio" value="{{ f.inicio }}" required{% if not d.editavel %} disabled{% endif %}></label>
+                    <label class="pp-campo is-curto"><span>Prazo final <small class="pp-sub">vazio = sem fim</small></span><input type="date" name="fim" value="{{ f.fim }}"{% if not d.editavel %} disabled{% endif %}></label>
+                </div>
+                <label class="pp-campo"><span>Orientações <small class="pp-sub">aparecem no topo da conferência</small></span><textarea name="orientacoes" rows="3" maxlength="2000"{% if not d.editavel %} disabled{% endif %}>{{ f.orientacoes }}</textarea></label>
+                <label class="pp-campo is-curto"><span>Repetir</span>
+                    <select name="recorrencia" data-pp-recorrencia{% if not d.editavel %} disabled{% endif %}>{% for r in d.recorrencias %}<option value="{{ r.chave }}"{% if r.chave == f.recorrencia %} selected{% endif %}>{{ r.rotulo }}</option>{% endfor %}</select>
+                </label>
+                <p class="pp-nota" data-pp-recorrencia-nota{% if f.recorrencia == 'nenhuma' %} hidden{% endif %}>No dia seguinte ao prazo final, a tarefa automática do GLPI (Configurar → Ações automáticas → <code>conferencias</code>) encerra esta campanha e abre a próxima, já aberta, com o mesmo público, as mesmas orientações e a mesma duração.{% if d.proximo is not null %} Próxima: <strong>{{ d.proximo.inicio|date('d/m/Y') }}{% if d.proximo.fim is not null %} a {{ d.proximo.fim|date('d/m/Y') }}{% endif %}</strong>.{% endif %}</p>
+                {% if d.origem_id > 0 %}<p class="pp-nota">Gerada pela recorrência da campanha #{{ d.origem_id }}.</p>{% endif %}
+            </section>
+
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>2</span> Quem confere</h2>
+                <div class="pp-pub-tipos">
+                    {% for m in d.modos %}
+                        <label class="pp-tipo">
+                            <input type="radio" name="publico_modo" value="{{ m.chave }}" data-pp-publico-modo{% if m.chave == f.publico_modo %} checked{% endif %}{% if not d.editavel %} disabled{% endif %}>
+                            <span class="pp-tipo-corpo"><strong>{{ m.rotulo }}</strong><small>{{ m.chave == 'todos' ? 'Hoje: ' ~ d.com_itens ~ (d.com_itens == 1 ? ' pessoa com' : ' pessoas com') ~ ' entrega assinada. Quem ganhar itens entra; quem devolver tudo sai.' : 'Monte as regras abaixo; só quem também tem itens em cautela confere.' }}</small></span>
+                        </label>
+                    {% endfor %}
+                </div>
+                <div data-pp-so-recorte{% if f.publico_modo != 'recorte' %} hidden{% endif %}>
+                    {% if d.modelos|length > 0 %}
+                        <label class="pp-campo"><span>Começar de um público salvo</span>
+                            <select data-pp-modelo-select data-pp-buscavel><option value="0">Montar as regras aqui</option>{% for m in d.modelos %}<option value="{{ m.id }}" data-pp-regras="{{ m.regras|e('html_attr') }}"{% if m.id == f.publico_modelo_id %} selected{% endif %}>{{ m.nome }} ({{ m.total }})</option>{% endfor %}</select>
+                        </label>
+                    {% endif %}
+                    <ul class="pp-publ-regras" data-pp-regras-lista aria-live="polite">{% for r in d.regras %}<li class="pp-chip is-fixo{% if r.is_exclusao %} pp-publ-exclusao{% endif %}">{{ r.is_exclusao ? 'exceto ' : '' }}{{ r.rotulo_tipo|lower }}: {{ r.rotulo }}</li>{% else %}<li class="pp-sub" data-pp-regras-vazio>Nenhuma regra ainda.</li>{% endfor %}</ul>
+                    <div class="pp-publ-nova" data-pp-regra-nova>
+                        <label class="pp-campo is-curto"><span>Incluir por</span><select data-pp-regra-tipo>{% for t in d.tipos_regra %}<option value="{{ t.chave }}">{{ t.rotulo }}</option>{% endfor %}</select></label>
+                        <label class="pp-campo"><span>Valor</span><select data-pp-regra-valor data-pp-buscavel></select></label>
+                        <label class="pp-marcar is-justo" data-pp-regra-filhos-rotulo><input type="checkbox" data-pp-regra-filhos><span>Incluir subníveis</span></label>
+                        <label class="pp-marcar is-justo"><input type="checkbox" data-pp-regra-exclusao><span>Excluir</span></label>
+                        <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                        <small class="pp-dica pp-dica-criterio" data-pp-regra-dica>Grupo: quem está no grupo (setor) do GLPI. Perfil: quem tem esse perfil. Entidade: quem tem perfil nessa entidade. Usuário: uma pessoa. Vínculo e empregador: pela ficha do Fichário.</small>
+                    </div>
+                    <div class="pp-contagem-publico" data-pp-resultado>
+                        <i class="ti ti-users-group" aria-hidden="true"></i>
+                        <span><strong data-pp-previa-total>{{ d.previa.total }}</strong> <span data-pp-previa-rotulo>{{ d.previa.total == 1 ? 'pessoa no público' : 'pessoas no público' }}</span></span>
+                    </div>
+                    <ul class="pp-publ-nomes" data-pp-previa-nomes>{% for n in d.previa.nomes %}<li>{{ n }}</li>{% endfor %}{% if d.previa.mais > 0 %}<li class="pp-sub">e mais {{ d.previa.mais }}</li>{% endif %}</ul>
+                    <p class="pp-alerta-zero" data-pp-zero{% if d.previa.total > 0 %} hidden{% endif %} role="status">
+                        <i class="ti ti-alert-circle" aria-hidden="true"></i>
+                        Nenhum critério corresponde: ninguém vê. O Pessoas+ nunca trata “nada marcado” como “todos”.
+                    </p>
+                    <p class="pp-nota">Só quem está no público <strong>e</strong> tem itens em cautela (entrega assinada) entra na conferência. O público é recalculado a cada abertura (D-72).</p>
+                </div>
+            </section>
+        </div>
+
+        <aside class="pp-novo-lateral">
+            <section class="pp-cartao">
+                <h2 class="pp-secao-titulo is-simples"><i class="ti ti-eye" aria-hidden="true"></i> Como o colaborador vai ver</h2>
+                <div class="pp-previa">
+                    <span class="pp-previa-tipo">Conferência</span>
+                    <strong>{{ f.titulo != '' ? f.titulo : 'Conferência de itens' }}</strong>
+                    <p>Lista dos itens em cautela da pessoa; em cada um: Está comigo · Com avaria · Não está comigo, observação e foto pela câmera.</p>
+                    <span class="pp-botao is-primario is-compacto pp-previa-botao" aria-hidden="true">Conferir meus itens</span>
+                </div>
+                <p class="pp-nota" data-pp-so-recorte{% if f.publico_modo != 'recorte' %} hidden{% endif %}><span data-pp-prev-total>{{ d.previa.total }}</span> pessoas no recorte · entram só as com itens em cautela.</p>
+                <p class="pp-nota" data-pp-so-todos{% if f.publico_modo == 'recorte' %} hidden{% endif %}><strong>{{ d.com_itens }}</strong> {{ d.com_itens == 1 ? 'pessoa' : 'pessoas' }} com itens em cautela hoje.</p>
+            </section>
+            <section class="pp-cartao pp-publicar">
+                {% if d.editavel %}
+                    {% if d.nova %}
+                        <button type="submit" name="add" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                        <button type="button" class="pp-botao is-primario is-largo" disabled title="Salve o rascunho primeiro"><i class="ti ti-player-play" aria-hidden="true"></i><span>Abrir campanha</span></button>
+                    {% else %}
+                        <button type="submit" name="update" value="1" class="pp-botao is-largo"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                        <button type="submit" name="abrir" value="1" class="pp-botao is-primario is-largo" data-pp-confirmar="Abrir a campanha? Quem tem itens em cautela passa a ver a conferência na Minha área."><i class="ti ti-player-play" aria-hidden="true"></i><span>Abrir campanha</span></button>
+                        <button type="submit" name="delete" value="1" class="pp-botao is-perigo is-largo" data-pp-confirmar="Excluir este rascunho?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir rascunho</span></button>
+                    {% endif %}
+                {% elseif d.gerencia and d.situacao == 'aberta' %}
+                    <button type="submit" name="encerrar" value="1" class="pp-botao is-perigo is-largo" data-pp-confirmar="Encerrar a campanha? Quem não conferiu fica registrado como não conferido."><i class="ti ti-player-stop" aria-hidden="true"></i><span>Encerrar campanha</span></button>
+                    <p class="pp-nota">Aberta: recebe respostas até o prazo. Público e prazo não mudam mais.</p>
+                {% elseif d.situacao == 'encerrada' %}
+                    <p class="pp-nota">Encerrada. As respostas e fotos ficam como evidência.</p>
+                {% endif %}
+                <a class="pp-botao is-largo" href="{{ d.url_lista }}">Voltar</a>
+            </section>
+        </aside>
+    </form>
+{% endblock %}

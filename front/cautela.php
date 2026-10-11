@@ -4,6 +4,7 @@
  * Pessoas+ - itens em cautela, area do RH (BM.6-1).
  *
  * PESSOASPLUS_BUILD_BM6
+ * PESSOASPLUS_BUILD_BM6_2
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -13,6 +14,7 @@ use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Cautela;
 use GlpiPlugin\Pessoasplus\Colaborador;
+use GlpiPlugin\Pessoasplus\Conferencia;
 use GlpiPlugin\Pessoasplus\Permissoes;
 
 Pagina::somenteInterfacePadrao();
@@ -48,6 +50,8 @@ $dados = [
     'colaboradores' => $colaboradores,
     'url_aqui'      => Pagina::url('/plugins/pessoasplus/front/cautela.php'),
     'url_termo'     => Pagina::url('/plugins/pessoasplus/front/cautela_termo.php'),
+    'conferencias'  => Conferencia::lista(),
+    'url_conferencia' => Pagina::url('/plugins/pessoasplus/front/conferencia.php'),
 ];
 
 $pp = Pagina::contexto('cautela', 'Itens em cautela', 'Termos de entrega e devolução com ciência do colaborador', $dados);

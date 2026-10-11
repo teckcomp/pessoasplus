@@ -1,3 +1,4 @@
+/* PESSOASPLUS_BUILD_BM6_3 */
 /* Pessoas+ - aviso ao entrar e lembretes durante a sessao (Tela 1, D-49).
  * PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BP2D PESSOASPLUS_BUILD_BP3C
  *
@@ -69,11 +70,11 @@
         contador.href = String(dados.url_ler || '');
         contador.textContent = '';
         contador.appendChild(el('strong', null, qtd));
-        contador.appendChild(el('span', null, qtd === 1 ? 'ciência pendente' : 'ciências pendentes'));
+        contador.appendChild(el('span', null, qtd === 1 ? 'pendência' : 'pendências'));
         if (atraso) {
             contador.appendChild(el('em', null, dados.atrasados + ' em atraso'));
         }
-        contador.setAttribute('aria-label', qtd + ' ciências pendentes. Abrir a Minha área');
+        contador.setAttribute('aria-label', qtd + ' pendências. Abrir a Minha área');
         if (!atual) {
             document.body.appendChild(contador);
         }

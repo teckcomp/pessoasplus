@@ -34,7 +34,7 @@ namespace GlpiPlugin\Pessoasplus\Casca;
  * colaborador o aviso nao abre nem e gasto: abre uma vez, na primeira
  * pagina fora dele. O Mural ja mostra as pendencias no proprio resumo.
  */
-/* BM.2: as pendencias passaram a vir do banco (Comunicado::pendenciasDe). */
+/* BM.2: as pendencias passaram a vir do banco (Comunicado::pendenciasDe). BM.6-3: + cautela e conferencia. PESSOASPLUS_BUILD_BM6_3 */
 final class Aviso
 {
     public const CHAVE_PROXIMO   = 'plugin_pessoasplus_aviso_proximo';
@@ -71,11 +71,26 @@ final class Aviso
         }
 
         $itens = [];
-        foreach (\GlpiPlugin\Pessoasplus\Comunicado::pendenciasDe((int) \Session::getLoginUserID()) as $p) {
+        $uid   = (int) \Session::getLoginUserID();
+        foreach (\GlpiPlugin\Pessoasplus\Comunicado::pendenciasDe($uid) as $p) {
             $itens[] = ['id' => $p['id'], 'titulo' => $p['titulo'], 'detalhe' => $p['detalhe'], 'selo' => $p['selo'], 'tom' => $p['tom']];
         }
+        $comunicados = count($itens);
+        // BM.6-3: termos de cautela aguardando ciencia e conferencias abertas tambem avisam.
+        foreach (\GlpiPlugin\Pessoasplus\Cautela::pendentesDe($uid) as $t) {
+            $itens[] = ['id' => 0, 'titulo' => $t['titulo'], 'detalhe' => $t['tipo_rotulo'] . ' · ' . $t['total_itens'] . ($t['total_itens'] === 1 ? ' item' : ' itens') . ' · emitido em ' . $t['emitido_em'], 'selo' => 'Cautela', 'tom' => 'alerta'];
+        }
+        foreach (\GlpiPlugin\Pessoasplus\Conferencia::abertasPara($uid) as $c) {
+            if ($c['concluida']) {
+                continue;
+            }
+            $itens[] = ['id' => 0, 'titulo' => $c['titulo'], 'detalhe' => 'Conferência de itens · ' . $c['respondidos'] . ' de ' . $c['itens'] . ' · ' . $c['periodo'], 'selo' => $c['atrasada'] ? 'Prazo vencido' : 'Conferir', 'tom' => $c['atrasada'] ? 'atraso' : 'alerta'];
+        }
+        $total = count($itens);
         $conteudo = [
-            'titulo'    => count($itens) . (count($itens) === 1 ? ' comunicado aguarda' : ' comunicados aguardam') . ' sua ciência',
+            'titulo'    => $total === $comunicados
+                ? $total . ($total === 1 ? ' comunicado aguarda' : ' comunicados aguardam') . ' sua ciência'
+                : $total . ($total === 1 ? ' pendência aguarda' : ' pendências aguardam') . ' você',
             'subtitulo' => 'Confirme para manter seus registros em dia',
         ];
         $pendentes = count($itens);
