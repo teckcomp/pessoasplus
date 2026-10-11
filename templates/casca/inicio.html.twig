@@ -1,4 +1,5 @@
-{# Pessoas+ - painel inicial do RH. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP0C #}
+{# Pessoas+ - painel inicial do RH. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP0C PESSOASPLUS_BUILD_BM7 #}
+{# BM.7: dados reais (Painel::montar); indicadores, alertas, processos e agenda abrem o que descrevem. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -20,7 +21,7 @@
 {% block conteudo %}
     <section class="pp-indicadores" aria-label="Indicadores">
         {% for ind in pp.dados.indicadores %}
-            {% set destino = pp.areas[ind.area] %}
+            {% set destino = ind.url is defined and ind.url != '' ? ind.url : pp.areas[ind.area] %}
             {% if destino != '' %}<a class="pp-indicador pp-tom-{{ ind.tom }}" href="{{ destino }}">{% else %}<div class="pp-indicador pp-tom-{{ ind.tom }}">{% endif %}
                 <i class="{{ ind.icone }}" aria-hidden="true"></i>
                 <div class="pp-indicador-valor">{{ ind.valor }}</div>
@@ -41,13 +42,13 @@
                     <li class="pp-alerta pp-tom-{{ alerta.tom }}">
                         <i class="ti {{ alerta.tom == 'atraso' ? 'ti-alert-triangle' : (alerta.tom == 'alerta' ? 'ti-clock' : 'ti-info-circle') }}" aria-hidden="true"></i>
                         <div class="pp-alerta-texto">
-                            <strong>{{ alerta.titulo }}</strong>
+                            <strong>{% if alerta.url is defined and alerta.url != '' %}<a href="{{ alerta.url }}">{{ alerta.titulo }}</a>{% else %}{{ alerta.titulo }}{% endif %}</strong>
                             <span>{{ alerta.detalhe }}</span>
                         </div>
                         <span class="pp-selo pp-tom-{{ alerta.tom }}">{{ alerta.prazo }}</span>
                     </li>
                 {% else %}
-                    <li class="pp-vazio">Nenhum alerta nas áreas que você acompanha.</li>
+                    <li class="pp-vazio">Nada atrasado nem vencendo nas áreas que você acompanha.</li>
                 {% endfor %}
             </ul>
         </section>
@@ -62,7 +63,7 @@
                     <li>
                         <div class="pp-data"><span>{{ ev.dia }}</span><small>{{ ev.mes }}</small></div>
                         <div class="pp-agenda-texto">
-                            <strong>{{ ev.titulo }}</strong>
+                            <strong>{% if ev.url is defined and ev.url != '' %}<a href="{{ ev.url }}">{{ ev.titulo }}</a>{% else %}{{ ev.titulo }}{% endif %}</strong>
                             <span><i class="{{ ev.icone }}" aria-hidden="true"></i> {{ ev.origem }}</span>
                         </div>
                     </li>
@@ -82,7 +83,7 @@
             <table class="pp-tabela">
                 <thead>
                     <tr>
-                        <th scope="col">Pessoa</th>
+                        <th scope="col">Pessoa ou item</th>
                         <th scope="col">Processo</th>
                         <th scope="col">Etapa</th>
                         <th scope="col">Progresso</th>
@@ -96,7 +97,7 @@
                             <td>
                                 <div class="pp-pessoa">
                                     <span class="pp-avatar" aria-hidden="true">{{ proc.iniciais }}</span>
-                                    <div><strong>{{ proc.pessoa }}</strong><small>{{ proc.contexto }}</small></div>
+                                    <div><strong>{% if proc.url is defined and proc.url != '' %}<a href="{{ proc.url }}">{{ proc.pessoa }}</a>{% else %}{{ proc.pessoa }}{% endif %}</strong><small>{{ proc.contexto }}</small></div>
                                 </div>
                             </td>
                             <td>{{ proc.tipo }}</td>
@@ -111,7 +112,7 @@
                             <td><span class="pp-selo pp-tom-{{ proc.tom }}">{{ proc.situacao }}</span></td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="6" class="pp-vazio">Nenhum processo nas áreas que você acompanha.</td></tr>
+                        <tr><td colspan="6" class="pp-vazio">Nenhum comunicado, pesquisa, termo ou conferência em andamento nas áreas que você acompanha.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

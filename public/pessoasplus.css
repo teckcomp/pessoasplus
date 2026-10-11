@@ -1843,3 +1843,7 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-conf-foto { display: inline-block; margin: 8px 0 0; }
 .pp-casca .pp-conf-foto img { max-width: 240px; max-height: 240px; border-radius: 8px; border: 1px solid var(--pp-borda); display: block; }
 .pp-casca .pp-conf-form .pp-botao.is-largo { min-height: 48px; }
+
+/* BM.7: painel real: alertas, agenda e processos abrem o que descrevem. PESSOASPLUS_BUILD_BM7 */
+.pp-casca .pp-alerta-texto strong a, .pp-casca .pp-agenda-texto strong a, .pp-casca .pp-pessoa strong a { color: inherit; text-decoration: none; }
+.pp-casca .pp-alerta-texto strong a:hover, .pp-casca .pp-agenda-texto strong a:hover, .pp-casca .pp-pessoa strong a:hover { text-decoration: underline; color: var(--pp-acento-escuro); }

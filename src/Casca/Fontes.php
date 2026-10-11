@@ -36,7 +36,6 @@ final class Fontes
      * @var string[]
      */
     private const EM_DEMONSTRACAO = [
-        'inicio',
         'chegadas',
         'ferias',
         'desligamentos',
@@ -58,7 +57,8 @@ final class Fontes
      */
     public static function painelRh(): array
     {
-        return DadosDemo::painelRh();
+        // BM.7: painel real (PESSOASPLUS_BUILD_BM7).
+        return \GlpiPlugin\Pessoasplus\Painel::montar();
     }
 
     /**

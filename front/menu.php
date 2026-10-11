@@ -8,6 +8,8 @@
  * PESSOASPLUS_BUILD_BP2C
  * PESSOASPLUS_BUILD_BP0C
  * PESSOASPLUS_BUILD_BP3C
+ * PESSOASPLUS_BUILD_BM7 (painel real)
+ * PESSOASPLUS_BUILD_BM7
  *
  * No GLPI 11 o kernel ja esta carregado quando este arquivo e incluido
  * pelo roteador legado, entao nao se inclui inc/includes.php (T-24).
@@ -40,7 +42,7 @@ foreach ($dados['atalhos'] as $i => $a) {
 $pp = Pagina::contexto(
     'inicio',
     'Painel do RH',
-    'Processos em andamento, prazos e o que vem nos próximos dias',
+    'O que está atrasado, o que aguarda você e o que vence nos próximos 30 dias',
     $dados
 );
 
