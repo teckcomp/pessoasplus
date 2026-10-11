@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_BM4
  * PESSOASPLUS_BUILD_BM4_5
+ * PESSOASPLUS_BUILD_BM5
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -703,10 +704,132 @@ final class Formulario extends CommonDBTM
                 default:
                     $item['textos'] = array_values(array_filter($valores, static fn ($v) => $v !== ''));
             }
+            // BM.5: tres formatos prontos (barras / pizza / donut), legenda e opcao mais escolhida.
+            $item['graficos'] = ['barras' => '', 'pizza' => '', 'donut' => ''];
+            $item['legenda']  = '';
+            $item['top']      = '';
+            $item['enps']     = null;
+            if ($item['barras'] !== []) {
+                $item['graficos'] = [
+                    'barras' => Grafico::barras($item['barras'], $p['tipo'] !== 'escala'),
+                    'pizza'  => Grafico::pizza($item['barras'], false, 220, $respondidas),
+                    'donut'  => Grafico::pizza($item['barras'], true, 220, $respondidas),
+                ];
+                $item['legenda'] = Grafico::legenda($item['barras']);
+                $max = 0;
+                foreach ($item['barras'] as $b) {
+                    if ($b['total'] > $max) {
+                        $max = $b['total'];
+                        $item['top'] = $b['rotulo'];
+                    }
+                }
+                if ($p['tipo'] === 'escala' && $p['escala_max'] === 10 && $respondidas > 0) {
+                    // eNPS (D-32): promotores 9-10, detratores 1-6, na escala 1..10 do plugin.
+                    $prom = 0;
+                    $det  = 0;
+                    foreach ($item['barras'] as $b) {
+                        $n = (int) $b['rotulo'];
+                        if ($n >= 9) {
+                            $prom += $b['total'];
+                        } elseif ($n <= 6) {
+                            $det += $b['total'];
+                        }
+                    }
+                    $item['enps'] = (int) round(($prom - $det) * 100 / $respondidas);
+                }
+            }
+            $item['padrao'] = $p['tipo'] === 'unica' ? 'pizza' : ($p['tipo'] === 'multipla' ? 'donut' : 'barras');
             $saida[] = $item;
         }
 
         return $saida;
+    }
+
+    /** Mínimo de respostas para mostrar agregados de formulário anônimo (D-30, proposta 5.2). */
+    public const MINIMO_ANONIMO = 5;
+
+    /**
+     * Regras de anonimato aplicadas a tela de resultado (secao 3.2.1 do contexto):
+     * formulario que admite anonimato so mostra agregados a partir de MINIMO_ANONIMO
+     * respostas, e texto aberto / respostas individuais so depois do encerramento.
+     *
+     * @return array{anonimo: bool, bloqueado: bool, textos_liberados: bool, faltam: int}
+     */
+    public function restricaoAnonimato(int $totalRespostas, string $estado): array
+    {
+        $anonimo = (string) $this->fields['modo'] !== 'identificado';
+        if (!$anonimo) {
+            return ['anonimo' => false, 'bloqueado' => false, 'textos_liberados' => true, 'faltam' => 0];
+        }
+        $bloqueado = $totalRespostas < self::MINIMO_ANONIMO;
+
+        return [
+            'anonimo'          => true,
+            'bloqueado'        => $bloqueado,
+            'textos_liberados' => !$bloqueado && $estado === 'encerrado',
+            'faltam'           => max(0, self::MINIMO_ANONIMO - $totalRespostas),
+        ];
+    }
+
+    /**
+     * Indicadores da campanha (BM.5): respostas, adesao, media das escalas,
+     * eNPS (quando ha escala 1..10), opcao mais escolhida e top 5 geral.
+     *
+     * @param array<int, array<string, mixed>> $resultado  saida de resultado()
+     * @param array{total: int, responderam: int}|null $cobranca
+     *
+     * @return array{kpis: array<int, array{icone: string, valor: string, rotulo: string, detalhe: string, tom: string}>, top5: array<int, array{rotulo: string, total: int, percentual: int, pergunta: string}>}
+     */
+    public static function indicadores(array $resultado, ?array $cobranca, int $totalRespostas): array
+    {
+        $somaMedias = 0.0;
+        $nMedias    = 0;
+        $enps       = null;
+        $opcoes     = [];
+        $top        = ['rotulo' => '', 'total' => 0, 'pergunta' => ''];
+        foreach ($resultado as $q) {
+            if ($q['media'] !== null) {
+                $somaMedias += (float) $q['media'];
+                $nMedias++;
+            }
+            if ($q['enps'] !== null && $enps === null) {
+                $enps = (int) $q['enps'];
+            }
+            if (in_array($q['tipo'], ['unica', 'multipla'], true)) {
+                foreach ($q['barras'] as $b) {
+                    $opcoes[] = ['rotulo' => $b['rotulo'], 'total' => (int) $b['total'], 'percentual' => (int) $b['percentual'], 'pergunta' => $q['pergunta']];
+                    if ((int) $b['total'] > $top['total']) {
+                        $top = ['rotulo' => $b['rotulo'], 'total' => (int) $b['total'], 'pergunta' => $q['pergunta']];
+                    }
+                }
+            }
+        }
+        usort($opcoes, static fn ($a, $b) => ($b['total'] <=> $a['total']) ?: strcmp($a['rotulo'], $b['rotulo']));
+        $top5 = array_values(array_filter(array_slice($opcoes, 0, 5), static fn ($o) => $o['total'] > 0));
+
+        $kpis = [];
+        $kpis[] = ['icone' => 'ti ti-inbox', 'valor' => (string) $totalRespostas, 'rotulo' => $totalRespostas === 1 ? 'Resposta' : 'Respostas', 'detalhe' => 'recebidas na campanha', 'tom' => 'info'];
+        if ($cobranca !== null && $cobranca['total'] > 0) {
+            $pct = (int) round($cobranca['responderam'] * 100 / $cobranca['total']);
+            $kpis[] = ['icone' => 'ti ti-users-group', 'valor' => $pct . '%', 'rotulo' => 'Adesão', 'detalhe' => $cobranca['responderam'] . ' de ' . $cobranca['total'] . ' do público', 'tom' => $pct >= 70 ? 'ok' : ($pct >= 40 ? 'alerta' : 'atraso')];
+        } else {
+            $kpis[] = ['icone' => 'ti ti-users-group', 'valor' => '—', 'rotulo' => 'Adesão', 'detalhe' => 'público não definido', 'tom' => 'neutro'];
+        }
+        if ($nMedias > 0) {
+            $kpis[] = ['icone' => 'ti ti-chart-line', 'valor' => number_format($somaMedias / $nMedias, 1, ',', ''), 'rotulo' => 'Média das escalas', 'detalhe' => $nMedias . ($nMedias === 1 ? ' pergunta de escala' : ' perguntas de escala'), 'tom' => 'info'];
+        }
+        if ($enps !== null) {
+            $kpis[] = ['icone' => 'ti ti-mood-smile', 'valor' => ($enps > 0 ? '+' : '') . $enps, 'rotulo' => 'eNPS', 'detalhe' => 'promotores (9-10) menos detratores (1-6)', 'tom' => $enps >= 30 ? 'ok' : ($enps >= 0 ? 'alerta' : 'atraso')];
+        }
+        if ($top['rotulo'] !== '') {
+            $kpis[] = ['icone' => 'ti ti-trophy', 'valor' => (string) $top['total'], 'rotulo' => 'Mais escolhida: ' . $top['rotulo'], 'detalhe' => $top['pergunta'], 'tom' => 'ok'];
+        }
+        $perguntas = count($resultado);
+        if (count($kpis) < 5) {
+            $kpis[] = ['icone' => 'ti ti-list-check', 'valor' => (string) $perguntas, 'rotulo' => $perguntas === 1 ? 'Pergunta' : 'Perguntas', 'detalhe' => 'na campanha', 'tom' => 'neutro'];
+        }
+
+        return ['kpis' => array_slice($kpis, 0, 5), 'top5' => $top5];
     }
 
     /**

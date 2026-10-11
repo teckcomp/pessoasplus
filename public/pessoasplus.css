@@ -1777,7 +1777,7 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-mc-aniversario.is-embreve .pp-mc-capa-auto { min-height: 120px; }
 .pp-casca .pp-celebracao.is-embreve .pp-celebracao-data { color: var(--pp-texto-2); font-weight: 500; }
 
-/* BM.4-8: formularios de publicacao e comunicado no layout da casca (D-83). PESSOASPLUS_BUILD_BM4_8 */
+/* BM.4-8: formularios de publicacao e comunicado no layout da casca (D-83). PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 */
 .pp-casca .pp-secao-titulo .pp-selo { margin-left: 8px; vertical-align: middle; font-weight: 600; }
 .pp-casca .pp-marcar.is-desabilitado, .pp-casca .pp-campo.is-desabilitado { opacity: 0.6; cursor: not-allowed; }
 .pp-casca .pp-marcar.is-desabilitado input, .pp-casca .pp-campo.is-desabilitado select { cursor: not-allowed; }
@@ -1787,3 +1787,27 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-embreve-bloco .pp-campo-rotulo { margin-bottom: 8px; }
 .pp-casca .pp-publicar .pp-nota { margin: 8px 0 0; }
 .pp-casca .pp-novo-lateral .pp-pv-imagem { aspect-ratio: 2 / 1; object-fit: contain; background: var(--pp-fundo); }
+
+/* BM.5: resultado de pesquisa e quiz: KPIs, top 5 e graficos em SVG. PESSOASPLUS_BUILD_BM5 */
+.pp-casca .pp-top5 { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pp-casca .pp-top5 li { display: grid; grid-template-columns: 28px minmax(0, 1fr) minmax(120px, 280px) 72px; gap: 12px; align-items: center; }
+.pp-casca .pp-top5-pos { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; background: var(--pp-acento-claro); color: var(--pp-acento-escuro); }
+.pp-casca .pp-top5 li:first-child .pp-top5-pos { background: var(--pp-acento); color: #ffffff; }
+.pp-casca .pp-top5-texto { display: flex; flex-direction: column; min-width: 0; }
+.pp-casca .pp-top5-texto small { color: var(--pp-texto-2); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-casca .pp-top5 .pp-progresso.is-largo { margin-top: 0; max-width: none; }
+.pp-casca .pp-top5-valor { text-align: right; font-weight: 700; }
+.pp-casca .pp-top5-valor small { font-weight: 400; color: var(--pp-texto-2); }
+@media (max-width: 767px) { .pp-casca .pp-top5 li { grid-template-columns: 28px minmax(0, 1fr) 64px; } .pp-casca .pp-top5 .pp-progresso { display: none; } }
+.pp-casca .pp-graf-formatos { display: flex; gap: 6px; margin: 2px 0 10px; }
+.pp-casca .pp-graf-area.is-redonda { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: center; }
+@media (max-width: 575px) { .pp-casca .pp-graf-area.is-redonda { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
+.pp-casca .pp-graf { display: block; max-width: 100%; height: auto; font-family: inherit; }
+.pp-casca .pp-graf-barras { max-width: 720px; }
+.pp-casca .pp-graf-legenda { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pp-casca .pp-graf-legenda li { display: grid; grid-template-columns: 14px minmax(0, 1fr) 40px 44px; gap: 10px; align-items: center; font-size: 0.9rem; }
+.pp-casca .pp-graf-cor { width: 14px; height: 14px; border-radius: 3px; }
+.pp-casca .pp-graf-legenda strong { text-align: right; }
+.pp-casca .pp-graf-legenda small { color: var(--pp-texto-2); }
+.pp-casca .pp-graf-rotulo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media print { .pp-casca .pp-graf-formatos { display: none; } }

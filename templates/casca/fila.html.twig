@@ -1,4 +1,5 @@
-{# Pessoas+ - fila de respostas / Ouvidoria por porta (RH). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 #}
+{# Pessoas+ - fila de respostas / Ouvidoria por porta (RH). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 PESSOASPLUS_BUILD_BM5 #}
+{# BM.5: KPIs, top 5, grafico por pergunta (barras/pizza/donut em SVG do plugin), regras de anonimato (minimo 5, texto so apos encerrar). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -23,24 +24,65 @@
     {% endif %}
 
     {% if d.tipo != 'ouvidoria' %}
-        <section class="pp-cartao">
-            <header class="pp-cartao-cabecalho"><h2>Resultado</h2><span class="pp-referencia">{{ d.resumo.total }} {{ d.resumo.total == 1 ? 'resposta' : 'respostas' }}</span></header>
-            {% for q in d.resultado %}
-                <div class="pp-res-pergunta">
-                    <h3>{{ q.pergunta }} <span class="pp-sub">{{ q.tipo_rotulo }} · {{ q.respondidas }} {{ q.respondidas == 1 ? 'resposta' : 'respostas' }}{% if q.media is not null %} · média <strong>{{ q.media }}</strong>{% endif %}</span></h3>
-                    {% if q.barras|length > 0 %}
-                        <ul class="pp-barras">{% for b in q.barras %}<li><span class="pp-barras-rotulo">{{ b.rotulo }}</span><div class="pp-progresso is-largo" role="img" aria-label="{{ b.total }}"><div class="pp-progresso-barra pp-tom-info" style="width: {{ b.percentual }}%"></div></div><span class="pp-barras-valor">{{ b.total }}</span><small class="pp-barras-detalhe">{{ b.percentual }}%</small></li>{% endfor %}</ul>
-                    {% elseif q.textos|length > 0 %}
-                        <ul class="pp-res-textos">{% for t in q.textos %}<li>{{ t }}</li>{% endfor %}</ul>
-                    {% else %}
-                        <p class="pp-sub">Sem respostas ainda.</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </section>
+        {% if d.restricao.bloqueado %}
+            <section class="pp-cartao pp-vazio">
+                <i class="ti ti-incognito" aria-hidden="true"></i>
+                <p><strong>Resultado protegido.</strong> Esta campanha admite resposta anônima: os agregados só aparecem a partir de {{ d.minimo_anonimo }} respostas (D-30). Faltam {{ d.restricao.faltam }}.</p>
+            </section>
+        {% else %}
+            <section class="pp-indicadores" aria-label="Indicadores da campanha">
+                {% for ind in d.indicadores %}
+                    <div class="pp-indicador pp-tom-{{ ind.tom }}">
+                        <i class="{{ ind.icone }}" aria-hidden="true"></i>
+                        <div class="pp-indicador-valor">{{ ind.valor }}</div>
+                        <div class="pp-indicador-rotulo">{{ ind.rotulo }}</div>
+                        <div class="pp-indicador-detalhe">{{ ind.detalhe }}</div>
+                    </div>
+                {% endfor %}
+            </section>
+
+            {% if d.top5|length > 0 %}
+                <section class="pp-cartao">
+                    <header class="pp-cartao-cabecalho"><h2>Top 5 mais escolhidas</h2><span class="pp-referencia">entre todas as perguntas de escolha</span></header>
+                    <ol class="pp-top5">
+                        {% for t in d.top5 %}
+                            <li><span class="pp-top5-pos">{{ loop.index }}</span><div class="pp-top5-texto"><strong>{{ t.rotulo }}</strong><small>{{ t.pergunta }}</small></div><div class="pp-progresso is-largo" role="img" aria-label="{{ t.total }}"><div class="pp-progresso-barra" style="width: {{ t.percentual }}%"></div></div><span class="pp-top5-valor">{{ t.total }} <small>{{ t.percentual }}%</small></span></li>
+                        {% endfor %}
+                    </ol>
+                </section>
+            {% endif %}
+
+            <section class="pp-cartao" data-pp-resultado="{{ d.id }}">
+                <header class="pp-cartao-cabecalho"><h2>Resultado por pergunta</h2><span class="pp-referencia">{{ d.resumo.total }} {{ d.resumo.total == 1 ? 'resposta' : 'respostas' }}{% if d.restricao.anonimo %} · campanha com anonimato{% endif %}</span></header>
+                {% for q in d.resultado %}
+                    <div class="pp-res-pergunta" data-pp-res-pergunta data-pp-padrao="{{ q.padrao }}">
+                        <h3>{{ q.pergunta }} <span class="pp-sub">{{ q.tipo_rotulo }} · {{ q.respondidas }} {{ q.respondidas == 1 ? 'resposta' : 'respostas' }}{% if q.media is not null %} · média <strong>{{ q.media }}</strong>{% endif %}{% if q.enps is not null %} · eNPS <strong>{{ q.enps > 0 ? '+' : '' }}{{ q.enps }}</strong>{% endif %}{% if q.top != '' %} · mais escolhida: <strong>{{ q.top }}</strong>{% endif %}</span></h3>
+                        {% if q.barras|length > 0 %}
+                            <div class="pp-graf-formatos" role="group" aria-label="Formato do gráfico">
+                                <button type="button" class="pp-botao is-compacto" data-pp-formato="barras"><i class="ti ti-chart-bar" aria-hidden="true"></i><span>Barras</span></button>
+                                <button type="button" class="pp-botao is-compacto" data-pp-formato="pizza"><i class="ti ti-chart-pie" aria-hidden="true"></i><span>Pizza</span></button>
+                                <button type="button" class="pp-botao is-compacto" data-pp-formato="donut"><i class="ti ti-chart-donut" aria-hidden="true"></i><span>Rosca</span></button>
+                            </div>
+                            <div class="pp-graf-area is-barras" data-pp-graf="barras">{{ q.graficos.barras|raw }}</div>
+                            <div class="pp-graf-area is-redonda" data-pp-graf="pizza" hidden>{{ q.graficos.pizza|raw }}{{ q.legenda|raw }}</div>
+                            <div class="pp-graf-area is-redonda" data-pp-graf="donut" hidden>{{ q.graficos.donut|raw }}{{ q.legenda|raw }}</div>
+                        {% elseif q.textos|length > 0 %}
+                            <ul class="pp-res-textos">{% for t in q.textos %}<li>{{ t }}</li>{% endfor %}</ul>
+                        {% elseif q.textos_ocultos > 0 %}
+                            <p class="pp-sub"><i class="ti ti-lock" aria-hidden="true"></i> {{ q.textos_ocultos }} {{ q.textos_ocultos == 1 ? 'resposta em texto fica visível' : 'respostas em texto ficam visíveis' }} depois do encerramento da campanha (anonimato).</p>
+                        {% else %}
+                            <p class="pp-sub">Sem respostas ainda.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
     {% endif %}
 
-    {% if d.respostas|length == 0 %}
+    {% if not d.mostra_individuais %}
+        <div class="pp-cartao pp-vazio"><i class="ti ti-incognito" aria-hidden="true"></i><p>Respostas individuais de campanha com anonimato só aparecem depois do encerramento, e sem hora, origem nem ordem de chegada.</p></div>
+    {% endif %}
+    {% if d.respostas|length == 0 and d.mostra_individuais %}
         <div class="pp-cartao pp-vazio"><i class="ti ti-inbox" aria-hidden="true"></i><p>Nenhuma resposta{% if d.filtro != '' %} nessa situação{% endif %}.</p></div>
     {% endif %}
     {% for r in d.respostas %}

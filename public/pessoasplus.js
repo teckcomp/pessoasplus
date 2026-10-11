@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -2190,8 +2190,53 @@
         });
     }
 
+    /* BM.5: seletor barras / pizza / rosca por pergunta do resultado.
+     * O padrao vem do tipo da pergunta; a escolha fica na sessao do navegador por campanha. */
+    function iniciarResultado() {
+        document.querySelectorAll('.pp-casca [data-pp-resultado]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var chave = 'pp_formato_' + raiz.getAttribute('data-pp-resultado');
+            var guardado = {};
+            try {
+                guardado = JSON.parse(window.sessionStorage.getItem(chave) || '{}') || {};
+            } catch (e) {
+                guardado = {};
+            }
+            raiz.querySelectorAll('[data-pp-res-pergunta]').forEach(function (bloco, i) {
+                var botoes = bloco.querySelectorAll('[data-pp-formato]');
+                if (!botoes.length) {
+                    return;
+                }
+                function aplicar(formato) {
+                    bloco.querySelectorAll('[data-pp-graf]').forEach(function (area) {
+                        area.hidden = area.getAttribute('data-pp-graf') !== formato;
+                    });
+                    botoes.forEach(function (b) {
+                        var ativo = b.getAttribute('data-pp-formato') === formato;
+                        b.classList.toggle('is-primario', ativo);
+                        b.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+                    });
+                }
+                botoes.forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        var f = b.getAttribute('data-pp-formato');
+                        aplicar(f);
+                        guardado[i] = f;
+                        try {
+                            window.sessionStorage.setItem(chave, JSON.stringify(guardado));
+                        } catch (e) { /* sem storage: so a tela */ }
+                    });
+                });
+                aplicar(guardado[i] || bloco.getAttribute('data-pp-padrao') || 'barras');
+            });
+        });
+    }
+
     function tudo() {
         iniciar();
+        iniciarResultado();
         iniciarFiltros();
         iniciarCiencia();
         iniciarNovo();
