@@ -56,6 +56,12 @@ final class Evento extends CommonDBTM
         'publicacao_publicada'   => 'Publicação no mural',
         'publicacao_despublicada' => 'Publicação tirada do mural',
         'publicacao_excluida'    => 'Publicação excluída',
+        'formulario_criado'      => 'Formulário criado',
+        'formulario_aberto'      => 'Formulário aberto',
+        'formulario_encerrado'   => 'Formulário encerrado',
+        'formulario_respondido'  => 'Formulário respondido',
+        'ouvidoria_enviada'      => 'Envio à Ouvidoria (identificado)',
+        'ouvidoria_tratada'      => 'Ouvidoria: tratamento registrado',
     ];
 
     /**

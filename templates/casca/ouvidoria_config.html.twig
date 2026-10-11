@@ -1,0 +1,21 @@
+{# Pessoas+ - contatos e informativos da Ouvidoria (RH). PESSOASPLUS_BUILD_BM4_6 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+{% block acoes %}<a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Formulários</span></a>{% endblock %}
+{% block conteudo %}
+    {% set d = pp.dados %}
+    <form class="pp-novo" method="post" action="{{ d.url_aqui }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+        <div class="pp-novo-form">
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>1</span> Contatos do RH e informativos</h2>
+                <p class="pp-nota">Texto entre colchetes é marcador da proposta: substitua pelos dados da empresa. Informativos: um por linha, no formato <code>Rótulo | endereço</code> (o endereço pode ser o de um documento do Codex+).</p>
+                {% for c in d.campos %}
+                    <label class="pp-campo"><span>{{ c.rotulo }}</span>
+                        {% if c.tipo == 'linhas' %}<textarea name="{{ c.chave }}" rows="5" maxlength="2000">{{ c.valor }}</textarea>{% else %}<input type="text" name="{{ c.chave }}" maxlength="500" value="{{ c.valor }}"{% if c.tipo == 'url' %} placeholder="https://… ou /plugins/codexplus/…"{% endif %}>{% endif %}
+                    </label>
+                {% endfor %}
+            </section>
+            <div class="pp-acoes-linha"><button type="submit" name="gravar" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Gravar</span></button><a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a></div>
+        </div>
+    </form>
+{% endblock %}

@@ -1,4 +1,5 @@
-{# Pessoas+ - pasta do colaborador: capa, Jornada, Dados, Documentos, Historico. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 #}
+{# Pessoas+ - pasta do colaborador: capa, Jornada, Dados, Documentos, Historico. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM1_3 #}
+{# BM.1-3 (D-84): foto da capa com botao de camera e janela, em _foto.html.twig; CSS/JS proprios (foto.css, foto.js). #}
 {# Usa pp.dados (front/colaborador.form.php). Dados reais (BM.1). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -15,12 +16,9 @@
     {% set csrf = csrf_token() %}
 
     {% if not d.nova %}
+        <link rel="stylesheet" href="{{ d.foto_css }}">
         <section class="pp-cartao pp-pasta-capa">
-            {% if f.foto != '' %}
-                <img class="pp-pasta-foto" src="{{ f.foto }}" alt="">
-            {% else %}
-                <span class="pp-avatar pp-pasta-foto" aria-hidden="true">{{ f.iniciais }}</span>
-            {% endif %}
+            {% include '@pessoasplus/casca/_foto.html.twig' with { f: f, d: d, edita: edita, csrf: csrf } %}
             <div class="pp-pasta-capa-texto">
                 <div class="pp-pasta-capa-linha">
                     <span class="pp-selo pp-tom-{{ f.situacao_tom }}">{{ f.situacao_rotulo }}</span>
@@ -279,5 +277,8 @@
                 </ol>
             {% endif %}
         </section>
+    {% endif %}
+    {% if not d.nova %}
+        <script src="{{ d.foto_js }}" defer></script>
     {% endif %}
 {% endblock %}

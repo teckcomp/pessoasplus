@@ -4,6 +4,7 @@
  * Pessoas+ - Fichario: grade de pastas por setor (BM.1, D-34).
  *
  * PESSOASPLUS_BUILD_BM1
+ * PESSOASPLUS_BUILD_BM1_4 (D-85: cartao da grade no padrao creme do mockup; CSS proprio fichario_cartao.css)
  *
  * RH com Fichario Ler ve todas as pastas; gestor ve as dos grupos que
  * gere (D-36); colaborador sem nenhum dos dois cai na propria pasta.
@@ -56,6 +57,7 @@ $dados = [
     'url_nova'  => Pagina::url(Colaborador::getFormURL(false)),
     'escopo'    => Fichario::escopo(),
     'filtrado'  => $filtros['busca'] !== '' || $filtros['setor'] > 0 || $filtros['situacao'] !== '' || $filtros['vinculo'] !== '',
+    'cartao_css' => Pagina::url('/plugins/pessoasplus/fichario_cartao.css') . '?v=bm1-4',
 ];
 
 $pp = Pagina::contexto(

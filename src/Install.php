@@ -10,6 +10,7 @@
  * PESSOASPLUS_BUILD_BM2
  * PESSOASPLUS_BUILD_BM2_2
  * PESSOASPLUS_BUILD_BM3
+ * PESSOASPLUS_BUILD_BM4
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -55,6 +56,12 @@ final class Install
         'glpi_plugin_pessoasplus_ciencias',
         'glpi_plugin_pessoasplus_publicacoes',
         'glpi_plugin_pessoasplus_vistas',
+        'glpi_plugin_pessoasplus_formularios',
+        'glpi_plugin_pessoasplus_perguntas',
+        'glpi_plugin_pessoasplus_respostas',
+        'glpi_plugin_pessoasplus_respostas_itens',
+        'glpi_plugin_pessoasplus_participacoes',
+        'glpi_plugin_pessoasplus_limites',
     ];
 
     /**
@@ -368,6 +375,124 @@ final class Install
                 KEY `users_id` (`users_id`)
             ) $fim");
         }
+
+        // BM.4 - formularios (E7, D-58) e Ouvidoria (D-56, D-31).
+        $tabela = 'glpi_plugin_pessoasplus_formularios';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `entities_id` int unsigned NOT NULL DEFAULT '0',
+                `titulo` varchar(255) NOT NULL DEFAULT '',
+                `descricao` text,
+                `tipo` varchar(20) NOT NULL DEFAULT 'pesquisa',
+                `porta` varchar(20) NOT NULL DEFAULT '',
+                `modo` varchar(20) NOT NULL DEFAULT 'identificado',
+                `situacao` varchar(20) NOT NULL DEFAULT 'rascunho',
+                `inicio` date DEFAULT NULL,
+                `fim` date DEFAULT NULL,
+                `publico_sem_login` tinyint NOT NULL DEFAULT '0',
+                `token` char(32) NOT NULL DEFAULT '',
+                `limite_dia` int NOT NULL DEFAULT '20',
+                `plugin_pessoasplus_publicos_id` int unsigned NOT NULL DEFAULT '0',
+                `publico_modelo_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `is_deleted` tinyint NOT NULL DEFAULT '0',
+                `date_creation` timestamp NULL DEFAULT NULL,
+                `date_mod` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `tipo` (`tipo`,`porta`),
+                KEY `situacao` (`situacao`),
+                KEY `token` (`token`),
+                KEY `is_deleted` (`is_deleted`)
+            ) $fim");
+        }
+
+        $tabela = 'glpi_plugin_pessoasplus_perguntas';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_formularios_id` int unsigned NOT NULL DEFAULT '0',
+                `ordem` int NOT NULL DEFAULT '0',
+                `tipo` varchar(20) NOT NULL DEFAULT 'curto',
+                `enunciado` varchar(500) NOT NULL DEFAULT '',
+                `opcoes` text,
+                `obrigatoria` tinyint NOT NULL DEFAULT '0',
+                `escala_max` tinyint NOT NULL DEFAULT '5',
+                PRIMARY KEY (`id`),
+                KEY `formulario` (`plugin_pessoasplus_formularios_id`,`ordem`)
+            ) $fim");
+        }
+
+        // Resposta: no modo anonimo users_id = 0 e a data e so o dia (D-31).
+        $tabela = 'glpi_plugin_pessoasplus_respostas';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_formularios_id` int unsigned NOT NULL DEFAULT '0',
+                `protocolo` varchar(20) NOT NULL DEFAULT '',
+                `codigo_hash` char(64) NOT NULL DEFAULT '',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `anonimo` tinyint NOT NULL DEFAULT '0',
+                `origem` varchar(10) NOT NULL DEFAULT 'logado',
+                `data` timestamp NULL DEFAULT NULL,
+                `situacao` varchar(20) NOT NULL DEFAULT 'recebido',
+                `resposta_rh` text,
+                `pedido_complemento` text,
+                `data_resposta` timestamp NULL DEFAULT NULL,
+                `users_id_rh` int unsigned NOT NULL DEFAULT '0',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `protocolo` (`protocolo`),
+                KEY `formulario` (`plugin_pessoasplus_formularios_id`,`situacao`)
+            ) $fim");
+        }
+
+        $tabela = 'glpi_plugin_pessoasplus_respostas_itens';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_respostas_id` int unsigned NOT NULL DEFAULT '0',
+                `plugin_pessoasplus_perguntas_id` int unsigned NOT NULL DEFAULT '0',
+                `valor` text,
+                PRIMARY KEY (`id`),
+                KEY `resposta` (`plugin_pessoasplus_respostas_id`)
+            ) $fim");
+        }
+
+        // Participacao: so "ja respondeu", sem ligacao com a resposta (D-31).
+        $tabela = 'glpi_plugin_pessoasplus_participacoes';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_formularios_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `data` date DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unicidade` (`plugin_pessoasplus_formularios_id`,`users_id`)
+            ) $fim");
+        }
+
+        // Limite de envios da pagina publica: chave = sha256(ip + dia + sal), sem IP em claro (D-05).
+        $tabela = 'glpi_plugin_pessoasplus_limites';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `chave` char(64) NOT NULL DEFAULT '',
+                `dia` date DEFAULT NULL,
+                `total` int NOT NULL DEFAULT '0',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `chave` (`chave`),
+                KEY `dia` (`dia`)
+            ) $fim");
+        }
+
+        // Ouvidoria: as quatro portas nascem abertas (idempotente).
+        Formulario::semearOuvidoria($DB);
     }
 
 

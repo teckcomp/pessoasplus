@@ -1,0 +1,68 @@
+{# Pessoas+ - fila de respostas / Ouvidoria por porta (RH). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Formulários</span></a>
+    <a class="pp-botao" href="{{ pp.dados.url_editar }}"><i class="ti ti-settings" aria-hidden="true"></i><span>Perguntas e modo</span></a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
+    <div class="pp-pub-resumo">
+        <a class="pp-pub-chip{% if d.filtro == '' %} is-ativo{% endif %}" href="{{ d.url_aqui }}"><strong>{{ d.resumo.total }}</strong> no total</a>
+        {% for s in d.situacoes %}<a class="pp-pub-chip{% if d.filtro == s.chave %} is-ativo{% endif %}" href="{{ d.url_aqui }}&situacao={{ s.chave }}"><strong>{{ d.resumo[s.chave] }}</strong> {{ s.rotulo|lower }}</a>{% endfor %}
+    </div>
+
+    {% if d.cobranca is not null %}
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Quem ainda não respondeu</h2><span class="pp-referencia">{{ d.cobranca.responderam }} de {{ d.cobranca.total }} responderam</span></header>
+            {% if d.cobranca.faltam|length == 0 %}<p class="pp-nota">Todo o público respondeu.</p>{% else %}<ul class="pp-publ-nomes">{% for n in d.cobranca.faltam %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+            <p class="pp-nota">Só "respondeu ou não". No modo anônimo nada liga a pessoa à resposta (D-31).</p>
+        </section>
+    {% endif %}
+
+    {% if d.tipo != 'ouvidoria' %}
+        <section class="pp-cartao">
+            <header class="pp-cartao-cabecalho"><h2>Resultado</h2><span class="pp-referencia">{{ d.resumo.total }} {{ d.resumo.total == 1 ? 'resposta' : 'respostas' }}</span></header>
+            {% for q in d.resultado %}
+                <div class="pp-res-pergunta">
+                    <h3>{{ q.pergunta }} <span class="pp-sub">{{ q.tipo_rotulo }} · {{ q.respondidas }} {{ q.respondidas == 1 ? 'resposta' : 'respostas' }}{% if q.media is not null %} · média <strong>{{ q.media }}</strong>{% endif %}</span></h3>
+                    {% if q.barras|length > 0 %}
+                        <ul class="pp-barras">{% for b in q.barras %}<li><span class="pp-barras-rotulo">{{ b.rotulo }}</span><div class="pp-progresso is-largo" role="img" aria-label="{{ b.total }}"><div class="pp-progresso-barra pp-tom-info" style="width: {{ b.percentual }}%"></div></div><span class="pp-barras-valor">{{ b.total }}</span><small class="pp-barras-detalhe">{{ b.percentual }}%</small></li>{% endfor %}</ul>
+                    {% elseif q.textos|length > 0 %}
+                        <ul class="pp-res-textos">{% for t in q.textos %}<li>{{ t }}</li>{% endfor %}</ul>
+                    {% else %}
+                        <p class="pp-sub">Sem respostas ainda.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    {% if d.respostas|length == 0 %}
+        <div class="pp-cartao pp-vazio"><i class="ti ti-inbox" aria-hidden="true"></i><p>Nenhuma resposta{% if d.filtro != '' %} nessa situação{% endif %}.</p></div>
+    {% endif %}
+    {% for r in d.respostas %}
+        <article class="pp-cartao pp-fila-item">
+            <header class="pp-cartao-cabecalho">
+                <h2><code class="pp-protocolo">{{ r.protocolo }}</code> <span class="pp-selo pp-tom-{{ r.tom }}">{{ r.situacao_rotulo }}</span></h2>
+                <span class="pp-sub"><i class="ti {{ r.anonimo ? 'ti-incognito' : 'ti-user' }}" aria-hidden="true"></i> {{ r.quem }} · {{ r.origem }} · {{ r.data }}</span>
+            </header>
+            <dl class="pp-fila-itens">{% for i in r.itens %}<div><dt>{{ i.pergunta }}</dt><dd>{{ i.valor != '' ? i.valor : '—' }}</dd></div>{% endfor %}</dl>
+            {% if d.gerencia and d.tipo == 'ouvidoria' %}
+                <form method="post" action="{{ d.url_aqui }}" class="pp-fila-tratar">
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                    <input type="hidden" name="id" value="{{ d.id }}">
+                    <input type="hidden" name="resposta_id" value="{{ r.id }}">
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo is-curto"><span>Situação</span><select name="situacao">{% for s in d.situacoes %}<option value="{{ s.chave }}"{% if s.chave == r.situacao %} selected{% endif %}>{{ s.rotulo }}</option>{% endfor %}</select></label>
+                        <label class="pp-campo"><span>Resposta a quem enviou <small class="pp-sub">visível pelo protocolo</small></span><textarea name="resposta_rh" rows="2" maxlength="5000">{{ r.resposta_rh }}</textarea></label>
+                        <label class="pp-campo"><span>Pedido de complemento</span><textarea name="complemento" rows="2" maxlength="2000">{{ r.complemento }}</textarea></label>
+                    </div>
+                    <button type="submit" name="tratar" value="1" class="pp-botao is-compacto is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Registrar tratamento</span></button>
+                </form>
+            {% endif %}
+        </article>
+    {% endfor %}
+{% endblock %}

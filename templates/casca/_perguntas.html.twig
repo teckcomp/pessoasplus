@@ -1,0 +1,20 @@
+{# Pessoas+ - campos de resposta de um formulario (BM.4). Recebe "perguntas". PESSOASPLUS_BUILD_BM4 #}
+{% for q in perguntas %}
+    <div class="pp-campo pp-pergunta" data-pp-pergunta>
+        <span class="pp-campo-rotulo">{{ loop.index }}. {{ q.enunciado }}{% if q.obrigatoria %} <em class="pp-obrig">obrigatório</em>{% endif %}</span>
+        {% if q.tipo == 'curto' %}
+            <input type="text" name="p{{ q.id }}" maxlength="500"{% if q.obrigatoria %} required{% endif %}>
+        {% elseif q.tipo == 'longo' %}
+            <textarea name="p{{ q.id }}" rows="5" maxlength="5000"{% if q.obrigatoria %} required{% endif %}></textarea>
+        {% elseif q.tipo == 'unica' %}
+            {% for o in q.opcoes %}<label class="pp-marcar is-justo"><input type="radio" name="p{{ q.id }}" value="{{ o }}"{% if q.obrigatoria %} required{% endif %}><span>{{ o }}</span></label>{% endfor %}
+        {% elseif q.tipo == 'multipla' %}
+            {% for o in q.opcoes %}<label class="pp-marcar is-justo"><input type="checkbox" name="p{{ q.id }}[]" value="{{ o }}"><span>{{ o }}</span></label>{% endfor %}
+        {% elseif q.tipo == 'escala' %}
+            <div class="pp-escala">{% for n in q.escala %}<label class="pp-escala-item"><input type="radio" name="p{{ q.id }}" value="{{ n }}"{% if q.obrigatoria %} required{% endif %}><span>{{ n }}</span></label>{% endfor %}</div>
+        {% else %}
+            <label class="pp-marcar is-justo"><input type="radio" name="p{{ q.id }}" value="sim"{% if q.obrigatoria %} required{% endif %}><span>Sim</span></label>
+            <label class="pp-marcar is-justo"><input type="radio" name="p{{ q.id }}" value="nao"><span>Não</span></label>
+        {% endif %}
+    </div>
+{% endfor %}

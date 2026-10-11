@@ -1,0 +1,13 @@
+{# Pessoas+ - cabecalho das paginas sem Html::header (publicas). PESSOASPLUS_BUILD_BM4 #}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ titulo }} · {{ pp.identidade.organizacao }}</title>
+    <link rel="stylesheet" href="{{ pp.css }}">
+</head>
+<body class="pp-standalone">
+<div class="pp-casca pp-publica" style="--pp-acento: {{ pp.identidade.cor }}; --pp-acento-escuro: {{ pp.identidade.cor_escura }}; --pp-acento-claro: {{ pp.identidade.cor_clara }};">
+    <header class="pp-publica-topo"><span class="pp-publica-marca">{{ pp.identidade.organizacao }}</span><span class="pp-sub">{{ subtitulo }}</span></header>

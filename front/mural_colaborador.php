@@ -6,6 +6,7 @@
  * PESSOASPLUS_BUILD_BP3B
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM3_2
+ * PESSOASPLUS_BUILD_BM4_7
  *
  * Publicacoes no ar cujo publico alcanca a pessoa (D-72), por lugar (D-59);
  * abrir o mural marca as publicacoes como vistas (novidade da entrada, D-54).
@@ -19,6 +20,7 @@ use GlpiPlugin\Pessoasplus\Casca\MenuSimplificado;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Comunicado;
 use GlpiPlugin\Pessoasplus\EntradaMural;
+use GlpiPlugin\Pessoasplus\Formulario;
 use GlpiPlugin\Pessoasplus\Menu;
 use GlpiPlugin\Pessoasplus\Publicacao;
 
@@ -43,10 +45,24 @@ $resumo = [];
 if (count($pendencias) > 0) {
     $resumo[] = ['icone' => 'ti ti-speakerphone', 'valor' => count($pendencias), 'texto' => (count($pendencias) === 1 ? 'ciência pendente' : 'ciências pendentes') . ($atrasadas > 0 ? ' · ' . $atrasadas . ' em atraso' : ''), 'tom' => $atrasadas > 0 ? 'atraso' : 'alerta', 'area' => 'minha_area'];
 }
+$pesquisas = Formulario::pendentesDe($uid, $hoje);
+if (count($pesquisas) > 0) {
+    $resumo[] = ['icone' => 'ti ti-chart-bar', 'valor' => count($pesquisas), 'texto' => count($pesquisas) === 1 ? 'pesquisa aberta' : 'pesquisas abertas', 'tom' => 'info', 'area' => 'minha_area'];
+}
+$filtros = [['chave' => 'todos', 'rotulo' => 'Todas']];
+$tiposVistos = [];
+foreach ($mural['cartoes'] as $c) {
+    if (!isset($tiposVistos[$c['tipo']])) {
+        $tiposVistos[$c['tipo']] = true;
+        $filtros[] = ['chave' => $c['tipo'], 'rotulo' => $c['tipo_rotulo']];
+    }
+}
 $resumo[] = ['icone' => 'ti ti-sparkles', 'valor' => $mural['nao_vistas'], 'texto' => $mural['nao_vistas'] === 1 ? 'publicação nova' : 'publicações novas', 'tom' => $mural['nao_vistas'] > 0 ? 'info' : 'neutro', 'area' => ''];
 
 $dados = $mural + [
     'referencia'   => date('d/m/Y'),
+    'pesquisas'    => $pesquisas,
+    'filtros'      => $filtros,
     'resumo'       => $resumo,
     'quem'         => $nome === '' ? 'você' : $nome,
     'url_inicio'   => EntradaMural::urlContinuar($_SESSION, Pagina::interfaceAtual(), (string) ($CFG_GLPI['root_doc'] ?? '')),

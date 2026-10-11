@@ -12,6 +12,7 @@
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM2
  * PESSOASPLUS_BUILD_BM3
+ * PESSOASPLUS_BUILD_BM4
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -23,6 +24,7 @@ use GlpiPlugin\Pessoasplus\Casca\MuralAba;
 use GlpiPlugin\Pessoasplus\Colaborador;
 use GlpiPlugin\Pessoasplus\Comunicado;
 use GlpiPlugin\Pessoasplus\Publicacao;
+use Glpi\Http\Firewall;
 use GlpiPlugin\Pessoasplus\EntradaMural;
 use GlpiPlugin\Pessoasplus\Install;
 use GlpiPlugin\Pessoasplus\Menu;
@@ -66,6 +68,12 @@ function plugin_init_pessoasplus(): void
     Plugin::registerClass(Comunicado::class, ['document_types' => true]);
     // BM.3: imagem de capa da publicacao vem de um Document nativo ligado a ela.
     Plugin::registerClass(Publicacao::class, ['document_types' => true]);
+
+    // BM.4: paginas sem login (T-45): resposta publica por token e consulta de
+    // protocolo. Registrado antes da checagem do firewall, que roda no evento
+    // de controller (FirewallStrategyListener.php:78), depois do init dos plugins (T-82).
+    Firewall::addPluginStrategyForLegacyScripts('pessoasplus', '#^/front/responder_publico\.php#', Firewall::STRATEGY_NO_CHECK);
+    Firewall::addPluginStrategyForLegacyScripts('pessoasplus', '#^/front/protocolo\.php#', Firewall::STRATEGY_NO_CHECK);
 
     // Daqui para baixo, so para usuario logado com o direito do Pessoas+.
     // A sessao ja esta aberta quando o plugin_init roda (T-36), entao quem

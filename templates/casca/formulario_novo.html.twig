@@ -1,0 +1,107 @@
+{# Pessoas+ - novo formulario / editar; porta da Ouvidoria edita so perguntas, modo e descricao. PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_lista }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Formulários</span></a>
+    {% if not pp.dados.nova %}<a class="pp-botao" href="{{ pp.dados.tela.url_fila }}"><i class="ti ti-list-details" aria-hidden="true"></i><span>Respostas</span></a>{% endif %}
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set f = d.f %}
+    {% set csrf = csrf_token() %}
+    {% set edita = d.gerencia %}
+    <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-formulario data-pp-url-previa="{{ d.url_previa }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ edita ? '1' : '0' }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+        {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% endif %}
+        <input type="hidden" name="regras_json" value="{{ d.regras_json|e('html_attr') }}" data-pp-regras-campo>
+        <input type="hidden" name="publico_modelo_id" value="{{ f.publico_modelo_id }}" data-pp-modelo-campo>
+        <input type="hidden" name="perguntas_json" value="{{ d.perguntas_json|e('html_attr') }}" data-pp-perguntas-campo>
+        <script type="application/json" data-pp-regras-json>{{ d.regras_json|raw }}</script>
+        <script type="application/json" data-pp-opcoes-json>{{ d.opcoes_json|raw }}</script>
+        <script type="application/json" data-pp-perguntas-json>{{ d.perguntas_json|raw }}</script>
+
+        <div class="pp-novo-form">
+            <section class="pp-cartao pp-secao">
+                <h2 class="pp-secao-titulo"><span>1</span> {{ d.ouvidoria ? 'Porta da Ouvidoria' : 'Título e modo' }}</h2>
+                <label class="pp-campo"><span>Título <em class="pp-obrig">obrigatório</em></span><input type="text" name="titulo" maxlength="255" value="{{ f.titulo }}" required{% if not edita or d.ouvidoria %} disabled{% endif %}></label>
+                <label class="pp-campo"><span>Descrição <small class="pp-sub">aparece no topo do formulário</small></span><textarea name="descricao" rows="2" maxlength="2000"{% if not edita %} disabled{% endif %}>{{ f.descricao }}</textarea></label>
+                <div class="pp-pub-tipos">
+                    {% for m in d.modos %}
+                        <label class="pp-tipo"><input type="radio" name="modo" value="{{ m.chave }}"{% if m.chave == f.modo %} checked{% endif %}{% if not edita %} disabled{% endif %}><span class="pp-tipo-corpo"><strong>{{ m.rotulo }}</strong><small>{{ m.chave == 'anonimo' ? 'A resposta não leva usuário nem hora; só "já respondeu" fica registrado (D-31).' : (m.chave == 'escolha' ? 'Quem responde decide entre identificado e anônimo.' : 'A resposta fica ligada ao usuário.') }}</small></span></label>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="pp-cartao pp-secao" data-pp-perguntas>
+                <h2 class="pp-secao-titulo"><span>2</span> Perguntas</h2>
+                {% if not d.nova and d.tela.resumo is defined and d.tela.resumo.total > 0 %}<p class="pp-nota"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Já há {{ d.tela.resumo.total }} {{ d.tela.resumo.total == 1 ? 'resposta' : 'respostas' }}: editar o enunciado é permitido; pergunta removida sai do formulário mas continua no resultado como "[pergunta removida]".</p>{% endif %}
+                <ol class="pp-perg-lista" data-pp-perguntas-lista aria-live="polite"></ol>
+                {% if edita %}
+                    <div class="pp-publ-nova pp-perg-nova">
+                        <label class="pp-campo is-curto"><span>Tipo</span><select data-pp-perg-tipo>{% for t in d.tipos_pergunta %}<option value="{{ t.chave }}">{{ t.rotulo }}</option>{% endfor %}</select></label>
+                        <label class="pp-campo"><span>Enunciado</span><input type="text" maxlength="500" data-pp-perg-enunciado></label>
+                        <label class="pp-campo" data-pp-perg-opcoes-rotulo hidden><span>Opções <small class="pp-sub">uma por linha</small></span><textarea rows="3" data-pp-perg-opcoes></textarea></label>
+                        <label class="pp-campo is-curto" data-pp-perg-escala-rotulo hidden><span>Escala até</span><select data-pp-perg-escala><option value="5">5</option><option value="10">10</option></select></label>
+                        <label class="pp-marcar is-justo"><input type="checkbox" data-pp-perg-obrig checked><span>Obrigatória</span></label>
+                        <button type="button" class="pp-botao" data-pp-perg-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar pergunta</span></button>
+                    </div>
+                {% endif %}
+            </section>
+
+            {% if not d.ouvidoria %}
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>3</span> Período e página pública</h2>
+                    <div class="pp-linha-campos">
+                        <label class="pp-campo is-curto"><span>Início</span><input type="date" name="inicio" value="{{ f.inicio }}"{% if not edita %} disabled{% endif %}></label>
+                        <label class="pp-campo is-curto"><span>Fim</span><input type="date" name="fim" value="{{ f.fim }}"{% if not edita %} disabled{% endif %}></label>
+                    </div>
+                    <input type="hidden" name="publico_sem_login" value="0">
+                    <label class="pp-marcar is-justo"><input type="checkbox" name="publico_sem_login" value="1"{% if f.publico_sem_login %} checked{% endif %}{% if not edita %} disabled{% endif %}><span><strong>Página pública sem login</strong> (endereço com QR, envio sempre anônimo, com desafio contra robô e limite por dia).</span></label>
+                    <label class="pp-campo is-curto"><span>Limite de envios por dia, por endereço</span><input type="number" name="limite_dia" min="1" max="500" value="{{ f.limite_dia }}"{% if not edita %} disabled{% endif %}></label>
+                    {% if not d.nova and d.tela.url_publica != '' %}<p class="pp-nota">Endereço público: <code>{{ d.tela.url_publica }}</code> · <a href="{{ d.tela.url_qr }}&cartaz=1" target="_blank" rel="noopener">cartaz com QR</a></p>{% endif %}
+                </section>
+
+                <section class="pp-cartao pp-secao">
+                    <h2 class="pp-secao-titulo"><span>4</span> Quem responde (logado)</h2>
+                    {% if d.modelos|length > 0 %}
+                        <label class="pp-campo"><span>Começar de um público salvo</span><select data-pp-modelo-select data-pp-buscavel{% if not edita %} disabled{% endif %}><option value="0">Montar as regras aqui</option>{% for m in d.modelos %}<option value="{{ m.id }}" data-pp-regras="{{ m.regras|e('html_attr') }}"{% if m.id == f.publico_modelo_id %} selected{% endif %}>{{ m.nome }} ({{ m.total }})</option>{% endfor %}</select></label>
+                    {% endif %}
+                    <ul class="pp-publ-regras" data-pp-regras-lista aria-live="polite">{% for r in d.regras %}<li class="pp-chip is-fixo{% if r.is_exclusao %} pp-publ-exclusao{% endif %}">{{ r.is_exclusao ? 'exceto ' : '' }}{{ r.rotulo_tipo|lower }}: {{ r.rotulo }}</li>{% else %}<li class="pp-sub" data-pp-regras-vazio>Nenhuma regra ainda.</li>{% endfor %}</ul>
+                    {% if edita %}
+                        <div class="pp-publ-nova" data-pp-regra-nova>
+                            <label class="pp-campo is-curto"><span>Incluir por</span><select data-pp-regra-tipo>{% for t in d.tipos_regra %}<option value="{{ t.chave }}">{{ t.rotulo }}</option>{% endfor %}</select></label>
+                            <label class="pp-campo"><span>Valor</span><select data-pp-regra-valor data-pp-buscavel></select></label>
+                            <label class="pp-marcar is-justo" data-pp-regra-filhos-rotulo><input type="checkbox" data-pp-regra-filhos><span>Incluir subníveis</span></label>
+                            <label class="pp-marcar is-justo"><input type="checkbox" data-pp-regra-exclusao><span>Excluir</span></label>
+                            <button type="button" class="pp-botao" data-pp-regra-adicionar><i class="ti ti-plus" aria-hidden="true"></i><span>Adicionar regra</span></button>
+                        </div>
+                    {% endif %}
+                    <p class="pp-contagem-publico"><strong data-pp-previa-total>{{ d.previa.total }}</strong> <span data-pp-previa-rotulo>{{ d.previa.total == 1 ? 'pessoa' : 'pessoas' }}</span></p>
+                    <ul class="pp-publ-nomes" data-pp-previa-nomes>{% for n in d.previa.nomes %}<li>{{ n }}</li>{% endfor %}{% if d.previa.mais > 0 %}<li class="pp-sub">e mais {{ d.previa.mais }}</li>{% endif %}</ul>
+                </section>
+            {% else %}
+                <p class="pp-nota">A porta da Ouvidoria está sempre aberta para todos os usuários; não tem período nem público próprio. Página pública: {% if d.tela.url_publica != '' %}<code>{{ d.tela.url_publica }}</code> · <a href="{{ d.tela.url_qr }}&cartaz=1" target="_blank" rel="noopener">cartaz com QR</a>{% else %}desligada{% endif %}.</p>
+            {% endif %}
+
+            {% if edita %}
+                <div class="pp-acoes-linha">
+                    {% if d.nova %}
+                        <button type="submit" name="add" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar rascunho</span></button>
+                    {% elseif d.ouvidoria %}
+                        <button type="submit" name="update" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar</span></button>
+                    {% elseif d.estado == 'rascunho' or d.estado == 'encerrado' %}
+                        <button type="submit" name="update" value="1" class="pp-botao"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar</span></button>
+                        <button type="submit" name="abrir" value="1" class="pp-botao is-primario" data-pp-confirmar="Abrir o formulário? As perguntas não devem mudar depois que houver respostas."><i class="ti ti-player-play" aria-hidden="true"></i><span>Abrir</span></button>
+                        {% if d.estado == 'rascunho' %}<button type="submit" name="delete" value="1" class="pp-botao is-perigo" data-pp-confirmar="Excluir este rascunho?"><i class="ti ti-trash" aria-hidden="true"></i><span>Excluir</span></button>{% endif %}
+                    {% else %}
+                        <button type="submit" name="update" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar</span></button>
+                        <button type="submit" name="encerrar" value="1" class="pp-botao is-perigo" data-pp-confirmar="Encerrar? Ninguém mais responde; as respostas ficam."><i class="ti ti-player-stop" aria-hidden="true"></i><span>Encerrar</span></button>
+                    {% endif %}
+                    <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
+                    {% if not d.nova %}<span class="pp-selo pp-tom-{{ d.tela.estado_tom }}">{{ d.tela.estado_rotulo }}</span>{% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,108 @@
+{# Pessoas+ - foto na capa da pasta (BM.1-3, D-84; recorte BM.1-4, D-85). PESSOASPLUS_BUILD_BM1_3 PESSOASPLUS_BUILD_BM1_4 #}
+{# Usa f (ficha de Colaborador::paraTela + foto_cheia), d.url_foto, edita e csrf, #}
+{# todos definidos por colaborador.html.twig antes do include.                      #}
+{% set tem_user = f.users_id > 0 %}
+{% set tem_foto = f.foto_cheia != '' %}
+<div class="pp-foto-capa">
+    {% if tem_foto %}
+        <img class="pp-pasta-foto" src="{{ f.foto_cheia }}" alt="">
+    {% else %}
+        <span class="pp-avatar pp-pasta-foto" aria-hidden="true">{{ f.iniciais }}</span>
+    {% endif %}
+    {% if edita %}
+        {% if tem_user %}
+            <button type="button" class="pp-foto-camera" data-pp-foto-abrir aria-label="Alterar foto" title="Alterar foto">
+                <i class="ti ti-camera" aria-hidden="true"></i>
+            </button>
+        {% else %}
+            <button type="button" class="pp-foto-camera is-desativado" disabled aria-label="Foto disponível depois de ligar a ficha a um usuário do GLPI" title="Foto disponível depois de ligar a ficha a um usuário do GLPI">
+                <i class="ti ti-camera-off" aria-hidden="true"></i>
+            </button>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% if edita and tem_user %}
+    <dialog class="pp-foto-janela" data-pp-foto-janela aria-labelledby="pp-foto-titulo">
+        <form method="post" action="{{ d.url_foto }}" enctype="multipart/form-data" data-pp-foto-form>
+            <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="id" value="{{ f.id }}">
+            <header class="pp-foto-cabecalho">
+                <h2 id="pp-foto-titulo">Foto do colaborador</h2>
+                <button type="button" class="pp-foto-fechar" data-pp-foto-fechar aria-label="Fechar">
+                    <i class="ti ti-x" aria-hidden="true"></i>
+                </button>
+            </header>
+            <div class="pp-foto-corpo">
+                <div class="pp-foto-atual">
+                    {% if tem_foto %}
+                        <img class="pp-foto-atual-img" src="{{ f.foto_cheia }}" alt="">
+                    {% else %}
+                        <span class="pp-avatar pp-foto-atual-img" aria-hidden="true">{{ f.iniciais }}</span>
+                    {% endif %}
+                    <div class="pp-foto-atual-texto">
+                        <strong>{{ f.nome }}</strong>
+                        <span class="pp-sub">{{ tem_foto ? 'Foto atual: a do usuário do GLPI.' : 'Sem foto: a capa mostra as iniciais.' }}</span>
+                        <span class="pp-sub">Usuário do GLPI: <a href="{{ f.url_usuario }}">{{ f.usuario_login }}</a></span>
+                    </div>
+                </div>
+
+                <label class="pp-foto-zona" data-pp-foto-zona>
+                    <i class="ti ti-upload" aria-hidden="true"></i>
+                    <strong>Arraste a imagem aqui ou clique para escolher</strong>
+                    <span class="pp-sub">JPG, PNG, GIF, BMP ou WEBP, até 8 MB. Quadrada fica melhor; o GLPI guarda a original e gera a miniatura.</span>
+                    <input type="file" name="foto" accept="image/*" data-pp-foto-arquivo>
+                </label>
+
+                {# BM.1-4: recorte quadrado no navegador. Aparece ao escolher o arquivo; sem canvas, cai na linha simples abaixo. #}
+                <div class="pp-foto-recorte" data-pp-foto-recorte hidden>
+                    <div class="pp-foto-recorte-area">
+                        <canvas class="pp-foto-canvas" data-pp-foto-canvas width="300" height="300" aria-label="Posicione a foto dentro do círculo arrastando"></canvas>
+                        <span class="pp-foto-mascara" aria-hidden="true"></span>
+                        <span class="pp-foto-dica" aria-hidden="true">Arraste para posicionar</span>
+                    </div>
+                    <div class="pp-foto-recorte-lado">
+                        <span class="pp-foto-recorte-titulo">Como fica</span>
+                        <div class="pp-foto-previas" aria-hidden="true">
+                            <canvas data-pp-foto-previa width="84" height="84"></canvas>
+                            <canvas data-pp-foto-previa width="48" height="48"></canvas>
+                            <canvas data-pp-foto-previa width="32" height="32" class="is-quadrado"></canvas>
+                        </div>
+                        <span class="pp-sub">Pasta · grade · topo do GLPI</span>
+                        <label class="pp-foto-zoom">Zoom
+                            <input type="range" min="1" max="3" step="0.01" value="1" data-pp-foto-zoom>
+                        </label>
+                        <span class="pp-sub" data-pp-foto-nome-arquivo></span>
+                        <span class="pp-sub">Sai um quadrado de 600×600 px. O GLPI guarda esse quadrado e gera a miniatura dele: a foto fica igual em todo canto, inclusive no cabeçalho do GLPI.</span>
+                        <button type="button" class="pp-botao" data-pp-foto-trocar>Trocar imagem</button>
+                    </div>
+                </div>
+
+                <div class="pp-foto-escolhido" data-pp-foto-escolhido hidden>
+                    <i class="ti ti-check" aria-hidden="true"></i>
+                    <span><strong data-pp-foto-nome></strong> <span class="pp-sub" data-pp-foto-tamanho></span></span>
+                    <button type="button" class="pp-botao" data-pp-foto-trocar>Trocar</button>
+                </div>
+
+                {% if tem_foto %}
+                    <label class="pp-foto-remover">
+                        <input type="checkbox" name="remover" value="1" data-pp-foto-remover>
+                        <span>Remover a foto atual (a capa volta a mostrar as iniciais)</span>
+                    </label>
+                {% endif %}
+
+                <div class="pp-foto-aviso">
+                    <i class="ti ti-info-circle" aria-hidden="true"></i>
+                    <span>Esta é a <strong>foto do usuário no GLPI</strong>, a mesma do cadastro em Administração › Usuários. Ao salvar, ela passa a valer em todo o GLPI (chamados, comentários, Fichário). Qualquer pessoa logada no GLPI pode ver fotos de usuários.</span>
+                </div>
+            </div>
+            <footer class="pp-foto-rodape">
+                <span class="pp-sub">Fica no histórico da pasta.</span>
+                <div class="pp-foto-acoes">
+                    <button type="button" class="pp-botao" data-pp-foto-fechar>Cancelar</button>
+                    <button type="submit" class="pp-botao is-primario" data-pp-foto-salvar disabled>Salvar foto</button>
+                </div>
+            </footer>
+        </form>
+    </dialog>
+{% endif %}

@@ -1,5 +1,5 @@
-{# Pessoas+ - Mural do colaborador (quadro), real. PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM3_2 #}
-{# Lugares da D-59: destaque (faixa), grande (coluna), cartao (grade), lateral (direita). #}
+{# Pessoas+ - Mural do colaborador (quadro), real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4_7 #}
+{# Lugares da D-59. Comentarios/curtidas (B3.3) e celebracoes (D-41) ficam para depois de 13/10: a peca aparece, sem dado ficticio. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -16,84 +16,138 @@
         {% endfor %}
     </div>
 
-    {% if m.total == 0 %}
-        <div class="pp-cartao pp-vazio"><i class="ti ti-layout-board" aria-hidden="true"></i><p>Nada no mural para você por enquanto. Quando o RH publicar algo para o seu setor, aparece aqui.</p></div>
-    {% endif %}
-
     <div class="pp-mural">
         <div class="pp-mural-principal">
+            {# Destaque fixo: faixa no topo (D-59) #}
             {% if m.destaque is not null %}
                 {% set dq = m.destaque %}
                 <article class="pp-destaque">
                     <span class="pp-destaque-icone" aria-hidden="true"><i class="{{ dq.icone }}"></i></span>
                     <div class="pp-destaque-texto">
-                        <span class="pp-destaque-rotulo"><i class="ti ti-pin" aria-hidden="true"></i> Destaque · {{ dq.tipo_rotulo }}</span>
+                        <span class="pp-destaque-rotulo"><i class="ti ti-pin" aria-hidden="true"></i> Destaque fixo · {{ dq.tipo_rotulo }}</span>
                         <h2>{% if dq.tem_conteudo %}<a href="{{ dq.url }}">{{ dq.titulo }}</a>{% else %}{{ dq.titulo }}{% endif %}</h2>
                         <p>{{ dq.chamada }}</p>
                         <div class="pp-mural-meta"><span><i class="ti ti-user" aria-hidden="true"></i> {{ dq.autor }}</span><span><i class="ti ti-calendar" aria-hidden="true"></i> {{ dq.periodo }}</span>{% if dq.nova %}<span class="pp-mc-novo">Novo</span>{% endif %}</div>
                     </div>
                 </article>
+            {% elseif m.total == 0 %}
+                <div class="pp-cartao pp-vazio"><i class="ti ti-layout-board" aria-hidden="true"></i><p>Nada no mural para você por enquanto. Quando o RH publicar algo para o seu setor, aparece aqui.</p></div>
             {% endif %}
 
-            {% for g in m.grandes %}
-                <article class="pp-cartao pp-mc-campanha">
-                    {% if g.imagem_url != '' %}<img class="pp-mc-capa" src="{{ g.imagem_url }}" alt="{{ g.imagem_alt }}">{% endif %}
+            {# Publicacao grande (campanha do mes), fixada no topo da area (D-59) #}
+            {% for c in m.grandes %}
+                <article class="pp-cartao pp-mc-campanha" data-pp-post>
+                    {% if c.imagem_url != '' %}<img class="pp-mc-capa" src="{{ c.imagem_url }}" alt="{{ c.imagem_alt }}">{% endif %}
                     <div class="pp-mc-campanha-corpo">
-                        <div class="pp-mc-rotulo"><span><span class="pp-selo pp-tom-{{ g.tom }}">{{ g.tipo_rotulo }}</span></span>{% if g.fixada %}<span class="pp-mc-fixada"><i class="ti ti-pin" aria-hidden="true"></i> Fixada no topo</span>{% endif %}{% if g.nova %}<span class="pp-mc-novo">Novo</span>{% endif %}</div>
-                        <h2>{{ g.titulo }}</h2>
-                        <p>{{ g.chamada }}</p>
-                        <div class="pp-mc-acoes">
-                            {% for b in g.botoes %}<a class="pp-botao{% if loop.first %} is-primario{% endif %}" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% endfor %}
-                            {% if g.tem_conteudo %}<a class="pp-botao" href="{{ g.url }}"><i class="ti ti-file-text" aria-hidden="true"></i><span>Ler na íntegra</span></a>{% endif %}
+                        <div class="pp-mc-rotulo">
+                            <span>{{ c.tipo_rotulo }}{% if c.tipo == 'campanha' %} · {{ c.inicio != '' ? c.inicio|date('F')|capitalize : '' }}{% endif %}</span>
+                            {% if c.fixada %}<span class="pp-mc-fixada"><i class="ti ti-pin" aria-hidden="true"></i> Fixada no topo</span>{% endif %}
+                            {% if c.nova %}<span class="pp-mc-novo">Novo</span>{% endif %}
                         </div>
-                        <div class="pp-mural-meta pp-mc-rodape"><span><i class="ti ti-user" aria-hidden="true"></i> {{ g.autor }}</span><span><i class="ti ti-calendar" aria-hidden="true"></i> {{ g.periodo }}</span></div>
+                        <h2>{{ c.titulo }}</h2>
+                        <p>{{ c.chamada }}</p>
+                        <div class="pp-mc-acoes">
+                            {% for b in c.botoes %}<a class="pp-botao{% if loop.first %} is-primario{% endif %}" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% endfor %}
+                            {% if c.tem_conteudo %}<a class="pp-botao" href="{{ c.url }}"><i class="ti ti-file-text" aria-hidden="true"></i><span>Ler na íntegra</span></a>{% endif %}
+                            {% for b in c.botoes %}{% if b.qr_url != '' %}<a class="pp-qr" href="{{ b.url }}" target="_blank" rel="noopener" title="Aponte a câmera do celular"><img src="{{ b.qr_url }}" alt="QR: {{ b.rotulo }}"><span>ou leia o QR</span></a>{% endif %}{% endfor %}
+                        </div>
+                        <div class="pp-mural-meta pp-mc-rodape">
+                            <span><i class="ti ti-user" aria-hidden="true"></i> {{ c.autor }}</span>
+                            <span><i class="ti ti-calendar" aria-hidden="true"></i> {{ c.periodo }}</span>
+                            <span class="pp-mc-embreve"><i class="ti ti-thumb-up" aria-hidden="true"></i> curtidas <small>em breve</small></span>
+                            <span class="pp-mc-embreve"><i class="ti ti-message-circle" aria-hidden="true"></i> comentários <small>em breve</small></span>
+                        </div>
                     </div>
                 </article>
             {% endfor %}
 
-            {% if m.cartoes|length > 0 %}
-                <section class="pp-mc-secao" data-pp-filtravel>
-                    <header class="pp-mc-secao-cabecalho"><h2>Publicações</h2><span class="pp-contagem">{{ m.cartoes|length }}</span></header>
-                    <div class="pp-publicacoes">
-                        {% for p in m.cartoes %}
-                            <article class="pp-publicacao{% if p.nova %} is-nova{% endif %}" data-pp-item data-pp-situacao="{{ p.tipo }}">
-                                {% if p.imagem_url != '' %}
-                                    <img class="pp-publicacao-capa is-imagem" src="{{ p.imagem_url }}" alt="{{ p.imagem_alt }}">
-                                {% else %}
-                                    <div class="pp-publicacao-capa pp-cat-{{ p.tipo }}" aria-hidden="true"><i class="{{ p.icone }}"></i></div>
-                                {% endif %}
-                                <div class="pp-publicacao-corpo">
-                                    <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.tipo_rotulo }}</span>{% if p.fixada %} <span class="pp-mc-fixada"><i class="ti ti-pin" aria-hidden="true"></i></span>{% endif %}{% if p.nova %} <span class="pp-mc-novo">Novo</span>{% endif %}
-                                    <h3>{% if p.tem_conteudo %}<a href="{{ p.url }}">{{ p.titulo }}</a>{% else %}{{ p.titulo }}{% endif %}</h3>
-                                    <p>{{ p.chamada }}</p>
-                                    <div class="pp-mural-meta"><span><i class="ti ti-user" aria-hidden="true"></i> {{ p.autor }}</span><span><i class="ti ti-calendar" aria-hidden="true"></i> {{ p.periodo }}</span></div>
-                                </div>
-                            </article>
-                        {% endfor %}
+            {# Aniversariantes: cartao com comentarios (D-41, D-57) - depende do juridico #}
+            <section class="pp-mc-secao">
+                <header class="pp-mc-secao-cabecalho">
+                    <h2>Aniversariantes da semana</h2>
+                    <span class="pp-referencia">só dia e mês · quem consentiu</span>
+                </header>
+                <article class="pp-cartao pp-mc-aniversario is-embreve">
+                    <div class="pp-mc-capa-auto" aria-hidden="true"><span class="pp-mc-avatar is-grande"><i class="ti ti-cake"></i></span></div>
+                    <div class="pp-mc-aniversario-corpo">
+                        <div class="pp-mc-rotulo"><span>Aniversário · em breve</span></div>
+                        <h3>Cartões de aniversário da equipe</h3>
+                        <span class="pp-mc-detalhe">Entram na próxima etapa, depois da validação do jurídico sobre o consentimento (D-41). Aparecerão aqui com dia e mês, sem o ano, só para quem autorizar.</span>
                     </div>
-                </section>
-            {% endif %}
+                </article>
+            </section>
+
+            {# Publicacoes normais (cartoes) #}
+            <section class="pp-cartao" data-pp-filtravel>
+                <header class="pp-cartao-cabecalho"><h2>Publicações</h2><span class="pp-contagem">{{ m.cartoes|length }}</span></header>
+                {% if m.filtros|length > 1 %}
+                    <div class="pp-filtros" role="group" aria-label="Filtrar por categoria">
+                        {% for f in m.filtros %}<button type="button" class="pp-chip{% if loop.first %} is-ativo{% endif %}" data-pp-filtro="{{ f.chave }}" aria-pressed="{{ loop.first ? 'true' : 'false' }}">{{ f.rotulo }}</button>{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="pp-publicacoes">
+                    {% for p in m.cartoes %}
+                        <article class="pp-publicacao{% if p.nova %} is-nova{% endif %}" data-pp-item data-pp-situacao="{{ p.tipo }}">
+                            {% if p.imagem_url != '' %}<img class="pp-publicacao-capa is-imagem" src="{{ p.imagem_url }}" alt="{{ p.imagem_alt }}">{% else %}<div class="pp-publicacao-capa pp-cat-{{ p.tipo }}" aria-hidden="true"><i class="{{ p.icone }}"></i></div>{% endif %}
+                            <div class="pp-publicacao-corpo">
+                                <span class="pp-selo pp-tom-{{ p.tom }}">{{ p.tipo_rotulo }}</span>{% if p.fixada %} <span class="pp-mc-fixada"><i class="ti ti-pin" aria-hidden="true"></i></span>{% endif %}{% if p.nova %} <span class="pp-mc-novo">Novo</span>{% endif %}
+                                <h3>{% if p.tem_conteudo %}<a href="{{ p.url }}">{{ p.titulo }}</a>{% else %}{{ p.titulo }}{% endif %}</h3>
+                                <p>{{ p.chamada }}</p>
+                                {% if p.botoes|length > 0 %}<div class="pp-links-botoes">{% for b in p.botoes %}<a class="pp-botao is-compacto is-primario" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% if b.qr_url != '' %}<a class="pp-qr is-pequeno" href="{{ b.url }}" target="_blank" rel="noopener"><img src="{{ b.qr_url }}" alt="QR: {{ b.rotulo }}"><span>ou leia o QR</span></a>{% endif %}{% endfor %}</div>{% endif %}
+                                <div class="pp-mural-meta"><span><i class="ti ti-user" aria-hidden="true"></i> {{ p.autor }}</span><span><i class="ti ti-calendar" aria-hidden="true"></i> {{ p.periodo }}</span><span class="pp-mc-embreve"><i class="ti ti-message-circle" aria-hidden="true"></i> comentários <small>em breve</small></span></div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+                {% if m.cartoes|length == 0 %}<p class="pp-vazio">Nenhuma publicação em cartão no momento.</p>{% endif %}
+                <p class="pp-vazio" data-pp-vazio hidden>Nenhuma publicação nesta categoria.</p>
+            </section>
         </div>
 
         <div class="pp-mural-lateral" data-pp-lateral-fixa>
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Para você responder</h2><span class="pp-contagem">{{ m.pesquisas|length }}</span></header>
+                {% if m.pesquisas|length == 0 %}<p class="pp-nota">Nenhuma pesquisa aberta para você.</p>{% endif %}
+                <ul class="pp-lista is-compacta">
+                    {% for q in m.pesquisas %}
+                        <li class="pp-mural-pesquisa">
+                            <div class="pp-lista-texto">
+                                <strong><i class="ti {{ q.modo == 'anonimo' ? 'ti-lock' : 'ti-clipboard-check' }}" aria-hidden="true"></i> {{ q.titulo }}</strong>
+                                <span>{{ q.modo_rotulo }} · {{ q.periodo }}</span>
+                                {% if q.modo != 'identificado' %}<em class="pp-nota">Suas respostas não ficam ligadas ao seu usuário.</em>{% endif %}
+                            </div>
+                            <div class="pp-mural-pesquisa-acao"><span class="pp-selo pp-tom-info">Aberta</span><a class="pp-botao is-compacto is-primario" href="{{ q.url_responder }}">Responder</a></div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            {# Publicacoes no lugar "lateral" (D-59) #}
             {% for l in m.laterais %}
                 <article class="pp-cartao pp-mc-lateral">
                     <div class="pp-mc-lateral-topo"><span class="pp-mc-lateral-icone" aria-hidden="true"><i class="{{ l.icone }}"></i></span><span class="pp-selo pp-tom-{{ l.tom }}">{{ l.tipo_rotulo }}</span>{% if l.nova %}<span class="pp-mc-novo">Novo</span>{% endif %}</div>
+                    {% if l.imagem_url != '' %}<img class="pp-mc-lateral-imagem" src="{{ l.imagem_url }}" alt="{{ l.imagem_alt }}">{% endif %}
                     <h3>{% if l.tem_conteudo %}<a href="{{ l.url }}">{{ l.titulo }}</a>{% else %}{{ l.titulo }}{% endif %}</h3>
                     <p>{{ l.chamada }}</p>
+                    {% if l.botoes|length > 0 %}<div class="pp-links-botoes is-lateral">{% for b in l.botoes %}{% if b.qr_url != '' %}<a class="pp-qr is-lateral" href="{{ b.url }}" target="_blank" rel="noopener" title="Aponte a câmera do celular"><img src="{{ b.qr_url }}" alt="QR: {{ b.rotulo }}"><span>leia o QR ou</span></a>{% endif %}<a class="pp-botao is-compacto is-primario" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% endfor %}</div>{% endif %}
                     <div class="pp-mural-meta"><span><i class="ti ti-calendar" aria-hidden="true"></i> {{ l.periodo }}</span></div>
                 </article>
             {% endfor %}
 
-            <article class="pp-cartao pp-mc-ouvidoria">
-                <h3><i class="ti ti-message-circle-heart" aria-hidden="true"></i> Ouvidoria</h3>
-                <p>Dúvidas, sugestões, reclamações e relatos, com opção anônima e protocolo.</p>
-                <a class="pp-botao" href="{{ m.url_ouvidoria }}">Abrir a Ouvidoria</a>
-            </article>
+            <section class="pp-cartao">
+                <header class="pp-cartao-cabecalho"><h2>Celebrações</h2><span class="pp-referencia">próximos 30 dias</span></header>
+                <ul class="pp-celebracoes">
+                    <li class="pp-celebracao pp-celebra-aniversario is-embreve"><span class="pp-celebracao-icone" aria-hidden="true"><i class="ti ti-cake"></i></span><div class="pp-lista-texto"><strong>Aniversários</strong><span>com consentimento, dia e mês</span></div><span class="pp-celebracao-data">em breve</span></li>
+                    <li class="pp-celebracao pp-celebra-tempo is-embreve"><span class="pp-celebracao-icone" aria-hidden="true"><i class="ti ti-award"></i></span><div class="pp-lista-texto"><strong>Tempo de casa</strong><span>1, 5, 10 anos</span></div><span class="pp-celebracao-data">em breve</span></li>
+                    <li class="pp-celebracao pp-celebra-boasvindas is-embreve"><span class="pp-celebracao-icone" aria-hidden="true"><i class="ti ti-door-enter"></i></span><div class="pp-lista-texto"><strong>Boas-vindas</strong><span>quem chegou este mês</span></div><span class="pp-celebracao-data">em breve</span></li>
+                </ul>
+                <p class="pp-nota pp-celebracoes-nota">Aniversários aparecem só com a autorização da pessoa, com dia e mês. Depende da validação do jurídico (D-41).</p>
+            </section>
 
             <section class="pp-cartao">
-                <header class="pp-cartao-cabecalho"><h2>Celebrações</h2></header>
-                <p class="pp-nota">Aniversários e tempo de casa entram na próxima etapa (depende da validação do jurídico, D-41).</p>
+                <header class="pp-cartao-cabecalho"><h2>Ouvidoria</h2></header>
+                <p class="pp-mc-ouvidoria">Dúvidas, sugestões, reclamações e relatos, com opção anônima e protocolo.</p>
+                <a class="pp-botao" href="{{ m.url_ouvidoria }}"><i class="ti ti-message-circle-heart" aria-hidden="true"></i><span>Abrir a Ouvidoria</span></a>
             </section>
         </div>
     </div>
@@ -107,9 +161,7 @@
                 <li><div class="pp-lista-texto"><strong>Abrir o Mural ao entrar</strong></div><span class="pp-selo pp-tom-{{ g.direito_abrir ? 'ok' : 'atraso' }}">{{ g.direito_abrir ? 'sim' : 'não' }}</span></li>
                 <li><div class="pp-lista-texto"><strong>Decisão já tomada nesta sessão</strong><span>{{ g.decidido }}</span></div></li>
                 <li><div class="pp-lista-texto"><strong>Novidades antes de abrir esta página</strong></div><span class="pp-selo">{{ g.novidade_antes }}</span></li>
-                {% for l in g.publicacoes %}
-                    <li><div class="pp-lista-texto"><strong>{{ l.titulo }}</strong><span>{{ l.estado }}</span></div><span class="pp-selo pp-tom-{{ l.alcanca ? 'ok' : 'neutro' }}">{{ l.alcanca ? 'no meu público' : 'fora do meu público' }}</span><span class="pp-selo pp-tom-{{ l.vista ? 'neutro' : 'info' }}">{{ l.vista ? 'vista' : 'não vista' }}</span></li>
-                {% endfor %}
+                {% for l in g.publicacoes %}<li><div class="pp-lista-texto"><strong>{{ l.titulo }}</strong><span>{{ l.estado }}</span></div><span class="pp-selo pp-tom-{{ l.alcanca ? 'ok' : 'neutro' }}">{{ l.alcanca ? 'no meu público' : 'fora do meu público' }}</span><span class="pp-selo pp-tom-{{ l.vista ? 'neutro' : 'info' }}">{{ l.vista ? 'vista' : 'não vista' }}</span></li>{% endfor %}
             </ul>
         </section>
     {% endif %}

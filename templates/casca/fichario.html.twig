@@ -1,4 +1,5 @@
-{# Pessoas+ - Fichario: grade de pastas por setor. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 #}
+{# Pessoas+ - Fichario: grade de pastas por setor. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM1_4 #}
+{# BM.1-4 (D-85): cartao no padrao creme do mockup de 26/09 (opcao A), excecao a D-83 so aqui. CSS em fichario_cartao.css. #}
 {# Usa pp.dados (front/fichario.php). Dados reais (BM.1). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -12,6 +13,7 @@
 
 {% block conteudo %}
     {% set d = pp.dados %}
+    <link rel="stylesheet" href="{{ d.cartao_css }}">
     {% set f = d.filtros %}
 
     <form class="pp-cartao pp-fich-filtros" method="get" action="{{ d.url_base }}" role="search" aria-label="Filtrar o Fichário">
@@ -87,24 +89,23 @@
                 <h2 id="pp-setor-{{ setor.id }}"><i class="ti ti-folder" aria-hidden="true"></i> {{ setor.nome }}</h2>
                 <span class="pp-contagem">{{ setor.pastas|length }}</span>
             </header>
-            <div class="pp-fich-grade">
+            <div class="pp-fich-grade pp-fichc-grade">
                 {% for p in setor.pastas %}
-                    <a class="pp-fich-pasta" href="{{ p.url|e('html_attr') }}" data-pp-pasta="{{ p.id }}">
-                        <span class="pp-fich-aba" aria-hidden="true"></span>
-                        <span class="pp-fich-capa">
+                    <a class="pp-fichc{% if p.sem_usuario %} is-pre{% endif %}" href="{{ p.url|e('html_attr') }}" data-pp-pasta="{{ p.id }}">
+                        <span class="pp-fichc-aba" aria-hidden="true"></span>
+                        <span class="pp-fichc-capa">
                             {% if p.foto != '' %}
-                                <img class="pp-fich-foto" src="{{ p.foto }}" alt="">
+                                <img class="pp-fichc-foto" src="{{ p.foto }}" alt="">
                             {% else %}
-                                <span class="pp-avatar pp-fich-foto" aria-hidden="true">{{ p.iniciais }}</span>
+                                <span class="pp-fichc-foto pp-fichc-iniciais" aria-hidden="true">{{ p.iniciais }}</span>
                             {% endif %}
-                            <span class="pp-fich-texto">
-                                <strong>{{ p.nome }}</strong>
-                                <small>{{ p.cargo != '' ? p.cargo : p.vinculo_rotulo }}</small>
+                            <strong class="pp-fichc-nome">{{ p.nome }}</strong>
+                            <span class="pp-fichc-cargo">{{ p.cargo != '' ? p.cargo : p.vinculo_rotulo }}</span>
+                            <span class="pp-fichc-setor">{{ setor.nome }}</span>
+                            <span class="pp-fichc-rodape">
+                                <span class="pp-selo pp-tom-{{ p.situacao_tom }}">{{ p.situacao_rotulo }}</span>
+                                {% if p.sem_usuario %}<span class="pp-fichc-sem" title="Pré-cadastro sem usuário do GLPI"><i class="ti ti-user-off" aria-hidden="true"></i> sem usuário</span>{% endif %}
                             </span>
-                        </span>
-                        <span class="pp-fich-rodape">
-                            <span class="pp-selo pp-tom-{{ p.situacao_tom }}">{{ p.situacao_rotulo }}</span>
-                            {% if p.sem_usuario %}<span class="pp-sub" title="Pré-cadastro sem usuário do GLPI"><i class="ti ti-user-off" aria-hidden="true"></i> sem usuário</span>{% endif %}
                         </span>
                     </a>
                 {% endfor %}

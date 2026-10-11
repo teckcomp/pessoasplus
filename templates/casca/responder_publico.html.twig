@@ -1,0 +1,41 @@
+{# Pessoas+ - pagina publica de resposta, sem login (BM.4, T-45). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 #}
+{% set d = pp.dados %}
+{{ include('@pessoasplus/casca/_standalone_topo.html.twig', {titulo: d.titulo, subtitulo: d.ouvidoria ? 'Ouvidoria' : 'Pesquisa'}) }}
+    <main class="pp-publica-corpo">
+        <h1>{{ d.titulo }}</h1>
+        {% if d.descricao != '' %}<p class="pp-pub-chamada-grande">{{ d.descricao }}</p>{% endif %}
+        {% if not d.ok %}
+            <p class="pp-nota">Este endereço não corresponde a um formulário público.</p>
+        {% elseif not d.aberto %}
+            <p class="pp-nota">Este formulário não está aberto.</p>
+        {% elseif d.recibo is not null %}
+            {{ include('@pessoasplus/casca/_recibo.html.twig', {recibo: d.recibo}) }}
+            <p><a class="pp-botao" href="{{ d.url_protocolo }}">Acompanhar pelo protocolo</a></p>
+        {% else %}
+            {% if d.erro != '' %}<div class="pp-alerta pp-tom-atraso" role="alert"><i class="ti ti-alert-circle" aria-hidden="true"></i><div class="pp-alerta-texto">{{ d.erro }}</div></div>{% endif %}
+            {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'anonimo', ouvidoria: d.ouvidoria}) }}
+            <form method="post" action="{{ d.url_aqui }}" class="pp-novo-form">
+                <input type="hidden" name="_glpi_csrf_token" value="{{ d.csrf }}">
+                <input type="hidden" name="t" value="{{ d.token }}">
+                {{ include('@pessoasplus/casca/_perguntas.html.twig', {perguntas: d.perguntas}) }}
+                {% if d.desafio %}
+                    {# Widget montado pelo template do core: respeita o modo (interativo = clique na caixa). #}
+                    <div class="pp-campo pp-altcha">{{ include('components/altcha/widget.html.twig') }}</div>
+                {% endif %}
+                <div class="pp-acoes-linha"><button type="submit" name="enviar" value="1" class="pp-botao is-primario"><i class="ti ti-send" aria-hidden="true"></i><span>Enviar</span></button></div>
+            </form>
+        {% endif %}
+    </main>
+    <footer class="pp-publica-rodape"><a href="{{ d.url_protocolo }}">Consultar um protocolo</a></footer>
+    {% if d.diag is not null %}
+        <section class="pp-cartao pp-diag"><h2>Diagnóstico do desafio</h2><ul class="pp-lista is-compacta">
+            <li><div class="pp-lista-texto"><strong>ALTCHA ligado</strong></div><span class="pp-selo">{{ d.diag.ligado ? 'sim' : 'não' }}</span></li>
+            <li><div class="pp-lista-texto"><strong>Modo</strong></div><span class="pp-selo">{{ d.diag.modo }}</span></li>
+            <li><div class="pp-lista-texto"><strong>Endereço do desafio</strong><span>{{ d.diag.url }}</span></div></li>
+            <li><div class="pp-lista-texto"><strong>Desafio gerado pelo servidor</strong><span><code>{{ d.diag.desafio }}</code></span></div></li>
+        </ul><p class="pp-nota">Abra também o endereço do desafio numa aba: deve devolver um JSON com "challenge". Se a página de login aparecer, o problema é no roteamento; se o JSON vier e o widget ficar em "Verificando…", é no navegador (worker bloqueado) e o modo "auto" do GLPI deve ser trocado.</p></section>
+    {% endif %}
+</div>
+{% if d.ok and d.aberto and d.recibo is null and d.desafio %}<script src="{{ d.url_altcha_js }}"></script>{% endif %}
+</body>
+</html>

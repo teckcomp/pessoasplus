@@ -6,6 +6,7 @@
  * PESSOASPLUS_BUILD_BP3D
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM3_2
+ * PESSOASPLUS_BUILD_BM4_2
  *
  * POST add | update | publicar | despublicar | delete; imagem (documents_id)
  * escolhe a capa entre as imagens anexadas pela aba nativa de Documentos.
@@ -17,6 +18,7 @@
 use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Comunicado;
+use GlpiPlugin\Pessoasplus\Formulario;
 use GlpiPlugin\Pessoasplus\Permissoes;
 use GlpiPlugin\Pessoasplus\Publicacao;
 use GlpiPlugin\Pessoasplus\Publico;
@@ -142,6 +144,14 @@ foreach (Publico::modelos() as $m) {
     $modelos[] = ['id' => $m['id'], 'nome' => $m['nome'], 'total' => $m['total'], 'regras' => json_encode($m['regras'], $hex)];
 }
 $botoes = Comunicado::normalizarLinks((string) ($f['botoes'] ?? ''));
+// BM.4-2: atalhos para ligar o botao a um formulario aberto (pagina publica quando existe).
+$atalhos = [];
+foreach (Formulario::lista($hoje) as $fm) {
+    if ($fm['estado'] !== 'aberto') {
+        continue;
+    }
+    $atalhos[] = ['rotulo' => ($fm['tipo'] === 'ouvidoria' ? 'Ouvidoria: ' : 'Responder: ') . $fm['titulo'], 'url' => $fm['url_publica'] !== '' ? $fm['url_publica'] : $fm['url_responder'], 'detalhe' => $fm['url_publica'] !== '' ? 'página pública, sem login' : 'logado'];
+}
 
 $dados = [
     'nova'        => $nova,
@@ -163,6 +173,7 @@ $dados = [
     'imagens'     => $nova ? [] : $pub->imagensDisponiveis(),
     'botoes'      => $botoes,
     'botoes_json' => json_encode($botoes, $hex),
+    'atalhos'     => $atalhos,
     'aba'         => $aba,
     'url_aba'     => ['conteudo' => $urlForm . '?id=' . $id, 'imagem' => $urlForm . '?id=' . $id . '&aba=imagem'],
     'editor_html' => $editorHtml,

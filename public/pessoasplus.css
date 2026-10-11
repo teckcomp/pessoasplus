@@ -1682,3 +1682,97 @@ body.pp-pagina-impressao { margin: 0; background: #eef1f3; font-family: system-u
 .pp-casca .pp-pub-completa .pp-mc-capa { width: 100%; max-height: 360px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
 .pp-casca .pp-inline { display: inline; margin: 0; }
 .pp-casca .pp-mc-resumo .pp-botao { margin-left: auto; }
+
+/* BM.4: formularios, Ouvidoria real, paginas publicas. PESSOASPLUS_BUILD_BM4 */
+.pp-casca .pp-mc-capa { max-height: 420px; object-fit: cover; }
+.pp-casca .pp-ouv-porta { text-decoration: none; color: inherit; }
+.pp-casca .pp-ouv-porta:hover { text-decoration: none; color: inherit; }
+.pp-casca .pp-ouv-porta-texto small.pp-selo { margin-top: 6px; display: inline-block; }
+.pp-casca .pp-ouv-resultado.is-erro { color: var(--pp-atraso); }
+.pp-casca .pp-ouv-resultado-topo { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; }
+.pp-casca .pp-pergunta { margin-bottom: 16px; }
+.pp-casca .pp-pergunta .pp-campo-rotulo { display: block; font-weight: 600; margin-bottom: 6px; }
+.pp-casca .pp-escala { display: flex; flex-wrap: wrap; gap: 6px; }
+.pp-casca .pp-escala-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border: 1px solid var(--pp-borda); border-radius: 8px; cursor: pointer; }
+.pp-casca .pp-escala-item:has(input:checked) { border-color: var(--pp-acento); background: var(--pp-acento-claro); }
+.pp-casca .pp-protocolo { font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; }
+.pp-casca .pp-recibo-protocolo dd code { font-size: 1.2rem; }
+.pp-casca .pp-perg-lista { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pp-casca .pp-perg-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--pp-borda); border-radius: 8px; }
+.pp-casca .pp-perg-item .pp-lista-texto { flex: 1 1 0; }
+.pp-casca .pp-perg-acoes { display: inline-flex; gap: 4px; }
+.pp-casca .pp-perg-nova .pp-campo textarea { width: 100%; box-sizing: border-box; }
+.pp-casca .pp-modo-escolha { border: 0; padding: 0; margin-bottom: 12px; }
+.pp-casca .pp-fila-item { margin-bottom: 14px; }
+.pp-casca .pp-fila-itens { display: grid; gap: 8px; margin: 8px 0 12px; }
+.pp-casca .pp-fila-itens dt { font-size: 0.8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--pp-texto-2); }
+.pp-casca .pp-fila-itens dd { margin: 0; white-space: pre-wrap; }
+.pp-casca .pp-pub-chip.is-ativo { border-color: var(--pp-acento); color: var(--pp-acento); }
+.pp-casca a.pp-pub-chip { text-decoration: none; color: inherit; }
+body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-family: Poppins, system-ui, sans-serif; }
+.pp-publica { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; }
+.pp-publica-topo { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 10px; border-bottom: 2px solid var(--pp-acento); margin-bottom: 18px; }
+.pp-publica-marca { font-weight: 700; color: var(--pp-acento); font-size: 1.1rem; }
+.pp-publica-corpo h1 { font-size: 1.5rem; margin: 0 0 8px; }
+.pp-publica-corpo .pp-campo input[type="text"], .pp-publica-corpo .pp-campo textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--pp-borda); border-radius: 6px; padding: 10px; font: inherit; }
+.pp-publica-rodape { margin-top: 24px; font-size: 0.9rem; }
+.pp-cartaz { text-align: center; }
+.pp-cartaz-qr svg { width: 320px; height: 320px; max-width: 100%; }
+.pp-cartaz-url { font-size: 0.9rem; word-break: break-all; color: var(--pp-texto-2); }
+@media print { .pp-cartaz-imprimir, .pp-publica-topo .pp-sub { display: none; } }
+
+/* BM.4-2: bloco "Seu anonimato", widget ALTCHA, botoes em cartao/lateral. PESSOASPLUS_BUILD_BM4_2 */
+.pp-casca .pp-anon { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--pp-borda); border-left: 4px solid var(--pp-acento); border-radius: 8px; background: var(--pp-superficie); }
+.pp-casca .pp-anon h3 { margin: 0 0 6px; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
+.pp-casca .pp-anon h3 .ti { color: var(--pp-acento); }
+.pp-casca .pp-anon-lista { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; }
+.pp-casca .pp-anon-lista .ti { color: var(--pp-ok); margin-right: 4px; }
+.pp-casca .pp-anon-leis summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; }
+.pp-casca .pp-anon-leis ul { margin: 8px 0 0; padding-left: 18px; font-size: 0.88rem; }
+.pp-casca .pp-altcha altcha-widget { display: block; max-width: 360px; }
+.pp-casca .pp-publicacao .pp-links-botoes, .pp-casca .pp-mc-lateral .pp-links-botoes { margin: 8px 0 0; }
+
+/* BM.4-3: capa inteira, QR automatico, imagem na lateral, anonimato na Minha area. PESSOASPLUS_BUILD_BM4_3 */
+.pp-casca .pp-mc-capa { max-height: 560px; object-fit: contain; background: var(--pp-fundo, #f4f6f8); }
+.pp-casca .pp-publicacao-capa.is-imagem { object-fit: contain; height: 160px; background: var(--pp-fundo, #f4f6f8); }
+.pp-casca .pp-mc-lateral-imagem { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin: 8px 0; background: var(--pp-fundo, #f4f6f8); }
+.pp-casca .pp-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; margin: 8px 12px 0 0; text-decoration: none; color: var(--pp-texto-2); font-size: 0.8rem; }
+.pp-casca .pp-qr img { width: 140px; height: 140px; border: 1px solid var(--pp-borda); border-radius: 8px; background: #fff; padding: 4px; }
+.pp-casca .pp-qr.is-pequeno img { width: 110px; height: 110px; }
+.pp-casca .pp-anon-detalhe { margin-top: 10px; }
+.pp-casca .pp-anon-detalhe summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; }
+.pp-casca .pp-anon-detalhe .pp-anon { margin-top: 8px; }
+
+/* BM.4-4: lateral com botao em largura e QR centralizado; capas em proporcao 2:1. PESSOASPLUS_BUILD_BM4_4 */
+.pp-casca .pp-mc-lateral .pp-links-botoes { flex-direction: column; align-items: stretch; }
+.pp-casca .pp-mc-lateral .pp-links-botoes .pp-botao { justify-content: center; }
+.pp-casca .pp-mc-lateral .pp-qr { align-self: center; margin: 4px 0 0; }
+.pp-casca .pp-publicacao .pp-links-botoes { align-items: center; flex-wrap: wrap; }
+.pp-casca .pp-mc-lateral-imagem { aspect-ratio: 2 / 1; height: auto; max-height: none; }
+.pp-casca .pp-publicacao-capa.is-imagem { aspect-ratio: 2 / 1; height: auto; }
+.pp-casca .pp-mc-capa { aspect-ratio: 2 / 1; height: auto; max-height: none; }
+
+/* BM.4-5: lateral com QR em cima e botao embaixo, resultado da pesquisa. PESSOASPLUS_BUILD_BM4_5 */
+.pp-casca .pp-mc-lateral .pp-links-botoes.is-lateral { flex-direction: column; align-items: center; gap: 6px; }
+.pp-casca .pp-mc-lateral .pp-links-botoes.is-lateral .pp-botao { align-self: center; width: auto; min-width: 60%; }
+.pp-casca .pp-qr.is-lateral img { width: 180px; height: 180px; }
+.pp-casca .pp-qr.is-lateral { margin: 0; }
+.pp-casca .pp-res-pergunta { padding: 10px 0; border-top: 1px solid var(--pp-borda); }
+.pp-casca .pp-res-pergunta:first-of-type { border-top: 0; }
+.pp-casca .pp-res-pergunta h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+.pp-casca .pp-res-textos { margin: 0; padding-left: 18px; font-size: 0.92rem; }
+.pp-casca .pp-res-textos li { margin-bottom: 4px; white-space: pre-wrap; }
+
+/* BM.4-6: Ouvidoria com o layout da proposta. PESSOASPLUS_BUILD_BM4_6 */
+.pp-casca .pp-ouv-intro { margin: -4px 0 14px; }
+.pp-casca .pp-ouv-porta-texto small.pp-ouv-porta-modo { font-weight: 600; color: var(--pp-acento); margin-top: 6px; }
+.pp-casca .pp-ouv-qr-imagem { width: 180px; height: 180px; border: 1px solid var(--pp-borda); border-radius: 10px; background: #fff; padding: 6px; }
+.pp-casca .pp-ouv-informativos a { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 2px; text-decoration: none; color: inherit; }
+.pp-casca .pp-ouv-informativos a:hover span { color: var(--pp-acento); text-decoration: underline; }
+.pp-casca .pp-ouv .pp-anon { margin-top: 14px; }
+
+/* BM.4-7: pecas da casca marcadas "em breve" sem dado ficticio. PESSOASPLUS_BUILD_BM4_7 */
+.pp-casca .is-embreve { opacity: .85; }
+.pp-casca .pp-mc-embreve small { color: var(--pp-texto-2); font-size: 0.75rem; margin-left: 2px; }
+.pp-casca .pp-mc-aniversario.is-embreve .pp-mc-capa-auto { min-height: 120px; }
+.pp-casca .pp-celebracao.is-embreve .pp-celebracao-data { color: var(--pp-texto-2); font-weight: 500; }

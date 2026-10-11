@@ -37,8 +37,6 @@ final class Fontes
      */
     private const EM_DEMONSTRACAO = [
         'inicio',
-        'ouvidoria',
-        'pesquisas',
         'chegadas',
         'ferias',
         'desligamentos',

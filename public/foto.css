@@ -1,0 +1,125 @@
+/* Pessoas+ - foto na capa da pasta (BM.1-3, D-84; recorte BM.1-4). PESSOASPLUS_BUILD_BM1_3 PESSOASPLUS_BUILD_BM1_4
+   Arquivo proprio para nao sobrescrever o pessoasplus.css em uso no servidor.
+   Prefixo pp-foto-. Herda as variaveis --pp-* da .pp-casca. */
+
+.pp-casca .pp-foto-capa { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+.pp-casca .pp-foto-capa .pp-pasta-foto { display: block; width: 84px; height: 84px; }
+.pp-casca .pp-foto-capa .pp-avatar.pp-pasta-foto { display: inline-flex; }
+
+.pp-casca .pp-foto-camera {
+    position: absolute; right: -4px; bottom: -4px;
+    width: 32px; height: 32px; padding: 0;
+    border-radius: 50%; border: 2px solid var(--pp-superficie);
+    background: var(--pp-acento); color: #ffffff;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+}
+.pp-casca .pp-foto-camera:hover { background: var(--pp-acento-escuro); }
+.pp-casca .pp-foto-camera:focus-visible { outline: 2px solid var(--pp-acento-escuro); outline-offset: 2px; }
+.pp-casca .pp-foto-camera .ti { font-size: 1rem; }
+.pp-casca .pp-foto-camera.is-desativado,
+.pp-casca .pp-foto-camera:disabled { background: #c6ccd3; cursor: not-allowed; box-shadow: none; }
+
+/* Janela (dialog nativo) */
+.pp-casca .pp-foto-janela {
+    width: min(560px, calc(100vw - 32px));
+    padding: 0; border: 0; border-radius: 10px;
+    background: var(--pp-superficie); color: var(--pp-texto);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+}
+.pp-casca .pp-foto-janela::backdrop { background: rgba(31, 35, 40, .45); }
+.pp-casca .pp-foto-janela form { display: flex; flex-direction: column; margin: 0; }
+
+.pp-casca .pp-foto-cabecalho {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--pp-borda);
+}
+.pp-casca .pp-foto-cabecalho h2 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.pp-casca .pp-foto-fechar {
+    width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent;
+    color: var(--pp-texto-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.pp-casca .pp-foto-fechar:hover { background: var(--pp-fundo); color: var(--pp-texto); }
+
+.pp-casca .pp-foto-corpo { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+.pp-casca .pp-foto-atual { display: flex; gap: 16px; align-items: center; }
+.pp-casca .pp-foto-atual-img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; flex-shrink: 0; font-size: 1.8rem; }
+.pp-casca .pp-avatar.pp-foto-atual-img { display: inline-flex; }
+.pp-casca .pp-foto-atual-texto { display: flex; flex-direction: column; gap: 3px; font-size: .92rem; }
+
+.pp-casca .pp-foto-zona {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 22px 16px; text-align: center; cursor: pointer;
+    border: 2px dashed #9fc9cc; border-radius: 10px; background: var(--pp-acento-claro);
+    color: var(--pp-acento-escuro);
+}
+.pp-casca .pp-foto-zona:hover, .pp-casca .pp-foto-zona.is-arrastando { border-color: var(--pp-acento); background: #e9f6f6; }
+.pp-casca .pp-foto-zona .ti { font-size: 1.6rem; }
+.pp-casca .pp-foto-zona strong { font-size: .95rem; }
+.pp-casca .pp-foto-zona .pp-sub { color: var(--pp-texto-2); }
+.pp-casca .pp-foto-zona input[type="file"] {
+    position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0);
+}
+.pp-casca .pp-foto-zona:focus-within { outline: 2px solid var(--pp-acento-escuro); outline-offset: 2px; }
+
+.pp-casca .pp-foto-escolhido {
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px 12px; border: 1px solid var(--pp-borda); border-radius: 8px; font-size: .9rem;
+}
+.pp-casca .pp-foto-escolhido[hidden] { display: none; }
+.pp-casca .pp-foto-escolhido > .ti { color: var(--pp-ok); font-size: 1.1rem; }
+.pp-casca .pp-foto-escolhido > span { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+.pp-casca .pp-foto-escolhido .pp-sub { display: inline; }
+.pp-casca .pp-foto-escolhido .pp-botao { min-height: 32px; padding: 0 10px; font-size: .85rem; }
+
+.pp-casca .pp-foto-remover { display: flex; gap: 10px; align-items: center; font-size: .92rem; cursor: pointer; }
+.pp-casca .pp-foto-remover input { width: 18px; height: 18px; margin: 0; }
+
+.pp-casca .pp-foto-aviso {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 14px; border-radius: 8px;
+    background: var(--pp-info-fundo); color: var(--pp-acento-escuro); font-size: .86rem; line-height: 1.45;
+}
+.pp-casca .pp-foto-aviso > .ti { flex-shrink: 0; margin-top: 2px; }
+
+.pp-casca .pp-foto-rodape {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 18px; border-top: 1px solid var(--pp-borda); background: var(--pp-fundo);
+    border-radius: 0 0 10px 10px;
+}
+.pp-casca .pp-foto-acoes { display: flex; gap: 8px; margin-left: auto; }
+.pp-casca .pp-foto-acoes .pp-botao:disabled { opacity: .55; cursor: not-allowed; }
+.pp-casca .pp-foto-janela.is-enviando .pp-foto-acoes .pp-botao { pointer-events: none; opacity: .7; }
+
+/* ---- BM.1-4 (D-85): recorte quadrado no navegador. PESSOASPLUS_BUILD_BM1_4 ---- */
+.pp-casca .pp-foto-janela { width: min(640px, calc(100vw - 32px)); }
+.pp-casca .pp-foto-recorte { display: flex; gap: 18px; align-items: flex-start; }
+.pp-casca .pp-foto-recorte[hidden] { display: none; }
+.pp-casca .pp-foto-recorte-area {
+    position: relative; width: 300px; height: 300px; flex-shrink: 0;
+    border-radius: 10px; overflow: hidden; background: #2b3138; touch-action: none; user-select: none;
+}
+.pp-casca .pp-foto-canvas { display: block; width: 300px; height: 300px; cursor: grab; }
+.pp-casca .pp-foto-canvas.is-arrastando { cursor: grabbing; }
+.pp-casca .pp-foto-mascara {
+    position: absolute; left: 20px; top: 20px; width: 260px; height: 260px; border-radius: 50%;
+    box-shadow: 0 0 0 999px rgba(43, 49, 56, .55); border: 2px solid #ffffff; pointer-events: none;
+}
+.pp-casca .pp-foto-dica {
+    position: absolute; left: 0; right: 0; bottom: 8px; text-align: center;
+    font-size: .74rem; color: #ffffff; pointer-events: none; text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+}
+.pp-casca .pp-foto-recorte-lado { display: flex; flex-direction: column; gap: 8px; flex: 1 1 0; min-width: 0; }
+.pp-casca .pp-foto-recorte-titulo { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--pp-texto-2); }
+.pp-casca .pp-foto-previas { display: flex; gap: 12px; align-items: flex-end; }
+.pp-casca .pp-foto-previas canvas { border-radius: 50%; background: var(--pp-fundo); }
+.pp-casca .pp-foto-previas canvas.is-quadrado { border-radius: 6px; }
+.pp-casca .pp-foto-zoom { display: flex; flex-direction: column; gap: 4px; font-size: .88rem; font-weight: 600; margin-top: 4px; }
+.pp-casca .pp-foto-zoom input { width: 100%; accent-color: var(--pp-acento); }
+.pp-casca .pp-foto-recorte-lado .pp-botao { align-self: flex-start; margin-top: 4px; }
+@media (max-width: 575px) {
+    .pp-casca .pp-foto-recorte { flex-direction: column; align-items: center; }
+    .pp-casca .pp-foto-recorte-area, .pp-casca .pp-foto-canvas { width: 260px; height: 260px; }
+    .pp-casca .pp-foto-mascara { left: 10px; top: 10px; width: 240px; height: 240px; }
+}

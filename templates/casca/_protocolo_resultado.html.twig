@@ -1,0 +1,13 @@
+{# Pessoas+ - resultado da consulta de protocolo (BM.4). Recebe "resultado" e "consultou". PESSOASPLUS_BUILD_BM4 #}
+{% if consultou %}
+    {% if resultado is null %}
+        <div class="pp-ouv-resultado is-erro" role="status"><i class="ti ti-alert-circle" aria-hidden="true"></i> Protocolo ou código não conferem. Verifique e tente de novo.</div>
+    {% else %}
+        <div class="pp-ouv-resultado" role="status">
+            <div class="pp-ouv-resultado-topo"><strong>{{ resultado.protocolo }}</strong> · {{ resultado.porta }} · {{ resultado.modo }} <span class="pp-selo pp-tom-{{ resultado.tom }}">{{ resultado.situacao }}</span> <span class="pp-sub">atualizado em {{ resultado.atualizado }}</span></div>
+            {% if resultado.resposta != '' %}<p><strong>Resposta:</strong> {{ resultado.resposta }}</p>{% endif %}
+            {% if resultado.complemento != '' %}<p class="pp-alerta pp-tom-alerta"><strong>Pedido de complemento:</strong> {{ resultado.complemento }}</p>{% endif %}
+            {% if resultado.resposta == '' and resultado.complemento == '' %}<p class="pp-sub">Ainda sem resposta. Consulte de novo em alguns dias.</p>{% endif %}
+        </div>
+    {% endif %}
+{% endif %}

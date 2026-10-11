@@ -1,0 +1,62 @@
+/* Pessoas+ - cartao da grade do Fichario (BM.1-4, D-85). PESSOASPLUS_BUILD_BM1_4
+   Padrao creme do mockup "Pessoas+ - Fichario" de 26/09 (opcao A): capa de
+   papel com aba, foto redonda no alto, nome, cargo, setor e selo. Excecao
+   consciente a D-83, restrita a estes cartoes. Prefixo pp-fichc-.
+   Arquivo proprio para nao tocar no pessoasplus.css do servidor. */
+
+.pp-casca .pp-fichc-grade {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
+
+.pp-casca .pp-fichc {
+    --pp-fichc-capa: #efe3c6;
+    --pp-fichc-aba: #dcc896;
+    --pp-fichc-borda: #cbb98f;
+    --pp-fichc-texto: #4a4033;
+    --pp-fichc-texto-2: #5c5040;
+    --pp-fichc-iniciais: #6b5a33;
+    display: flex; flex-direction: column;
+    color: #1f2328; text-decoration: none;
+    transition: transform .15s, filter .15s;
+}
+.pp-casca .pp-fichc.is-pre {
+    --pp-fichc-capa: #ecebe6;
+    --pp-fichc-aba: #d8d5cb;
+}
+.pp-casca .pp-fichc:hover,
+.pp-casca .pp-fichc:focus-visible { transform: translateY(-3px); filter: drop-shadow(0 6px 10px rgba(60, 45, 10, .18)); color: #1f2328; text-decoration: none; outline: 0; }
+.pp-casca .pp-fichc:focus-visible .pp-fichc-capa { outline: 2px solid var(--pp-acento); outline-offset: 2px; }
+
+.pp-casca .pp-fichc-aba {
+    display: block; width: 84px; height: 16px; margin-left: 12px;
+    background: var(--pp-fichc-aba); border-radius: 8px 8px 0 0;
+}
+.pp-casca .pp-fichc-capa {
+    flex: 1 1 auto;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 18px 14px 14px; min-height: 236px; box-sizing: border-box;
+    background: var(--pp-fichc-capa); border: 1px solid var(--pp-fichc-borda);
+    border-radius: 4px 10px 10px 10px;
+}
+.pp-casca .pp-fichc-foto {
+    width: 96px; height: 96px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    background: #ffffff; border: 3px solid #ffffff; box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(60, 45, 10, .25);
+}
+.pp-casca .pp-fichc-iniciais {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.85rem; font-weight: 600; color: var(--pp-fichc-iniciais);
+}
+.pp-casca .pp-fichc-nome { font-size: .95rem; font-weight: 600; text-align: center; line-height: 1.25; overflow-wrap: anywhere; }
+.pp-casca .pp-fichc-cargo { font-size: .82rem; color: var(--pp-fichc-texto); text-align: center; }
+.pp-casca .pp-fichc-setor { font-size: .76rem; color: var(--pp-fichc-texto-2); text-align: center; }
+.pp-casca .pp-fichc-rodape { margin-top: auto; padding-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pp-casca .pp-fichc-sem { font-size: .72rem; color: var(--pp-fichc-texto-2); }
+
+@media (max-width: 575px) {
+    .pp-casca .pp-fichc-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .pp-casca .pp-fichc-capa { min-height: 200px; padding: 14px 10px 12px; }
+    .pp-casca .pp-fichc-foto { width: 72px; height: 72px; }
+}

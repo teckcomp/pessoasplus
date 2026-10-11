@@ -1,0 +1,16 @@
+{# Pessoas+ - consulta de protocolo sem login (BM.4). PESSOASPLUS_BUILD_BM4 #}
+{% set d = pp.dados %}
+{{ include('@pessoasplus/casca/_standalone_topo.html.twig', {titulo: 'Acompanhar um envio', subtitulo: 'Ouvidoria'}) }}
+    <main class="pp-publica-corpo">
+        <h1>Acompanhar um envio</h1>
+        <form class="pp-ouv-consulta" method="post" action="{{ d.url_aqui }}" autocomplete="off">
+            <input type="hidden" name="_glpi_csrf_token" value="{{ d.csrf }}">
+            <label class="pp-campo"><span>Protocolo</span><input type="text" name="protocolo" maxlength="20" placeholder="OUV-2026-0001" spellcheck="false" required></label>
+            <label class="pp-campo"><span>Código de acompanhamento</span><input type="text" name="codigo" maxlength="12" spellcheck="false" required></label>
+            <button type="submit" name="consultar" value="1" class="pp-botao is-primario"><i class="ti ti-search" aria-hidden="true"></i><span>Consultar</span></button>
+        </form>
+        {{ include('@pessoasplus/casca/_protocolo_resultado.html.twig', {resultado: d.resultado, consultou: d.consultou}) }}
+    </main>
+</div>
+</body>
+</html>

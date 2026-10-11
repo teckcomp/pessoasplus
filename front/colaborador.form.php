@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM1_2
+ * PESSOASPLUS_BUILD_BM1_3 (D-84: foto da capa pela pasta; foto_cheia, url_foto, foto.css/js)
  *
  * URL derivada pelo core de GlpiPlugin\Pessoasplus\Colaborador
  * (Toolbox::getItemTypeFormURL). GET ?id= abre a pasta; sem id (ou ?users_id=)
@@ -96,6 +97,15 @@ if ($nova) {
 
 $opcoes = Fichario::opcoesFormulario();
 
+// BM.1-3: caminho do arquivo da foto do usuario ligado (campo nativo glpi_users.picture).
+$fotoArquivo = '';
+if ((int) $ficha['users_id'] > 0) {
+    $u = new User();
+    if ($u->getFromDB((int) $ficha['users_id'])) {
+        $fotoArquivo = (string) ($u->fields['picture'] ?? '');
+    }
+}
+
 $documentosHtml = '';
 $podeDocumentos = false;
 if (!$nova && $aba === 'documentos') {
@@ -142,7 +152,13 @@ $dados = [
     'documentos_html' => $documentosHtml,
     'pode_documentos' => $podeDocumentos,
     'eventos'         => $nova ? [] : Evento::doColaborador($id),
+    // BM.1-3 (D-84): foto da capa. Imagem cheia na pasta (a miniatura do core tem 71 px);
+    // envio/remocao por front/foto.php; estaticos proprios para nao tocar nos do servidor.
+    'url_foto'        => Pagina::url('/plugins/pessoasplus/front/foto.php'),
+    'foto_css'        => Pagina::url('/plugins/pessoasplus/foto.css') . '?v=bm1-3',
+    'foto_js'         => Pagina::url('/plugins/pessoasplus/foto.js') . '?v=bm1-3',
 ];
+$dados['ficha']['foto_cheia'] = (int) $ficha['users_id'] > 0 ? (string) (Toolbox::getPictureUrl($fotoArquivo, true) ?? '') : '';
 $dados['jornada'] = $nova ? ['trechos' => [], 'atual' => ''] : Jornada::montar($ficha, $dados['eventos']);
 
 $pp = Pagina::contexto(

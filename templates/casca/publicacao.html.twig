@@ -1,4 +1,4 @@
-{# Pessoas+ - publicacao completa do mural. PESSOASPLUS_BUILD_BM3 #}
+{# Pessoas+ - publicacao completa do mural. PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4_3 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -13,6 +13,6 @@
         <div class="pp-emissor-topo"><span class="pp-selo pp-tom-{{ p.tom }}">{{ p.tipo_rotulo }}</span><span class="pp-selo pp-tom-{{ p.estado_tom }}">{{ p.estado_rotulo }}</span><span class="pp-sub"><i class="ti ti-user" aria-hidden="true"></i> {{ p.autor }} · <i class="ti ti-calendar" aria-hidden="true"></i> {{ p.periodo }}</span></div>
         <p class="pp-pub-chamada-grande">{{ p.chamada }}</p>
         <div class="pp-doc-secao pp-conteudo-rico">{{ p.conteudo_html|raw }}</div>
-        {% if p.botoes|length > 0 %}<div class="pp-links-botoes">{% for b in p.botoes %}<a class="pp-botao{% if loop.first %} is-primario{% endif %}" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% endfor %}</div>{% endif %}
+        {% if p.botoes|length > 0 %}<div class="pp-links-botoes">{% for b in p.botoes %}<a class="pp-botao{% if loop.first %} is-primario{% endif %}" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.rotulo }}</a>{% endfor %}</div>{% for b in p.botoes %}{% if b.qr_url != '' %}<a class="pp-qr" href="{{ b.url }}" target="_blank" rel="noopener"><img src="{{ b.qr_url }}" alt="QR: {{ b.rotulo }}"><span>ou leia o QR</span></a>{% endif %}{% endfor %}{% endif %}
     </article>
 {% endblock %}

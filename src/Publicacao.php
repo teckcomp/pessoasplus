@@ -5,6 +5,9 @@
  * imagem de capa, botoes, visualizacoes.
  *
  * PESSOASPLUS_BUILD_BM3
+ * PESSOASPLUS_BUILD_BM4_2
+ * PESSOASPLUS_BUILD_BM4_3
+ * PESSOASPLUS_BUILD_BM4_4
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -49,10 +52,13 @@ final class Publicacao extends CommonDBTM
     /** chave => [rotulo, descricao] */
     public const LUGARES = [
         'destaque' => ['Destaque fixo', 'Faixa no topo do mural. Um por vez: vale o de início mais recente.'],
-        'grande'   => ['Grande', 'Largura da coluna, com imagem de capa e até 2 botões.'],
-        'cartao'   => ['Cartão', 'Grade de cartões. O padrão.'],
-        'lateral'  => ['Lateral', 'Bloco curto na coluna da direita.'],
+        'grande'   => ['Grande', 'Largura da coluna, com imagem de capa (1400 × 700 px) e até 2 botões.'],
+        'cartao'   => ['Cartão', 'Grade de cartões, com imagem (800 × 400 px) e 1 botão. O padrão.'],
+        'lateral'  => ['Lateral', 'Bloco curto na coluna da direita, com imagem pequena (600 × 300 px) e 1 botão.'],
     ];
+
+    /** Dimensoes recomendadas da capa por lugar (proporcao 2:1). */
+    public const IMAGEM = ['grande' => '1400 × 700 px', 'cartao' => '800 × 400 px', 'lateral' => '600 × 300 px'];
 
     public const PASTA = 'pessoasplus/publicacoes';
 
@@ -186,7 +192,9 @@ final class Publicacao extends CommonDBTM
             $input['imagem_alt'] = mb_substr(trim((string) $input['imagem_alt']), 0, 255);
         }
         if (array_key_exists('botoes_json', $input)) {
-            $botoes = $lugar === 'grande' ? array_slice(Comunicado::normalizarLinks((string) $input['botoes_json']), 0, 2) : [];
+            // BM.4-2 (D-81): 2 botoes no Grande, 1 em Cartao e Lateral, nenhum no Destaque.
+            $maximo = ['grande' => 2, 'cartao' => 1, 'lateral' => 1][$lugar] ?? 0;
+            $botoes = $maximo > 0 ? array_slice(Comunicado::normalizarLinks((string) $input['botoes_json']), 0, $maximo) : [];
             $input['botoes'] = json_encode($botoes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             unset($input['botoes_json']);
         }
@@ -479,8 +487,15 @@ final class Publicacao extends CommonDBTM
         $pub    = new self();
         $pub->fields = $p;
         $botoes = [];
-        if (($p['lugar'] ?? '') === 'grande') {
-            $botoes = Comunicado::linksParaTela((string) ($p['botoes'] ?? ''));
+        if (($p['lugar'] ?? '') !== 'destaque') {
+            foreach (Comunicado::linksParaTela((string) ($p['botoes'] ?? '')) as $b) {
+                // BM.4-3: botao para pagina publica de formulario ganha QR automatico.
+                $b['qr_url'] = '';
+                if (preg_match('#responder_publico\.php\?t=([a-f0-9]{32})#', $b['url'], $m)) {
+                    $b['qr_url'] = \Html::getPrefixedUrl('/plugins/pessoasplus/front/qr.php') . '?t=' . $m[1];
+                }
+                $botoes[] = $b;
+            }
         }
 
         return [
@@ -501,7 +516,7 @@ final class Publicacao extends CommonDBTM
             'fim'            => (string) ($p['fim'] ?? ''),
             'fixada'         => (int) ($p['fixada'] ?? 0) === 1,
             'fixada_em'      => (string) ($p['fixada_em'] ?? ''),
-            'imagem_url'     => ($p['lugar'] === 'grande' || $p['lugar'] === 'cartao') ? $pub->urlImagem() : '',
+            'imagem_url'     => $p['lugar'] !== 'destaque' ? $pub->urlImagem() : '',
             'imagem_alt'     => (string) ($p['imagem_alt'] ?? ''),
             'botoes'         => $botoes,
             'tem_conteudo'   => trim(strip_tags((string) ($p['conteudo'] ?? ''))) !== '',

@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -1418,8 +1418,9 @@
                         url.focus();
                         return;
                     }
-                    if (links.length >= 10) {
-                        avisar(raiz, 'No máximo 10 documentos relacionados.');
+                    var maximo = parseInt(raiz.getAttribute('data-pp-links-max') || '10', 10) || 10;
+                    if (links.length >= maximo) {
+                        avisar(raiz, maximo === 1 ? 'Este lugar aceita 1 botão.' : 'No máximo ' + maximo + ' itens.');
                         return;
                     }
                     links.push({ rotulo: (rotulo.value || '').trim(), url: u });
@@ -1429,6 +1430,19 @@
                     rotulo.focus();
                 };
                 adicionar.addEventListener('click', incluir);
+                var atalho = raiz.querySelector('[data-pp-link-atalho]');
+                if (atalho) {
+                    atalho.addEventListener('change', function () {
+                        var o = atalho.options[atalho.selectedIndex];
+                        if (!o || o.value === '') {
+                            return;
+                        }
+                        rotulo.value = o.getAttribute('data-pp-rotulo') || '';
+                        url.value = o.value;
+                        atalho.value = '';
+                        adicionar.focus();
+                    });
+                }
                 [rotulo, url].forEach(function (c) {
                     c.addEventListener('keydown', function (evento) {
                         if (evento.key === 'Enter') {
@@ -1457,10 +1471,22 @@
                 var marcado = raiz.querySelector('input[name="lugar"]:checked');
                 var lugar = marcado ? marcado.value : 'cartao';
                 if (imagem) {
-                    imagem.hidden = !(lugar === 'grande' || lugar === 'cartao');
+                    imagem.hidden = lugar === 'destaque';
+                    var dicaImagem = imagem.querySelector('[data-pp-imagem-dica]');
+                    if (dicaImagem) {
+                        dicaImagem.textContent = { grande: '1400 × 700 px', cartao: '800 × 400 px', lateral: '600 × 300 px' }[lugar] || '800 × 400 px';
+                    }
                 }
                 if (botoes) {
-                    botoes.hidden = lugar !== 'grande';
+                    botoes.hidden = lugar === 'destaque';
+                    var links = botoes.querySelector('[data-pp-links]');
+                    if (links) {
+                        links.setAttribute('data-pp-links-max', lugar === 'grande' ? '2' : '1');
+                        var dica = links.querySelector('[data-pp-links-dica]');
+                        if (dica) {
+                            dica.textContent = lugar === 'grande' ? 'até 2 no lugar Grande' : '1 em Cartão e Lateral';
+                        }
+                    }
                 }
                 if (fixavel) {
                     fixavel.hidden = lugar === 'destaque';
@@ -1474,6 +1500,114 @@
                 r.addEventListener('change', aplicar);
             });
             aplicar();
+        });
+    }
+
+
+    /* BM.4: editor de perguntas do formulario. */
+    function iniciarPerguntas() {
+        document.querySelectorAll('.pp-casca [data-pp-perguntas]').forEach(function (raiz) {
+            if (!primeiraVez(raiz)) {
+                return;
+            }
+            var form = raiz.closest('form');
+            var campo = form ? form.querySelector('[data-pp-perguntas-campo]') : null;
+            var lista = raiz.querySelector('[data-pp-perguntas-lista]');
+            var perguntas = [];
+            try {
+                var lidas = JSON.parse((form.querySelector('[data-pp-perguntas-json]') || {}).textContent || '[]');
+                perguntas = Array.isArray(lidas) ? lidas : [];
+            } catch (e) {
+                perguntas = [];
+            }
+            var tipos = { curto: 'Texto curto', longo: 'Texto longo', unica: 'Escolha única', multipla: 'Múltipla escolha', escala: 'Escala', simnao: 'Sim ou não' };
+            var editavel = !!raiz.querySelector('[data-pp-perg-adicionar]');
+            function render() {
+                if (campo) {
+                    campo.value = JSON.stringify(perguntas);
+                }
+                if (!lista) {
+                    return;
+                }
+                lista.innerHTML = '';
+                if (perguntas.length === 0) {
+                    lista.appendChild(el('li', 'pp-sub', 'Nenhuma pergunta ainda.'));
+                }
+                perguntas.forEach(function (p, i) {
+                    var li = el('li', 'pp-perg-item');
+                    var texto = el('div', 'pp-lista-texto');
+                    texto.appendChild(el('strong', '', p.enunciado + (p.obrigatoria ? ' *' : '')));
+                    var detalhe = tipos[p.tipo] || p.tipo;
+                    if (p.tipo === 'unica' || p.tipo === 'multipla') {
+                        detalhe += ': ' + (Array.isArray(p.opcoes) ? p.opcoes.join(' | ') : '');
+                    } else if (p.tipo === 'escala') {
+                        detalhe += ' 1 a ' + (p.escala_max || 5);
+                    }
+                    texto.appendChild(el('span', '', detalhe));
+                    li.appendChild(texto);
+                    if (editavel) {
+                        var acoes = el('span', 'pp-perg-acoes');
+                        var sobe = el('button', 'pp-botao is-compacto is-icone', '↑');
+                        sobe.type = 'button';
+                        sobe.setAttribute('aria-label', 'Subir');
+                        sobe.disabled = i === 0;
+                        sobe.addEventListener('click', function () { var t = perguntas[i - 1]; perguntas[i - 1] = perguntas[i]; perguntas[i] = t; render(); });
+                        var desce = el('button', 'pp-botao is-compacto is-icone', '↓');
+                        desce.type = 'button';
+                        desce.setAttribute('aria-label', 'Descer');
+                        desce.disabled = i === perguntas.length - 1;
+                        desce.addEventListener('click', function () { var t = perguntas[i + 1]; perguntas[i + 1] = perguntas[i]; perguntas[i] = t; render(); });
+                        var x = el('button', 'pp-botao is-compacto is-icone is-perigo', '×');
+                        x.type = 'button';
+                        x.setAttribute('aria-label', 'Remover');
+                        x.addEventListener('click', function () { perguntas.splice(i, 1); render(); });
+                        acoes.appendChild(sobe);
+                        acoes.appendChild(desce);
+                        acoes.appendChild(x);
+                        li.appendChild(acoes);
+                    }
+                    lista.appendChild(li);
+                });
+            }
+            var adicionar = raiz.querySelector('[data-pp-perg-adicionar]');
+            if (adicionar) {
+                var tipo = raiz.querySelector('[data-pp-perg-tipo]');
+                var enunciado = raiz.querySelector('[data-pp-perg-enunciado]');
+                var opcoes = raiz.querySelector('[data-pp-perg-opcoes]');
+                var opcoesRotulo = raiz.querySelector('[data-pp-perg-opcoes-rotulo]');
+                var escala = raiz.querySelector('[data-pp-perg-escala]');
+                var escalaRotulo = raiz.querySelector('[data-pp-perg-escala-rotulo]');
+                var obrig = raiz.querySelector('[data-pp-perg-obrig]');
+                var ajustar = function () {
+                    opcoesRotulo.hidden = !(tipo.value === 'unica' || tipo.value === 'multipla');
+                    escalaRotulo.hidden = tipo.value !== 'escala';
+                };
+                tipo.addEventListener('change', ajustar);
+                ajustar();
+                adicionar.addEventListener('click', function () {
+                    var e = (enunciado.value || '').trim();
+                    if (e === '') {
+                        avisar(raiz, 'Escreva o enunciado.');
+                        enunciado.focus();
+                        return;
+                    }
+                    var p = { tipo: tipo.value, enunciado: e, obrigatoria: obrig.checked ? 1 : 0, opcoes: [], escala_max: parseInt(escala.value, 10) || 5 };
+                    if (p.tipo === 'unica' || p.tipo === 'multipla') {
+                        p.opcoes = (opcoes.value || '').split(/\r?\n/).map(function (o) { return o.trim(); }).filter(Boolean);
+                        if (p.opcoes.length < 2) {
+                            avisar(raiz, 'Informe ao menos duas opções, uma por linha.');
+                            opcoes.focus();
+                            return;
+                        }
+                    }
+                    perguntas.push(p);
+                    enunciado.value = '';
+                    opcoes.value = '';
+                    render();
+                    enunciado.focus();
+                });
+            }
+            render();
         });
     }
 
@@ -1850,6 +1984,7 @@
         iniciarComunicado();
         iniciarLinks();
         iniciarPublicacaoReal();
+        iniciarPerguntas();
     }
 
     if (document.readyState === 'loading') {

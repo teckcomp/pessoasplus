@@ -1,4 +1,4 @@
-{# Pessoas+ - nova publicacao / editar publicacao, real. PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM3_2 #}
+{# Pessoas+ - nova publicacao / editar publicacao, real. PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM3_2 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -19,7 +19,7 @@
 
     {% if d.aba == 'imagem' %}
         <section class="pp-cartao pp-pasta-docs">
-            <p class="pp-nota">Anexe a imagem pelo formulário nativo abaixo (JPEG ou PNG, de preferência 1400 px de largura) e clique em <strong>Usar como capa</strong>. Imagem só aparece nos lugares <strong>Grande</strong> e <strong>Cartão</strong>.</p>
+            <p class="pp-nota">Anexe a imagem pelo formulário nativo abaixo (JPEG ou PNG) e clique em <strong>Usar como capa</strong>. Tamanho recomendado, proporção 2:1: Grande <strong>1400 × 700 px</strong>, Cartão <strong>800 × 400 px</strong>, Lateral <strong>600 × 300 px</strong>; esta publicação está no lugar <strong>{{ f.lugar == 'grande' ? 'Grande' : (f.lugar == 'lateral' ? 'Lateral' : (f.lugar == 'cartao' ? 'Cartão' : 'Destaque')) }}</strong>. Imagem aparece em Grande, Cartão e Lateral (pequena); o Destaque não tem imagem. <strong>QR de formulário não precisa de imagem:</strong> ligue um botão à página pública e o QR aparece sozinho.</p>
             {% if d.imagens|length > 0 %}
                 <ul class="pp-lista is-compacta pp-capas">
                     {% for i in d.imagens %}
@@ -81,25 +81,31 @@
                     <input type="hidden" name="fixada" value="0">
                     <label class="pp-marcar is-justo" data-pp-so-fixavel{% if f.lugar == 'destaque' %} hidden{% endif %}><input type="checkbox" name="fixada" value="1"{% if f.fixada %} checked{% endif %}><span><strong>Fixar no topo</strong> da área. Entre fixadas, a mais recente primeiro; "Trazer ao topo" na lista renova a fixação (D-59). O destaque não se fixa.</span></label>
 
-                    <div data-pp-so-imagem{% if f.lugar != 'grande' and f.lugar != 'cartao' %} hidden{% endif %}>
+                    <div data-pp-so-imagem{% if f.lugar == 'destaque' %} hidden{% endif %}>
                         {% if d.nova %}
-                            <p class="pp-nota">Salve o rascunho para anexar a imagem de capa (aba Imagem).</p>
+                            <p class="pp-nota">Salve o rascunho para anexar a imagem de capa (aba Imagem). Tamanho recomendado: <strong data-pp-imagem-dica>{{ f.lugar == 'grande' ? '1400 × 700 px' : (f.lugar == 'lateral' ? '600 × 300 px' : '800 × 400 px') }}</strong> (proporção 2:1).</p>
                         {% else %}
                             <label class="pp-campo"><span>Imagem de capa</span>
                                 <select name="imagem" data-pp-buscavel>
                                     <option value="0">Sem imagem: capa na cor do tipo</option>
                                     {% for i in d.imagens %}<option value="{{ i.id }}"{% if i.escolhida %} selected{% endif %}>{{ i.nome }}</option>{% endfor %}
                                 </select>
-                                <small class="pp-dica">Imagens anexadas na aba Imagem. Falta uma? Anexe lá e volte aqui.</small>
+                                <small class="pp-dica">Imagens anexadas na aba Imagem. Falta uma? Anexe lá e volte aqui. Tamanho recomendado para este lugar: <strong data-pp-imagem-dica>{{ f.lugar == 'grande' ? '1400 × 700 px' : (f.lugar == 'lateral' ? '600 × 300 px' : '800 × 400 px') }}</strong> (proporção 2:1; outra proporção aparece inteira, com fundo nas sobras).</small>
                             </label>
                             {% if d.imagem_url != '' %}<img class="pp-pv-imagem-atual" src="{{ d.imagem_url }}" alt="{{ f.imagem_alt }}">{% endif %}
                             <label class="pp-campo"><span>Descrição da imagem <small class="pp-sub">acessibilidade</small></span><input type="text" name="imagem_alt" maxlength="255" value="{{ f.imagem_alt }}"></label>
                         {% endif %}
                     </div>
 
-                    <div data-pp-so-botoes{% if f.lugar != 'grande' %} hidden{% endif %}>
-                        <fieldset class="pp-campo pp-links" data-pp-links>
-                            <legend class="pp-campo-rotulo">Botões <small class="pp-sub">até 2, só no lugar Grande</small></legend>
+                    <div data-pp-so-botoes{% if f.lugar == 'destaque' %} hidden{% endif %}>
+                        <fieldset class="pp-campo pp-links" data-pp-links data-pp-links-max="{{ f.lugar == 'grande' ? 2 : 1 }}">
+                            <legend class="pp-campo-rotulo">Botões <small class="pp-sub" data-pp-links-dica>{{ f.lugar == 'grande' ? 'até 2 no lugar Grande' : '1 em Cartão e Lateral' }}</small></legend>
+                            {% if d.atalhos|length > 0 %}
+                                <label class="pp-campo"><span>Ligar a um formulário ou porta da Ouvidoria</span>
+                                    <select data-pp-link-atalho><option value="">Escolha…</option>{% for a in d.atalhos %}<option value="{{ a.url }}" data-pp-rotulo="{{ a.rotulo }}">{{ a.rotulo }} ({{ a.detalhe }})</option>{% endfor %}</select>
+                                    <small class="pp-dica">Preenche rótulo e endereço; depois clique em Adicionar. Com página pública, o mesmo endereço do cartaz com QR.</small>
+                                </label>
+                            {% endif %}
                             <input type="hidden" name="botoes_json" value="{{ d.botoes_json|e('html_attr') }}" data-pp-links-campo>
                             <script type="application/json" data-pp-links-json>{{ d.botoes_json|raw }}</script>
                             <ul class="pp-publ-regras" data-pp-links-lista aria-live="polite">{% for b in d.botoes %}<li class="pp-chip is-fixo">{{ b.rotulo }}</li>{% else %}<li class="pp-sub" data-pp-links-vazio>Nenhum botão.</li>{% endfor %}</ul>

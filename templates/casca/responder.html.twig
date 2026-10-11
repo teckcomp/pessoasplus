@@ -1,0 +1,52 @@
+{# Pessoas+ - responder formulario logado (BM.4). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_voltar }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>{{ pp.dados.ouvidoria ? 'Ouvidoria' : 'Minha área' }}</span></a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
+    <div class="pp-leitura">
+        <section class="pp-cartao pp-documento">
+            {% if d.descricao != '' %}<p class="pp-pub-chamada-grande">{{ d.descricao }}</p>{% endif %}
+            {% if d.recibo is not null %}
+                {{ include('@pessoasplus/casca/_recibo.html.twig', {recibo: d.recibo}) }}
+            {% elseif not d.aberto %}
+                <p class="pp-nota">Este formulário não está aberto ({{ d.estado_rotulo|lower }}).</p>
+            {% elseif d.ja_respondeu %}
+                <p class="pp-nota"><i class="ti ti-circle-check" aria-hidden="true"></i> Você já respondeu. Obrigado!</p>
+            {% else %}
+                <form method="post" action="{{ d.url_aqui }}" class="pp-novo-form" data-pp-responder>
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                    <input type="hidden" name="id" value="{{ d.id }}">
+                    {% if d.modo == 'escolha' %}
+                        <fieldset class="pp-campo pp-modo-escolha">
+                            <legend class="pp-campo-rotulo">Como você quer enviar?</legend>
+                            <label class="pp-marcar is-justo"><input type="radio" name="anonimo" value="0"{% if d.porta != 'conduta' %} checked{% endif %}><span><strong>Identificado:</strong> o RH vê quem enviou e pode responder a você diretamente.</span></label>
+                            <label class="pp-marcar is-justo"><input type="radio" name="anonimo" value="1"{% if d.porta == 'conduta' %} checked{% endif %}><span><strong>Anônimo:</strong> não grava seu usuário nem a hora, só o dia. O acompanhamento é só pelo protocolo.</span></label>
+                        </fieldset>
+                    {% elseif d.modo == 'anonimo' %}
+                        <p class="pp-nota"><i class="ti ti-incognito" aria-hidden="true"></i> Envio anônimo: não grava seu usuário nem a hora, só o dia (D-31).</p>
+                    {% else %}
+                        <p class="pp-nota"><i class="ti ti-user" aria-hidden="true"></i> Envio identificado.</p>
+                    {% endif %}
+                    {{ include('@pessoasplus/casca/_perguntas.html.twig', {perguntas: d.perguntas}) }}
+                    <div class="pp-acoes-linha"><button type="submit" name="enviar" value="1" class="pp-botao is-primario"><i class="ti ti-send" aria-hidden="true"></i><span>Enviar</span></button></div>
+                </form>
+            {% endif %}
+        </section>
+        <aside class="pp-cartao pp-ciencia">
+            {% if d.ouvidoria and d.porta_info is not null %}
+                <h2><i class="{{ d.porta_info[4] }}" aria-hidden="true"></i> {{ d.porta_info[0] }}</h2>
+                <p>{{ d.porta_info[1] }}</p>
+                <p class="pp-nota">Sem anexo por enquanto (D-73): descreva no texto.</p>
+            {% else %}
+                <h2>{{ d.modo_rotulo }}</h2>
+                <p class="pp-sub">{{ d.periodo }}</p>
+            {% endif %}
+            {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: d.modo, ouvidoria: d.ouvidoria}) }}
+        </aside>
+    </div>
+{% endblock %}
