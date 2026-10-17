@@ -16,7 +16,7 @@ ProxyPreserveHost On
 ProxyRequests Off
 
 # ALVO = como este próprio Apache atende o GLPI, visto de dentro do servidor.
-#   HTTP puro (ex.: homologação na porta 2077):  http://127.0.0.1:2077
+#   HTTP puro atras de encaminhamento de porta: http://127.0.0.1:<porta interna do Apache>
 #   HTTPS (produção): https://127.0.0.1:443 com as três linhas SSLProxy abaixo,
 #   porque o certificado é do domínio e não de 127.0.0.1.
 #SSLProxyEngine On
