@@ -1,0 +1,11 @@
+/* Pessoas+ - cartao do endereco publico no editor (BM.4-17, D-97/D-98). Prefixo pp-endereco-. */
+.pp-casca .pp-endereco { display: flex; gap: 16px; align-items: stretch; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--pp-borda); border-radius: 12px; background: var(--pp-superficie); }
+.pp-casca .pp-endereco-qr { flex: none; width: 92px; height: 92px; border-radius: 8px; background: #fff; border: 1px solid var(--pp-borda); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--pp-texto-2); font-size: 0.75rem; text-align: center; }
+.pp-casca .pp-endereco-qr img { width: 84px; height: 84px; display: block; }
+.pp-casca .pp-endereco-qr > .ti { font-size: 1.8rem; }
+.pp-casca .pp-endereco-corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.pp-casca .pp-endereco-rotulo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.85rem; color: var(--pp-acento-escuro); font-weight: 600; }
+.pp-casca .pp-endereco-url { font-size: 1rem; word-break: break-all; padding: 8px 10px; background: var(--pp-fundo); border-radius: 8px; display: block; }
+.pp-casca .pp-endereco-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.pp-casca .pp-endereco .pp-nota { margin: 0; }
+@media (max-width: 640px) { .pp-casca .pp-endereco { flex-direction: column; } }

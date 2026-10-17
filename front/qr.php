@@ -24,6 +24,7 @@ use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Formulario;
 use GlpiPlugin\Pessoasplus\Permissoes;
 use Symfony\Component\HttpFoundation\Response;
+// PESSOASPLUS_BUILD_BM4_17 (D-98: QR e cartaz so quando o formulario divulga)
 
 Session::checkRight(\GlpiPlugin\Pessoasplus\Install::RIGHT_BASE, READ);
 
@@ -32,13 +33,13 @@ $token = preg_replace('/[^a-f0-9]/', '', (string) ($_GET['t'] ?? ''));
 $id    = (int) ($_GET['id'] ?? 0);
 if ($token !== '' && strlen($token) === 32) {
     // BM.4-3: por token, qualquer usuario do Pessoas+ (o QR so codifica a URL publica, que e publica por definicao).
-    if (!$form->getFromDBByCrit(['token' => $token, 'is_deleted' => 0, 'publico_sem_login' => 1])) {
-        throw new \Glpi\Exception\Http\NotFoundHttpException('Este formulário não tem página pública.');
+    if (!$form->getFromDBByCrit(['token' => $token, 'is_deleted' => 0, 'publico_sem_login' => 1]) || !$form->divulgaQr()) {
+        throw new \Glpi\Exception\Http\NotFoundHttpException('Este formulário não é divulgado por QR.');
     }
 } else {
     Permissoes::exigirLeitura('pesquisas');
-    if ($id <= 0 || !$form->getFromDB($id) || $form->urlPublica() === '' || !$form->podeLerFila()) {
-        throw new \Glpi\Exception\Http\NotFoundHttpException('Este formulário não tem página pública.');
+    if ($id <= 0 || !$form->getFromDB($id) || $form->urlPublica() === '' || !$form->podeLerFila() || !$form->divulgaQr()) {
+        throw new \Glpi\Exception\Http\NotFoundHttpException('Este formulário não é divulgado por QR.');
     }
 }
 $url = $form->urlPublica();

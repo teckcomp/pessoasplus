@@ -1,4 +1,5 @@
-{# Pessoas+ - pagina publica de resposta, sem login (BM.4, T-45). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 #}
+{# Pessoas+ - pagina publica de resposta, sem login (BM.4, T-45). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_17 #}
+{# BM.4-17 (D-97): o bilhete chega no fragmento #b= (nunca vai ao servidor na URL); o JS copia para o campo oculto "b" e limpa o fragmento. #}
 {% set d = pp.dados %}
 {{ include('@pessoasplus/casca/_standalone_topo.html.twig', {titulo: d.titulo, subtitulo: d.ouvidoria ? 'Ouvidoria' : 'Pesquisa'}) }}
     <main class="pp-publica-corpo">
@@ -10,13 +11,23 @@
             <p class="pp-nota">Este formulário não está aberto.</p>
         {% elseif d.recibo is not null %}
             {{ include('@pessoasplus/casca/_recibo.html.twig', {recibo: d.recibo}) }}
+            {% if not d.ouvidoria %}
+                {% if d.recibo.com_bilhete %}
+                    <div class="pp-alerta pp-tom-ok"><i class="ti ti-user-check" aria-hidden="true"></i><div class="pp-alerta-texto"><strong>Sua participação foi registrada</strong> (só que você respondeu, nunca o quê). Pode fechar esta aba.</div></div>
+                {% else %}
+                    <div class="pp-alerta pp-tom-info"><i class="ti ti-info-circle" aria-hidden="true"></i><div class="pp-alerta-texto"><strong>Respondeu pelo QR ou pelo link?</strong> Este caminho não registra quem respondeu. Se você é colaborador e quer sair da lista de pendentes, entre no Pessoas+ › Minha área e use "Já respondi pelo QR".</div></div>
+                {% endif %}
+            {% endif %}
             <p><a class="pp-botao" href="{{ d.url_protocolo }}">Acompanhar pelo protocolo</a></p>
         {% else %}
             {% if d.erro != '' %}<div class="pp-alerta pp-tom-atraso" role="alert"><i class="ti ti-alert-circle" aria-hidden="true"></i><div class="pp-alerta-texto">{{ d.erro }}</div></div>{% endif %}
             {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'anonimo', ouvidoria: d.ouvidoria}) }}
-            <form method="post" action="{{ d.url_aqui }}" class="pp-novo-form">
+            {% if d.somente_bilhete %}<div class="pp-alerta pp-tom-info" data-pp-aviso-bilhete hidden><i class="ti ti-login" aria-hidden="true"></i><div class="pp-alerta-texto">Esta pesquisa é respondida pelo botão <strong>Responder</strong>, dentro do Pessoas+ (Minha área ou Mural). O botão abre esta mesma página já com o seu acesso.</div></div>{% endif %}
+            <form method="post" action="{{ d.url_aqui }}" class="pp-novo-form" data-pp-publica{% if d.somente_bilhete %} data-pp-somente-bilhete="1"{% endif %}>
                 <input type="hidden" name="_glpi_csrf_token" value="{{ d.csrf }}">
                 <input type="hidden" name="t" value="{{ d.token }}">
+                <input type="hidden" name="b" value="" data-pp-bilhete>
+                {% if not d.ouvidoria %}<p class="pp-nota" data-pp-nota-bilhete hidden><i class="ti ti-user-check" aria-hidden="true"></i> Você veio pelo botão Responder: ao enviar, fica registrado que você respondeu (nunca o quê).</p>{% endif %}
                 {{ include('@pessoasplus/casca/_perguntas.html.twig', {perguntas: d.perguntas}) }}
                 {% if d.desafio %}
                     {# Widget montado pelo template do core: respeita o modo (interativo = clique na caixa). #}
@@ -37,5 +48,23 @@
     {% endif %}
 </div>
 {% if d.ok and d.aberto and d.recibo is null and d.desafio %}<script src="{{ d.url_altcha_js }}"></script>{% endif %}
+{% if d.ok and d.aberto and d.recibo is null %}<script>
+(function () {
+    var f = document.querySelector('form[data-pp-publica]');
+    if (!f) { return; }
+    var m = /(?:^|[#&])b=([a-f0-9]{32})\b/.exec(window.location.hash || '');
+    var campo = f.querySelector('[data-pp-bilhete]');
+    if (m && campo) {
+        campo.value = m[1];
+        var nota = f.querySelector('[data-pp-nota-bilhete]');
+        if (nota) { nota.hidden = false; }
+        if (window.history && history.replaceState) { history.replaceState(null, '', window.location.pathname + window.location.search); }
+    } else if (f.getAttribute('data-pp-somente-bilhete') === '1') {
+        f.hidden = true;
+        var aviso = document.querySelector('[data-pp-aviso-bilhete]');
+        if (aviso) { aviso.hidden = false; }
+    }
+})();
+</script>{% endif %}
 </body>
 </html>

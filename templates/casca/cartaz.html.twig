@@ -1,4 +1,4 @@
-{# Pessoas+ - cartaz imprimivel com o QR da pagina publica (BM.4). PESSOASPLUS_BUILD_BM4 #}
+{# Pessoas+ - cartaz imprimivel com o QR da pagina publica (BM.4). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_17 #}
 {% set d = pp.dados %}
 {{ include('@pessoasplus/casca/_standalone_topo.html.twig', {titulo: 'Cartaz: ' ~ d.titulo, subtitulo: d.ouvidoria ? 'Ouvidoria' : 'Pesquisa'}) }}
     <main class="pp-publica-corpo pp-cartaz">
@@ -6,7 +6,7 @@
         {% if d.descricao != '' %}<p class="pp-pub-chamada-grande">{{ d.descricao }}</p>{% endif %}
         <div class="pp-cartaz-qr">{{ d.svg|raw }}</div>
         <p class="pp-cartaz-url">{{ d.url }}</p>
-        <p class="pp-nota">Aponte a câmera do celular para o código. Não precisa de login; o envio é anônimo.</p>
+        <p class="pp-nota">Aponte a câmera do celular para o código. Não precisa de login; o envio é anônimo.{% if not d.ouvidoria %} Por este caminho não fica registrado quem respondeu.{% endif %}</p>
         <p class="pp-cartaz-imprimir"><button type="button" class="pp-botao is-primario" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i><span>Imprimir</span></button></p>
     </main>
 </div>

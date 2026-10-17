@@ -1,4 +1,4 @@
-{# Pessoas+ - novo formulario / editar; porta da Ouvidoria edita so perguntas, modo e descricao. PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 PESSOASPLUS_BUILD_BM4_9 #}
+{# Pessoas+ - novo formulario / editar; porta da Ouvidoria edita so perguntas, modo e descricao. PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 PESSOASPLUS_BUILD_BM4_9 PESSOASPLUS_BUILD_BM4_17 #}
 {# BM.4-9 (D-92): botao "Como vai aparecer" abre uma janela com o formulario renderizado por _perguntas.html.twig (ajax/formulario_previa.php), sem gravar. CSS/JS proprios em formulario_previa.{css,js}. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -59,9 +59,30 @@
                         <label class="pp-campo is-curto"><span>Fim</span><input type="date" name="fim" value="{{ f.fim }}"{% if not edita %} disabled{% endif %}></label>
                     </div>
                     <input type="hidden" name="publico_sem_login" value="0">
-                    <label class="pp-marcar is-justo"><input type="checkbox" name="publico_sem_login" value="1"{% if f.publico_sem_login %} checked{% endif %}{% if not edita %} disabled{% endif %}><span><strong>Página pública sem login</strong> (endereço com QR, envio sempre anônimo, com desafio contra robô e limite por dia).</span></label>
-                    <label class="pp-campo is-curto"><span>Limite de envios por dia, por endereço</span><input type="number" name="limite_dia" min="1" max="500" value="{{ f.limite_dia }}"{% if not edita %} disabled{% endif %}></label>
-                    {% if not d.nova and d.tela.url_publica != '' %}<p class="pp-nota">Endereço público: <code>{{ d.tela.url_publica }}</code> · <a href="{{ d.tela.url_qr }}&cartaz=1" target="_blank" rel="noopener">cartaz com QR</a></p>{% endif %}
+                    <label class="pp-marcar is-justo" data-pp-publica-marcar><input type="checkbox" name="publico_sem_login" value="1"{% if f.publico_sem_login or f.modo == 'anonimo' %} checked{% endif %}{% if not edita %} disabled{% endif %}><span><strong>Página pública sem login</strong> (envio sempre anônimo, com desafio contra robô). <em data-pp-publica-auto{% if f.modo != 'anonimo' %} hidden{% endif %}>Em pesquisa anônima fica sempre ligada: é por ela que o botão Responder funciona.</em></span></label>
+                    {# BM.4-17 (D-98): QR e cartaz sao opcionais; nao registram participacao #}
+                    <input type="hidden" name="divulgar_qr" value="0">
+                    <label class="pp-marcar is-justo"><input type="checkbox" name="divulgar_qr" value="1"{% if f.divulgar_qr %} checked{% endif %}{% if not edita %} disabled{% endif %}><span><strong>Divulgar por QR e cartaz</strong> (aparece ao lado do botão no mural e no cartaz para impressão). <strong>Atenção:</strong> quem responde pelo QR ou pelo link anônimo não é registrado: não entra em "quem respondeu" nem sai da lista de pendentes. Use para quem não tem acesso ao Pessoas+. Desligado, a pesquisa só aceita quem vem pelo botão Responder.</span></label>
+                    <label class="pp-campo is-curto"><span>Limite de envios por dia, por endereço (só pelo QR/link)</span><input type="number" name="limite_dia" min="1" max="500" value="{{ f.limite_dia }}"{% if not edita %} disabled{% endif %}></label>
+                    {% if not d.nova and d.endereco.url != '' %}
+                        <link rel="stylesheet" href="{{ d.endereco_css }}">
+                        <div class="pp-endereco">
+                            <div class="pp-endereco-qr">{% if d.endereco.qr_mini != '' %}<img src="{{ d.endereco.qr_mini }}" alt="QR do endereço público" width="92" height="92">{% else %}<i class="ti ti-qrcode-off" aria-hidden="true"></i><span>QR desligado</span>{% endif %}</div>
+                            <div class="pp-endereco-corpo">
+                                <div class="pp-endereco-rotulo"><i class="ti ti-lock-open" aria-hidden="true"></i> Acesso anônimo, sem login{% if not d.endereco.curto %} <span class="pp-selo pp-tom-alerta" title="Preencha o Endereço curto em Formulários e Ouvidoria › Configurar para esconder o caminho do GLPI.">endereço curto desligado</span>{% endif %}</div>
+                                <code class="pp-endereco-url">{{ d.endereco.url }}</code>
+                                <div class="pp-endereco-acoes">
+                                    <button type="button" class="pp-botao is-compacto" data-pp-copiar="{{ d.endereco.url }}"><i class="ti ti-copy" aria-hidden="true"></i><span>Copiar endereço</span></button>
+                                    {% if d.endereco.url_cartaz != '' %}<a class="pp-botao is-compacto" href="{{ d.endereco.url_cartaz }}" target="_blank" rel="noopener"><i class="ti ti-printer" aria-hidden="true"></i><span>Cartaz com QR</span></a>{% endif %}
+                                    <a class="pp-botao is-compacto" href="{{ d.endereco.url }}" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i><span>Abrir</span></a>
+                                </div>
+                                <p class="pp-nota">É este endereço que o botão Responder{% if d.endereco.qr_mini != '' %}, o QR do mural e o cartaz{% endif %} usam. Quem chega por aqui nunca vê o GLPI. {% if f.modo == 'anonimo' %}Pelo botão, fica registrado só que a pessoa respondeu; pelo QR ou link, nada.{% endif %}</p>
+                            </div>
+                        </div>
+                    {% elseif d.nova %}
+                        <p class="pp-nota">O endereço público e o QR aparecem aqui depois de salvar o rascunho.</p>
+                    {% endif %}
+                    <script src="{{ d.endereco_js }}"></script>
                 </section>
 
                 <section class="pp-cartao pp-secao">

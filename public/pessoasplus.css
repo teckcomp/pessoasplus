@@ -1883,3 +1883,10 @@ body.pp-standalone { margin: 0; background: var(--pp-fundo, #f4f6f8); font-famil
 .pp-casca .pp-guarde ul, .pp-publica-corpo .pp-guarde ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 .pp-casca .pp-guarde p, .pp-publica-corpo .pp-guarde p { margin: 0; }
 .pp-casca .pp-guarde.is-curto { margin-top: 4px; font-size: .88rem; }
+
+/* BM.4-17 (D-97): alerta de confirmacao e formulario em linha ("Ja respondi pelo QR") */
+.pp-casca .pp-alerta.pp-tom-ok > .ti { color: var(--pp-ok); }
+.pp-casca form.pp-inline { display: inline-flex; margin: 0; }
+/* "Ja respondi pelo QR": destaque suave (fundo ambar claro, borda tracejada, icone de QR) para nao sumir ao lado do Responder */
+.pp-casca .pp-botao.is-declarar { background: var(--pp-alerta-fundo); border: 1px dashed var(--pp-alerta); color: var(--pp-alerta); font-weight: 600; }
+.pp-casca .pp-botao.is-declarar:hover { background: #ffe8bd; border-style: solid; }

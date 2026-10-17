@@ -5,6 +5,7 @@
  *
  * PESSOASPLUS_BUILD_BM4
  * PESSOASPLUS_BUILD_BM4_9 (D-92: previa "como vai aparecer" antes de abrir)
+ * PESSOASPLUS_BUILD_BM4_17 (D-97/D-98: cartao do endereco publico, QR opcional)
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -118,7 +119,17 @@ $dados = [
         'titulo' => (string) ($f['titulo'] ?? ''), 'descricao' => (string) ($f['descricao'] ?? ''), 'modo' => (string) ($f['modo'] ?? 'identificado'),
         'inicio' => (string) ($f['inicio'] ?? ''), 'fim' => (string) ($f['fim'] ?? ''), 'publico_sem_login' => (int) ($f['publico_sem_login'] ?? 0) === 1,
         'limite_dia' => (int) ($f['limite_dia'] ?? 20), 'publico_modelo_id' => (int) ($f['publico_modelo_id'] ?? 0), 'porta' => (string) ($f['porta'] ?? ''),
+        'divulgar_qr' => (int) ($f['divulgar_qr'] ?? 0) === 1,
     ],
+    // BM.4-17 (D-97/D-98): cartao do endereco publico (QR em miniatura por token, so quando divulga).
+    'endereco'   => [
+        'url'        => $nova ? '' : $form->urlPublica(),
+        'curto'      => \GlpiPlugin\Pessoasplus\OuvidoriaConfig::canalBase() !== '',
+        'qr_mini'    => (!$nova && $form->divulgaQr()) ? Pagina::url('/plugins/pessoasplus/front/qr.php') . '?t=' . (string) $f['token'] : '',
+        'url_cartaz' => (!$nova && $form->divulgaQr()) ? Pagina::url('/plugins/pessoasplus/front/qr.php') . '?id=' . $id . '&cartaz=1' : '',
+    ],
+    'endereco_css' => Pagina::url('/plugins/pessoasplus/endereco.css') . '?v=bm4-17',
+    'endereco_js'  => Pagina::url('/plugins/pessoasplus/endereco.js') . '?v=bm4-17',
     'modos'      => $lista(Formulario::MODOS),
     'tipos_pergunta' => $lista(Formulario::TIPOS_PERGUNTA),
     'perguntas_json' => json_encode($perguntas, $hex),

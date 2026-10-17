@@ -184,7 +184,13 @@ foreach (Formulario::lista($hoje) as $fm) {
     if ($fm['estado'] !== 'aberto') {
         continue;
     }
-    $atalhos[] = ['rotulo' => ($fm['tipo'] === 'ouvidoria' ? 'Ouvidoria: ' : 'Responder: ') . $fm['titulo'], 'url' => $fm['url_publica'] !== '' ? $fm['url_publica'] : $fm['url_responder'], 'detalhe' => $fm['url_publica'] !== '' ? 'página pública, sem login' : 'logado'];
+    // BM.4-17 (D-97): pesquisa anonima aponta para bilhete.php (sai do GLPI e conta participacao);
+    // o QR ao lado, quando divulgado, codifica o endereco publico. Ouvidoria segue pela pagina publica.
+    if ($fm['tipo'] === 'ouvidoria') {
+        $atalhos[] = ['rotulo' => 'Ouvidoria: ' . $fm['titulo'], 'url' => $fm['url_publica'] !== '' ? $fm['url_publica'] : $fm['url_responder'], 'detalhe' => $fm['url_publica'] !== '' ? 'página pública, sem login' : 'logado'];
+    } else {
+        $atalhos[] = ['rotulo' => 'Responder: ' . $fm['titulo'], 'url' => $fm['url_responder'], 'detalhe' => $fm['responde_fora'] ? 'anônima: sai do GLPI com registro de participação' . ($fm['divulgar_qr'] ? ', QR ao lado' : '') : 'logado'];
+    }
 }
 
 $dados = [

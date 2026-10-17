@@ -3,6 +3,7 @@
 /**
  * Pessoas+ - aviso ao entrar e lembretes durante a sessao (D-49).
  *
+ * PESSOASPLUS_BUILD_BM4_17 (D-97: pesquisas pendentes no aviso ao entrar)
  * PESSOASPLUS_BUILD_BP1
  * PESSOASPLUS_BUILD_BP2D
  * PESSOASPLUS_BUILD_BP3B
@@ -85,6 +86,14 @@ final class Aviso
                 continue;
             }
             $itens[] = ['id' => 0, 'titulo' => $c['titulo'], 'detalhe' => 'Conferência de itens · ' . $c['respondidos'] . ' de ' . $c['itens'] . ' · ' . $c['periodo'], 'selo' => $c['atrasada'] ? 'Prazo vencido' : 'Conferir', 'tom' => $c['atrasada'] ? 'atraso' : 'alerta'];
+        }
+        // BM.4-17 (D-97): pesquisas abertas ainda nao respondidas (mesma lista da Minha area:
+        // participacao e a unica fonte, entao quem respondeu pelo QR sem declarar continua avisado).
+        foreach (\GlpiPlugin\Pessoasplus\Formulario::pendentesDe($uid) as $q) {
+            $fim = (string) ($q['fim'] ?? '');
+            $restam = $fim !== '' ? (int) floor((strtotime($fim) - strtotime(date('Y-m-d', $agora))) / 86400) : -1;
+            $urgente = $restam >= 0 && $restam <= 2;
+            $itens[] = ['id' => 0, 'titulo' => $q['titulo'], 'detalhe' => 'Pesquisa · ' . $q['modo_rotulo'] . ' · ' . $q['periodo'] . ($q['modo'] === 'anonimo' ? ' · respostas não ficam ligadas a você' : ''), 'selo' => $urgente ? ($restam === 0 ? 'Último dia' : 'Encerra em ' . $restam . ($restam === 1 ? ' dia' : ' dias')) : 'Responder', 'tom' => $urgente ? 'alerta' : 'info'];
         }
         $total = count($itens);
         $conteudo = [

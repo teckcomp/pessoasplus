@@ -8,6 +8,8 @@
  * PESSOASPLUS_BUILD_BM4_2
  * PESSOASPLUS_BUILD_BM4_3
  * PESSOASPLUS_BUILD_BM4_4
+ * PESSOASPLUS_BUILD_BM4_16 (T-99: QR automatico tambem pelo endereco curto; URL longa vira curta)
+ * PESSOASPLUS_BUILD_BM4_17 (D-97/D-98: QR so quando o formulario divulga; botao com bilhete reconhecido)
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -474,6 +476,39 @@ final class Publicacao extends CommonDBTM
     }
 
     /**
+     * Token (32 hex) de um botao que aponta para a pagina publica de um formulario,
+     * seja pela URL real (responder_publico.php?t=...), pelo endereco curto (<base>/<token>, D-91)
+     * ou pela saida com bilhete (bilhete.php?id=..., D-97). '' quando o botao aponta para outra coisa
+     * ou quando o formulario nao divulga QR (BM.4-17, D-98).
+     */
+    public static function tokenPublico(string $url): string
+    {
+        $token = '';
+        if (preg_match('#responder_publico\.php\?t=([a-f0-9]{32})\b#', $url, $m)) {
+            $token = $m[1];
+        } elseif (preg_match('#bilhete\.php\?id=(\d+)\b#', $url, $m)) {
+            $f = new Formulario();
+            if ($f->getFromDB((int) $m[1])) {
+                $token = (string) ($f->fields['token'] ?? '');
+            }
+        } else {
+            $base = OuvidoriaConfig::canalBase();
+            if ($base !== '' && preg_match('#^' . preg_quote($base, '#') . '/([a-f0-9]{32})/?(?:[?\#].*)?$#', $url, $m)) {
+                $token = $m[1];
+            }
+        }
+        if ($token === '') {
+            return '';
+        }
+        $f = new Formulario();
+        if (!$f->getFromDBByCrit(['token' => $token, 'is_deleted' => 0]) || !$f->divulgaQr()) {
+            return '';
+        }
+
+        return $token;
+    }
+
+    /**
      * Linha pronta para as telas (toda chave existe, T-06).
      *
      * @param array<string, mixed> $p
@@ -490,9 +525,15 @@ final class Publicacao extends CommonDBTM
         if (($p['lugar'] ?? '') !== 'destaque') {
             foreach (Comunicado::linksParaTela((string) ($p['botoes'] ?? '')) as $b) {
                 // BM.4-3: botao para pagina publica de formulario ganha QR automatico.
+                // BM.4-16 (T-99): reconhece tambem o endereco curto (D-91) e, quando ele esta
+                // ligado, troca a URL longa gravada antes pela curta, para o clique nao expor o GLPI.
                 $b['qr_url'] = '';
-                if (preg_match('#responder_publico\.php\?t=([a-f0-9]{32})#', $b['url'], $m)) {
-                    $b['qr_url'] = \Html::getPrefixedUrl('/plugins/pessoasplus/front/qr.php') . '?t=' . $m[1];
+                $token = self::tokenPublico((string) $b['url']);
+                if ($token !== '') {
+                    $b['qr_url'] = \Html::getPrefixedUrl('/plugins/pessoasplus/front/qr.php') . '?t=' . $token;
+                    if (!str_contains((string) $b['url'], 'bilhete.php')) { // botao com bilhete fica logado (D-97)
+                        $b['url'] = OuvidoriaConfig::urlAnonima('responder', $token);
+                    }
                 }
                 $botoes[] = $b;
             }

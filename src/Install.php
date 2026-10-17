@@ -8,6 +8,7 @@
  * PESSOASPLUS_BUILD_BP3C
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM2
+ * PESSOASPLUS_BUILD_BM4_17 (D-97 bilhetes, D-98 divulgar_qr, T-100 participacoes sem id)
  * PESSOASPLUS_BUILD_BM2_2
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM4
@@ -74,6 +75,7 @@ final class Install
         'glpi_plugin_pessoasplus_respostas_itens',
         'glpi_plugin_pessoasplus_participacoes',
         'glpi_plugin_pessoasplus_limites',
+        'glpi_plugin_pessoasplus_bilhetes',
         'glpi_plugin_pessoasplus_cautela_termos',
         'glpi_plugin_pessoasplus_cautela_itens',
         'glpi_plugin_pessoasplus_cautela_conferencias',
@@ -410,6 +412,7 @@ final class Install
                 `publico_sem_login` tinyint NOT NULL DEFAULT '0',
                 `token` char(32) NOT NULL DEFAULT '',
                 `limite_dia` int NOT NULL DEFAULT '20',
+                `divulgar_qr` tinyint NOT NULL DEFAULT '0',
                 `plugin_pessoasplus_publicos_id` int unsigned NOT NULL DEFAULT '0',
                 `publico_modelo_id` int unsigned NOT NULL DEFAULT '0',
                 `users_id` int unsigned NOT NULL DEFAULT '0',
@@ -422,6 +425,13 @@ final class Install
                 KEY `token` (`token`),
                 KEY `is_deleted` (`is_deleted`)
             ) $fim");
+        }
+
+        // BM.4-17 (D-97/D-98): "Divulgar por QR e cartaz" opcional; quem ja tinha pagina publica continua divulgando.
+        if (!$DB->fieldExists('glpi_plugin_pessoasplus_formularios', 'divulgar_qr')) {
+            $migration->displayMessage('Adicionando divulgar_qr em glpi_plugin_pessoasplus_formularios');
+            $DB->doQuery("ALTER TABLE `glpi_plugin_pessoasplus_formularios` ADD `divulgar_qr` tinyint NOT NULL DEFAULT '0' AFTER `limite_dia`");
+            $DB->doQuery("UPDATE `glpi_plugin_pessoasplus_formularios` SET `divulgar_qr` = 1 WHERE `publico_sem_login` = 1");
         }
 
         $tabela = 'glpi_plugin_pessoasplus_perguntas';
@@ -479,16 +489,48 @@ final class Install
         }
 
         // Participacao: so "ja respondeu", sem ligacao com a resposta (D-31).
+        // BM.4-17 (T-100): sem id sequencial. Chave composta (formulario, usuario) e so o dia,
+        // para nao existir ordem de chegada que se cruze com respostas.id. origem: envio | declarado (D-97).
         $tabela = 'glpi_plugin_pessoasplus_participacoes';
         if (!$DB->tableExists($tabela)) {
             $migration->displayMessage("Criando $tabela");
             $DB->doQuery("CREATE TABLE `$tabela` (
-                `id` int unsigned NOT NULL AUTO_INCREMENT,
                 `plugin_pessoasplus_formularios_id` int unsigned NOT NULL DEFAULT '0',
                 `users_id` int unsigned NOT NULL DEFAULT '0',
                 `data` date DEFAULT NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `unicidade` (`plugin_pessoasplus_formularios_id`,`users_id`)
+                `origem` varchar(10) NOT NULL DEFAULT 'envio',
+                PRIMARY KEY (`plugin_pessoasplus_formularios_id`,`users_id`)
+            ) $fim");
+        } elseif ($DB->fieldExists($tabela, 'id')) {
+            // Instalacao anterior ao bm4-17: recria sem a sequencia, copiando o que existe.
+            $migration->displayMessage("Removendo a sequencia de $tabela (T-100)");
+            $nova = $tabela . '_t100';
+            $DB->doQuery("DROP TABLE IF EXISTS `$nova`");
+            $DB->doQuery("CREATE TABLE `$nova` (
+                `plugin_pessoasplus_formularios_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `data` date DEFAULT NULL,
+                `origem` varchar(10) NOT NULL DEFAULT 'envio',
+                PRIMARY KEY (`plugin_pessoasplus_formularios_id`,`users_id`)
+            ) $fim");
+            $DB->doQuery("INSERT IGNORE INTO `$nova` (`plugin_pessoasplus_formularios_id`, `users_id`, `data`, `origem`)
+                SELECT `plugin_pessoasplus_formularios_id`, `users_id`, `data`, 'envio' FROM `$tabela`");
+            $DB->doQuery("DROP TABLE `$tabela`");
+            $DB->doQuery("RENAME TABLE `$nova` TO `$tabela`");
+        }
+
+        // Bilhete de uso unico (BM.4-17, D-97): liga usuario a um envio PENDENTE pela pagina publica.
+        // Vive so ate o envio (apagado na mesma transacao que grava resposta e participacao) ou expira.
+        $tabela = 'glpi_plugin_pessoasplus_bilhetes';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `plugin_pessoasplus_formularios_id` int unsigned NOT NULL DEFAULT '0',
+                `users_id` int unsigned NOT NULL DEFAULT '0',
+                `hash` char(64) NOT NULL DEFAULT '',
+                `criado_em` datetime DEFAULT NULL,
+                PRIMARY KEY (`plugin_pessoasplus_formularios_id`,`users_id`),
+                KEY `hash` (`hash`)
             ) $fim");
         }
 

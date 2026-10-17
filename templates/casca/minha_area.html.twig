@@ -1,3 +1,4 @@
+{# PESSOASPLUS_BUILD_BM4_17 (D-97) #}
 {# PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 #}
 {# Pessoas+ - Minha area do colaborador, real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_7 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -47,7 +48,15 @@
                             <i class="ti {{ p.modo == 'anonimo' ? 'ti-lock' : 'ti-clipboard-check' }} pp-lista-icone" aria-hidden="true"></i>
                             <div class="pp-lista-texto"><strong>{{ p.titulo }}</strong><span>{{ p.modo_rotulo }} · {{ p.periodo }}</span>{% if p.modo != 'identificado' %}<em class="pp-nota">{{ p.modo == 'anonimo' ? 'Suas respostas não ficam ligadas ao seu usuário.' : 'Você escolhe entre identificado e anônimo ao responder.' }}</em>{% endif %}</div>
                             <span class="pp-selo pp-tom-info">Aberta</span>
-                            <a class="pp-botao is-compacto is-primario" href="{{ p.url_responder }}">Responder</a>
+                            {# BM.4-17 (D-97): anonima com pagina publica abre fora do GLPI, em nova aba, com bilhete #}
+                            <a class="pp-botao is-compacto is-primario" href="{{ p.url_responder }}"{% if p.responde_fora %} target="_blank" rel="noopener"{% endif %}>Responder{% if p.responde_fora %} <i class="ti ti-external-link" aria-hidden="true"></i>{% endif %}</a>
+                            {% if p.responde_fora and p.divulgar_qr %}
+                                <form method="post" action="{{ p.url_declarar }}" class="pp-inline" onsubmit="return confirm('Confirma que você já respondeu esta pesquisa pelo QR ou pelo link? Isso só registra que você respondeu; nenhuma resposta é gravada por aqui.');">
+                                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="id" value="{{ p.id }}">
+                                    <button type="submit" name="declarar" value="1" class="pp-botao is-compacto is-declarar" title="Respondeu pelo QR ou pelo link? Registre aqui para sair da lista de pendentes."><i class="ti ti-qrcode" aria-hidden="true"></i><span>Já respondi pelo QR</span></button>
+                                </form>
+                            {% endif %}
                         </li>
                     {% endfor %}
                 </ul>

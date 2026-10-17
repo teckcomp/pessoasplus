@@ -9,6 +9,7 @@
  * PESSOASPLUS_BUILD_BM4_10 (D-91: urlPublica pelo endereco curto)
  * PESSOASPLUS_BUILD_BM4_12 (D-93: complemento pelo remetente via protocolo; D-94: transicoes de situacao)
  * PESSOASPLUS_BUILD_BM4_13 (D-95: respostas do RH como lista datada; conversa nos dois lados)
+ * PESSOASPLUS_BUILD_BM4_17 (D-97 bilhete e "Ja respondi pelo QR"; D-98 anonimo liga a pagina publica; divulgar_qr opcional)
  * PESSOASPLUS_BUILD_BM4_15 (correcao: Ouvidoria nao grava participacao; segundo envio da mesma pessoa estourava a chave unica)
  * PESSOASPLUS_BUILD_BM4_5
  * PESSOASPLUS_BUILD_BM5
@@ -192,6 +193,15 @@ final class Formulario extends CommonDBTM
         }
         if (array_key_exists('publico_sem_login', $input)) {
             $input['publico_sem_login'] = (int) (bool) $input['publico_sem_login'];
+        }
+        if (array_key_exists('divulgar_qr', $input)) {
+            $input['divulgar_qr'] = (int) (bool) $input['divulgar_qr'];
+        }
+        // BM.4-17 (D-98): pesquisa anonima responde SEMPRE pela pagina publica (o botao Responder
+        // sai do GLPI com bilhete, D-97); por isso a pagina publica nasce ligada. QR e opcional.
+        $modoFinal = (string) ($input['modo'] ?? ($this->fields['modo'] ?? ''));
+        if ($modoFinal === 'anonimo' && ($novo || array_key_exists('publico_sem_login', $input) || array_key_exists('modo', $input))) {
+            $input['publico_sem_login'] = 1;
         }
         if (array_key_exists('limite_dia', $input)) {
             $input['limite_dia'] = min(500, max(1, (int) $input['limite_dia']));
@@ -544,8 +554,8 @@ final class Formulario extends CommonDBTM
         // Participacao sem ligacao com a resposta: "ja respondeu", nada mais. So em pesquisa:
         // a Ouvidoria aceita varios envios da mesma pessoa e a chave unica (formulario, usuario)
         // estourava no segundo envio (BM.4-15, correcao). Se ja houver linha, nao insere.
-        if ($uid > 0 && !$this->ehOuvidoria() && countElementsInTable(Participacao::getTable(), ['plugin_pessoasplus_formularios_id' => (int) $this->getID(), 'users_id' => $uid]) === 0) {
-            $DB->insert(Participacao::getTable(), ['plugin_pessoasplus_formularios_id' => (int) $this->getID(), 'users_id' => $uid, 'data' => $hoje]);
+        if ($uid > 0 && !$this->ehOuvidoria()) {
+            Participacao::registrar((int) $this->getID(), $uid, Participacao::ORIGEM_ENVIO);
         }
         // Trilha: so para resposta identificada (D-31).
         if (!$anonimo && $uid > 0) {
@@ -558,7 +568,25 @@ final class Formulario extends CommonDBTM
 
     public function jaRespondeu(int $uid): bool
     {
-        return countElementsInTable(Participacao::getTable(), ['plugin_pessoasplus_formularios_id' => (int) $this->getID(), 'users_id' => $uid]) > 0;
+        return Participacao::existe((int) $this->getID(), $uid);
+    }
+
+    /**
+     * BM.4-17 (D-97): pesquisa anonima com pagina publica e respondida FORA do GLPI,
+     * pelo endereco publico com bilhete; a tela logada responder.php nao serve para ela.
+     */
+    public function respondeFora(): bool
+    {
+        return !$this->ehOuvidoria()
+            && (string) ($this->fields['modo'] ?? '') === 'anonimo'
+            && (int) ($this->fields['publico_sem_login'] ?? 0) === 1
+            && (string) ($this->fields['token'] ?? '') !== '';
+    }
+
+    /** QR e cartaz sao opcionais (D-98); a Ouvidoria segue a configuracao da porta. */
+    public function divulgaQr(): bool
+    {
+        return (int) ($this->fields['publico_sem_login'] ?? 0) === 1 && (int) ($this->fields['divulgar_qr'] ?? 0) === 1;
     }
 
     private function gerarProtocolo(): string
@@ -969,7 +997,8 @@ final class Formulario extends CommonDBTM
         $kpis[] = ['icone' => 'ti ti-inbox', 'valor' => (string) $totalRespostas, 'rotulo' => $totalRespostas === 1 ? 'Resposta' : 'Respostas', 'detalhe' => 'recebidas na campanha', 'tom' => 'info'];
         if ($cobranca !== null && $cobranca['total'] > 0) {
             $pct = (int) round($cobranca['responderam'] * 100 / $cobranca['total']);
-            $kpis[] = ['icone' => 'ti ti-users-group', 'valor' => $pct . '%', 'rotulo' => 'Adesão', 'detalhe' => $cobranca['responderam'] . ' de ' . $cobranca['total'] . ' do público', 'tom' => $pct >= 70 ? 'ok' : ($pct >= 40 ? 'alerta' : 'atraso')];
+            $decl = (int) ($cobranca['declarados'] ?? 0);
+            $kpis[] = ['icone' => 'ti ti-users-group', 'valor' => $pct . '%', 'rotulo' => 'Adesão', 'detalhe' => $cobranca['responderam'] . ' de ' . $cobranca['total'] . ' do público' . ($decl > 0 ? ' (' . $decl . ' por declaração pelo QR)' : ''), 'tom' => $pct >= 70 ? 'ok' : ($pct >= 40 ? 'alerta' : 'atraso')];
         } else {
             $kpis[] = ['icone' => 'ti ti-users-group', 'valor' => '—', 'rotulo' => 'Adesão', 'detalhe' => 'público não definido', 'tom' => 'neutro'];
         }
@@ -1268,7 +1297,7 @@ final class Formulario extends CommonDBTM
      * Quem ainda nao respondeu (publico de hoje menos participacoes), sem
      * dizer o que ninguem respondeu (D-31).
      *
-     * @return array{total: int, responderam: int, faltam: string[]}
+     * @return array{total: int, responderam: int, faltam: string[], declarados: int}
      */
     public function cobranca(): array
     {
@@ -1288,7 +1317,7 @@ final class Formulario extends CommonDBTM
         }
         sort($faltam);
 
-        return ['total' => count($publico), 'responderam' => count($publico) - count($faltam), 'faltam' => $faltam];
+        return ['total' => count($publico), 'responderam' => count($publico) - count($faltam), 'faltam' => $faltam, 'declarados' => Participacao::declarados((int) $this->getID())];
     }
 
     // ----------------------------------------------------------------- limites da pagina publica
@@ -1369,8 +1398,14 @@ final class Formulario extends CommonDBTM
             'fim'           => (string) ($f['fim'] ?? ''),
             'publico_sem_login' => (int) ($f['publico_sem_login'] ?? 0) === 1,
             'limite_dia'    => (int) ($f['limite_dia'] ?? 20),
+            'divulgar_qr'   => $form->divulgaQr(),
+            'responde_fora' => $form->respondeFora(),
             'url_publica'   => $form->urlPublica(),
-            'url_responder' => \Html::getPrefixedUrl('/plugins/pessoasplus/front/responder.php') . '?id=' . (int) $f['id'],
+            // BM.4-17 (D-97): anonima com pagina publica -> bilhete.php emite o bilhete e leva para fora do GLPI.
+            'url_responder' => $form->respondeFora()
+                ? \Html::getPrefixedUrl('/plugins/pessoasplus/front/bilhete.php') . '?id=' . (int) $f['id']
+                : \Html::getPrefixedUrl('/plugins/pessoasplus/front/responder.php') . '?id=' . (int) $f['id'],
+            'url_declarar'  => \Html::getPrefixedUrl('/plugins/pessoasplus/front/bilhete.php'),
             'url_fila'      => \Html::getPrefixedUrl('/plugins/pessoasplus/front/fila.php') . '?id=' . (int) $f['id'],
             'url_editar'    => \Html::getPrefixedUrl('/plugins/pessoasplus/front/formulario_novo.php') . '?id=' . (int) $f['id'],
             'url_qr'        => \Html::getPrefixedUrl('/plugins/pessoasplus/front/qr.php') . '?id=' . (int) $f['id'],
@@ -1433,7 +1468,7 @@ final class Formulario extends CommonDBTM
             $DB->insert(PublicoRegra::getTable(), ['plugin_pessoasplus_publicos_id' => $publicoId, 'tipo' => 'todos', 'valor_id' => 0, 'valor_texto' => '', 'incluir_filhos' => 0, 'is_exclusao' => 0]);
             $DB->insert(self::getTable(), [
                 'entities_id' => 0, 'titulo' => $def[0], 'descricao' => $def[1], 'tipo' => 'ouvidoria', 'porta' => $chave,
-                'modo' => $def[2], 'situacao' => 'aberto', 'inicio' => null, 'fim' => null, 'publico_sem_login' => $chave === 'conduta' ? 1 : 0,
+                'modo' => $def[2], 'situacao' => 'aberto', 'inicio' => null, 'fim' => null, 'publico_sem_login' => $chave === 'conduta' ? 1 : 0, 'divulgar_qr' => $chave === 'conduta' ? 1 : 0,
                 'token' => bin2hex(random_bytes(16)), 'limite_dia' => 20, 'plugin_pessoasplus_publicos_id' => $publicoId,
                 'publico_modelo_id' => 0, 'users_id' => 0, 'is_deleted' => 0, 'date_creation' => $agora, 'date_mod' => $agora,
             ]);

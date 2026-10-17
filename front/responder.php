@@ -4,6 +4,7 @@
  * Pessoas+ - responder um formulario logado (BM.4), nas duas interfaces.
  *
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM4_17 (D-97: anonima com pagina publica sai para bilhete.php)
  *
  * GET ?id=<formulario> ou ?porta=<duvida|sugestao|reclamacao|conduta>.
  * POST enviar: p<id>=..., anonimo=1 quando o modo e "escolha".
@@ -31,6 +32,9 @@ if (isset($_POST['enviar'])) {
     if (!$form->getFromDB($id) || !$form->alcanca($uid)) {
         Session::checkRight('pessoasplus_pesquisas', READ); // 403
     }
+    if ($form->respondeFora()) { // BM.4-17: so pela pagina publica com bilhete
+        Html::redirect(Pagina::url('/plugins/pessoasplus/front/bilhete.php') . '?id=' . $id);
+    }
     $r = $form->responder($_POST, $uid, (string) ($_POST['anonimo'] ?? '0') === '1');
     if (isset($r['erro'])) {
         Session::addMessageAfterRedirect($r['erro'], false, ERROR);
@@ -57,6 +61,10 @@ if ($porta !== '') {
 }
 if (!$form->alcanca($uid)) {
     Session::checkRight('pessoasplus_pesquisas', READ); // 403: fora do publico
+}
+// BM.4-17 (D-97): pesquisa anonima com pagina publica nao e respondida aqui dentro do GLPI.
+if ($form->respondeFora() && ($_GET['enviado'] ?? '') !== '1') {
+    Html::redirect(Pagina::url('/plugins/pessoasplus/front/bilhete.php') . '?id=' . (int) $form->getID());
 }
 $hoje  = date('Y-m-d');
 $tela  = Formulario::paraTela($form->fields, $hoje);
