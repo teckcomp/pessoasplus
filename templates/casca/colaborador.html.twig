@@ -1,5 +1,5 @@
 {# PESSOASPLUS_BUILD_BM6 #}
-{# Pessoas+ - pasta do colaborador: capa, Jornada, Dados, Documentos, Historico. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM1_3 #}
+{# Pessoas+ - pasta do colaborador: capa, Jornada, Dados, Documentos, Historico. PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM1_3 PESSOASPLUS_BUILD_BM8_1 #}
 {# BM.1-3 (D-84): foto da capa com botao de camera e janela, em _foto.html.twig; CSS/JS proprios (foto.css, foto.js). #}
 {# Usa pp.dados (front/colaborador.form.php). Dados reais (BM.1). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -12,6 +12,13 @@
 
 {% block conteudo %}
     {% set d = pp.dados %}
+    {% if d.na_lixeira %}
+        {# BM.8-1c (T-97): ficha na lixeira #}
+        <link rel="stylesheet" href="{{ d.css_admissao }}">
+        <div class="pp-adm-lixeira" role="alert"><i class="ti ti-trash" aria-hidden="true"></i><div><strong>Esta ficha está na lixeira.</strong> Ela não aparece no Fichário nem conta nos painéis. Restaure ou exclua definitivamente (os documentos de admissão e os vínculos de documentos nativos são apagados; a trilha de eventos fica).</div>
+            <form method="post" action="{{ d.url_form }}" class="pp-inline"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ d.ficha.id }}"><button type="submit" name="restore" value="1" class="pp-botao is-compacto is-primario"><i class="ti ti-rotate" aria-hidden="true"></i><span>Restaurar</span></button> <button type="submit" name="purge" value="1" class="pp-botao is-compacto is-perigo" data-pp-confirmar="Excluir definitivamente a ficha de {{ d.ficha.nome }}? Não há volta: os documentos de admissão são apagados do servidor."><i class="ti ti-trash-x" aria-hidden="true"></i><span>Excluir definitivamente</span></button></form>
+        </div>
+    {% endif %}
     {% set f = d.ficha %}
     {% set edita = d.gerencia %}
     {% set csrf = csrf_token() %}
@@ -277,14 +284,35 @@
             <p class="pp-nota">Lido do inventário do GLPI (campo Usuário do ativo). Entrar aqui não é cautela: a cautela é o termo com ciência.</p>
         </section>
     {% elseif d.aba == 'documentos' %}
-        <section class="pp-cartao pp-pasta-docs">
-            {% if d.pode_documentos %}
-                <p class="pp-nota">Documentos nativos do GLPI ligados a esta ficha (D-37). O que for anexado aqui aparece também em Gestão → Documentos.</p>
-                <div class="pp-nativo">{{ d.documentos_html|raw }}</div>
+        {# BM.8-1a (D-89/D-99): documentos de admissao, do plugin, so RH e o proprio colaborador #}
+        <link rel="stylesheet" href="{{ d.css_admissao }}">
+        <section class="pp-cartao pp-pasta-admissao">
+            <header class="pp-cartao-cabecalho"><h2>Documentos de admissão</h2>{% if d.admissao.gerencia %}<div class="pp-cartao-acoes"><a class="pp-botao is-compacto" href="{{ d.admissao.url_tipos }}"><i class="ti ti-settings" aria-hidden="true"></i><span>Configurar lista</span></a><form method="post" action="{{ d.admissao.url_acao }}" class="pp-inline"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="colaborador" value="{{ d.ficha.id }}"><button type="submit" name="acao" value="gerar" class="pp-botao is-compacto"><i class="ti ti-refresh" aria-hidden="true"></i><span>Gerar pendências do vínculo</span></button></form></div>{% endif %}</header>
+            {% set r = d.admissao.resumo %}
+            <div class="pp-adm-resumo">
+                <span class="pp-selo pp-tom-ok">{{ r.aceitos }} aceito{{ r.aceitos == 1 ? '' : 's' }}</span>
+                <span class="pp-selo pp-tom-info">{{ r.aguardando }} aguardando conferência</span>
+                <span class="pp-selo pp-tom-alerta">{{ r.pendentes }} pendente{{ r.pendentes == 1 ? '' : 's' }}{% if r.obrigatorios_abertos > 0 %} ({{ r.obrigatorios_abertos }} obrigatório{{ r.obrigatorios_abertos == 1 ? '' : 's' }}){% endif %}</span>
+                {% if r.recusados > 0 %}<span class="pp-selo pp-tom-atraso">{{ r.recusados }} recusado{{ r.recusados == 1 ? '' : 's' }}</span>{% endif %}
+                {% if r.dispensados > 0 %}<span class="pp-selo pp-tom-neutro">{{ r.dispensados }} dispensado{{ r.dispensados == 1 ? '' : 's' }}</span>{% endif %}
+            </div>
+            {% if d.admissao.docs|length == 0 %}
+                <p class="pp-nota">Nenhuma pendência para o vínculo <strong>{{ d.ficha.vinculo_rotulo }}</strong>. {% if d.admissao.gerencia %}Use "Gerar pendências do vínculo" ou configure a lista.{% endif %}</p>
             {% else %}
-                <p class="pp-nota">Seu perfil não tem o direito "Documentos" do GLPI (Administração → Perfis → Gestão), necessário para ver e anexar documentos.</p>
+                {{ include('@pessoasplus/casca/_admissao_docs.html.twig', {docs: d.admissao.docs, modo: d.admissao.gerencia ? 'rh' : 'leitura', url_envio: d.admissao.url_envio, url_acao: d.admissao.url_acao, origem: 'pasta', csrf: csrf_token(), limite_mb: d.admissao.limite_mb, extensoes: d.admissao.extensoes}) }}
             {% endif %}
+            {% if d.admissao.gerencia %}
+                <form method="post" action="{{ d.admissao.url_acao }}" class="pp-adm-avulso">
+                    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="colaborador" value="{{ d.ficha.id }}">
+                    <label><span>Adicionar documento avulso</span><input type="text" name="titulo" maxlength="150" placeholder="Título livre (ex.: Termo de confidencialidade assinado)" required></label>
+                    <button type="submit" name="acao" value="avulso" class="pp-botao is-compacto"><i class="ti ti-file-plus" aria-hidden="true"></i><span>Adicionar pendência</span></button>
+                    <small class="pp-dica">Para documentos fora da lista do vínculo: nasce como pendência com esse título, sem obrigatoriedade; o arquivo entra pela própria linha.</small>
+                </form>
+            {% endif %}
+            <p class="pp-nota">Todo documento do RH fica em pasta própria do plugin, fora da web, visível só a quem gerencia o Fichário e ao próprio colaborador (D-99, D-100). Recusa mantém o arquivo e o motivo e abre uma nova pendência (D-90). Nada aqui passa por Gestão → Documentos.</p>
         </section>
+
     {% else %}
         <section class="pp-cartao">
             <header class="pp-cartao-cabecalho"><h2>Histórico</h2></header>

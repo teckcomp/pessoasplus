@@ -1,4 +1,4 @@
-{# PESSOASPLUS_BUILD_BM4_17 (D-97) PESSOASPLUS_BUILD_BM4_18 #}
+{# PESSOASPLUS_BUILD_BM4_17 (D-97) PESSOASPLUS_BUILD_BM4_18 PESSOASPLUS_BUILD_BM8_1 #}
 {# PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 #}
 {# Pessoas+ - Minha area do colaborador, real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_7 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -36,6 +36,20 @@
                             <li><i class="{{ t.icone }} pp-lista-icone" aria-hidden="true"></i><div class="pp-lista-texto"><strong>{{ t.titulo }}</strong><span>{{ t.total_itens }} {{ t.total_itens == 1 ? 'item' : 'itens' }} · ciência em {{ t.ciencia_data }}</span></div><span class="pp-selo pp-tom-{{ t.tom }}">{{ t.situacao_rotulo }}</span><a class="pp-botao is-compacto" href="{{ t.url_comprovante }}" target="_blank" rel="noopener">Comprovante</a></li>
                         {% endfor %}
                     </ul>
+                </section>
+            {% endif %}
+
+            {% if d.admissao|length > 0 %}
+                {# BM.8-1a (D-89/D-99): documentos de admissao, enviados pelo proprio colaborador #}
+                <link rel="stylesheet" href="{{ d.css_admissao }}">
+                <section class="pp-cartao" id="pp-admissao">
+                    <header class="pp-cartao-cabecalho"><h2>Documentos de admissão</h2><span class="pp-contagem">{{ d.admissao_resumo.pendentes }}</span></header>
+                    {% if d.admissao_resumo.pendentes == 0 and d.admissao_resumo.aguardando == 0 %}
+                        <p class="pp-nota">Tudo entregue. {{ d.admissao_resumo.aceitos }} documento{{ d.admissao_resumo.aceitos == 1 ? '' : 's' }} aceito{{ d.admissao_resumo.aceitos == 1 ? '' : 's' }} pelo RH.</p>
+                    {% else %}
+                        <p class="pp-nota">Envie cada documento pedido pelo RH (PDF ou foto). Só você e o RH veem esses arquivos. Documento recusado mostra o motivo e pede um novo envio.</p>
+                    {% endif %}
+                    {{ include('@pessoasplus/casca/_admissao_docs.html.twig', {docs: d.admissao, modo: 'colaborador', url_envio: d.url_admissao_envio, url_acao: '', origem: 'minha_area', csrf: csrf_token(), limite_mb: d.admissao_limite_mb, extensoes: d.admissao_extensoes}) }}
                 </section>
             {% endif %}
 

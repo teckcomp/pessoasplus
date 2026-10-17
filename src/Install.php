@@ -9,6 +9,7 @@
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM2
  * PESSOASPLUS_BUILD_BM4_17 (D-97 bilhetes, D-98 divulgar_qr, T-100 participacoes sem id)
+ * PESSOASPLUS_BUILD_BM8_1 (D-89/D-99 admissao_tipos, admissao_docs, pasta propria)
  * PESSOASPLUS_BUILD_BM2_2
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM4
@@ -76,6 +77,8 @@ final class Install
         'glpi_plugin_pessoasplus_participacoes',
         'glpi_plugin_pessoasplus_limites',
         'glpi_plugin_pessoasplus_bilhetes',
+        'glpi_plugin_pessoasplus_admissao_tipos',
+        'glpi_plugin_pessoasplus_admissao_docs',
         'glpi_plugin_pessoasplus_cautela_termos',
         'glpi_plugin_pessoasplus_cautela_itens',
         'glpi_plugin_pessoasplus_cautela_conferencias',
@@ -667,6 +670,56 @@ final class Install
             ) $fim");
         }
 
+        // BM.8-1a (D-89, D-99): documentos de admissao em tabelas e pasta proprias do plugin.
+        $tabela = 'glpi_plugin_pessoasplus_admissao_tipos';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `nome` varchar(150) NOT NULL DEFAULT '',
+                `descricao` varchar(500) NOT NULL DEFAULT '',
+                `vinculos` varchar(200) NOT NULL DEFAULT '*',
+                `obrigatorio` tinyint NOT NULL DEFAULT '1',
+                `is_active` tinyint NOT NULL DEFAULT '1',
+                `ordem` int NOT NULL DEFAULT '0',
+                PRIMARY KEY (`id`),
+                KEY `ativo` (`is_active`,`ordem`)
+            ) $fim");
+        }
+        $tabela = 'glpi_plugin_pessoasplus_admissao_docs';
+        if (!$DB->tableExists($tabela)) {
+            $migration->displayMessage("Criando $tabela");
+            $DB->doQuery("CREATE TABLE `$tabela` (
+                `id` int unsigned NOT NULL AUTO_INCREMENT,
+                `plugin_pessoasplus_colaboradores_id` int unsigned NOT NULL DEFAULT '0',
+                `plugin_pessoasplus_admissao_tipos_id` int unsigned NOT NULL DEFAULT '0',
+                `titulo` varchar(150) NOT NULL DEFAULT '',
+                `situacao` varchar(20) NOT NULL DEFAULT 'pendente',
+                `arquivo` varchar(255) NOT NULL DEFAULT '',
+                `nome_original` varchar(255) NOT NULL DEFAULT '',
+                `sha256` char(64) NOT NULL DEFAULT '',
+                `tamanho` int unsigned NOT NULL DEFAULT '0',
+                `enviado_em` datetime DEFAULT NULL,
+                `users_id_envio` int unsigned NOT NULL DEFAULT '0',
+                `avaliado_em` datetime DEFAULT NULL,
+                `users_id_avaliacao` int unsigned NOT NULL DEFAULT '0',
+                `motivo` varchar(500) NOT NULL DEFAULT '',
+                `date_creation` timestamp NULL DEFAULT NULL,
+                `date_mod` timestamp NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `colaborador` (`plugin_pessoasplus_colaboradores_id`,`situacao`),
+                KEY `situacao` (`situacao`)
+            ) $fim");
+        }
+        if (!$DB->fieldExists($tabela, 'titulo')) { // avulso com titulo livre (D-100)
+            $DB->doQuery("ALTER TABLE `$tabela` ADD `titulo` varchar(150) NOT NULL DEFAULT '' AFTER `plugin_pessoasplus_admissao_tipos_id`");
+        }
+        AdmissaoTipo::semear();
+        $pastaAdmissao = GLPI_PLUGIN_DOC_DIR . '/' . AdmissaoDoc::PASTA;
+        if (!is_dir($pastaAdmissao)) {
+            @mkdir($pastaAdmissao, 0750, true);
+        }
+
         // Ouvidoria: as quatro portas nascem abertas (idempotente).
         Formulario::semearOuvidoria($DB);
 
@@ -730,6 +783,11 @@ final class Install
             if ($DB->tableExists($tabela)) {
                 $DB->doQuery("DROP TABLE `$tabela`");
             }
+        }
+        // BM.8-1a: os arquivos de admissao sao do plugin (D-99); saem com ele.
+        $pastaAdmissao = GLPI_PLUGIN_DOC_DIR . '/' . AdmissaoDoc::PASTA;
+        if (is_dir($pastaAdmissao)) {
+            \Toolbox::deleteDir($pastaAdmissao);
         }
 
         return true;

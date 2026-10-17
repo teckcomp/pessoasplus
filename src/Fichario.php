@@ -5,6 +5,8 @@
  *
  * PESSOASPLUS_BUILD_BM1
  *
+ * PESSOASPLUS_BUILD_BM8_1 (lixeira, T-97)
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -41,7 +43,15 @@ final class Fichario
             'setor'    => max(0, (int) ($get['setor'] ?? 0)),
             'situacao' => isset(Colaborador::SITUACOES[$situacao]) ? $situacao : '',
             'vinculo'  => isset(Colaborador::VINCULOS[$vinculo]) ? $vinculo : '',
+            // BM.8-1c (T-97): lixeira so para quem gerencia; o filtro nunca "some" (T-10).
+            'lixeira'  => (string) ($get['lixeira'] ?? '') === '1' && Permissoes::gerencia('fichario'),
         ];
+    }
+
+    /** Quantas fichas estao na lixeira (so quem gerencia ve o numero). */
+    public static function naLixeira(): int
+    {
+        return Permissoes::gerencia('fichario') ? countElementsInTable(Colaborador::getTable(), ['is_deleted' => 1]) : 0;
     }
 
     /**
@@ -74,7 +84,7 @@ final class Fichario
         global $DB;
 
         $tabela = Colaborador::getTable();
-        $where  = ["$tabela.is_deleted" => 0];
+        $where  = ["$tabela.is_deleted" => !empty($filtros['lixeira']) ? 1 : 0];
 
         $escopo = self::escopo();
         if (!$escopo['tudo']) {

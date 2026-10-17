@@ -1,0 +1,48 @@
+{# Pessoas+ - lista de documentos de admissao (BM.8-1a, D-89/D-90/D-99). PESSOASPLUS_BUILD_BM8_1
+   Recebe: docs (AdmissaoDoc::doColaborador), modo ('colaborador' | 'rh'), url_envio, url_acao, origem, csrf, limite_mb, extensoes #}
+<ul class="pp-adm-lista">
+    {% for doc in docs %}
+        <li class="pp-adm-item is-{{ doc.situacao }}">
+            <i class="{{ doc.icone }} pp-adm-icone" aria-hidden="true"></i>
+            <div class="pp-adm-corpo">
+                <div class="pp-adm-titulo"><strong>{{ doc.tipo }}</strong>{% if doc.obrigatorio %}<span class="pp-selo pp-tom-neutro">obrigatório</span>{% endif %}{% if doc.avulso %}<span class="pp-selo pp-tom-neutro">avulso</span>{% endif %}<span class="pp-selo pp-tom-{{ doc.tom }}">{{ doc.situacao_rotulo }}</span></div>
+                {% if doc.descricao != '' and doc.situacao == 'pendente' %}<span class="pp-adm-desc">{{ doc.descricao }}</span>{% endif %}
+                {% if doc.tem_arquivo %}
+                    <span class="pp-adm-meta"><a href="{{ doc.url_arquivo }}" target="_blank" rel="noopener"><i class="ti ti-eye" aria-hidden="true"></i> {{ doc.nome_original }}</a> · {{ doc.tamanho_legivel }} · enviado em {{ doc.enviado_em }}{% if modo == 'rh' %} · <code class="pp-adm-hash" title="SHA-256 do arquivo">{{ doc.sha256|slice(0, 12) }}…</code>{% endif %}</span>
+                {% endif %}
+                {% if doc.situacao == 'recusado' %}<span class="pp-adm-motivo"><i class="ti ti-message-circle" aria-hidden="true"></i> <strong>Motivo da recusa:</strong> {{ doc.motivo }}{% if doc.avaliado_por != '' %} <em>({{ doc.avaliado_por }}, {{ doc.avaliado_em }})</em>{% endif %}</span>{% endif %}
+                {% if doc.situacao == 'aceito' and doc.avaliado_em != '' %}<span class="pp-adm-meta">conferido por {{ doc.avaliado_por }} em {{ doc.avaliado_em }}{% if doc.motivo != '' %} · {{ doc.motivo }}{% endif %}</span>{% endif %}
+                {% if doc.situacao == 'dispensado' %}<span class="pp-adm-meta">dispensado por {{ doc.avaliado_por }} em {{ doc.avaliado_em }}{% if doc.motivo != '' %} · {{ doc.motivo }}{% endif %}</span>{% endif %}
+
+                {% if doc.aceita_envio %}
+                    <form method="post" action="{{ url_envio }}" enctype="multipart/form-data" class="pp-adm-envio">
+                        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                        <input type="hidden" name="id" value="{{ doc.id }}">
+                        <input type="hidden" name="origem" value="{{ origem }}">
+                        <input type="file" name="arquivo" accept="{{ extensoes }}" required>
+                        <button type="submit" class="pp-botao is-compacto is-primario"><i class="ti ti-upload" aria-hidden="true"></i><span>Enviar</span></button>
+                        <small class="pp-dica">PDF ou foto (JPG, PNG, WEBP), até {{ limite_mb }} MB.</small>
+                    </form>
+                {% endif %}
+
+                {% if modo == 'rh' and doc.situacao in ['enviado', 'pendente', 'recusado', 'dispensado'] %}
+                    <form method="post" action="{{ url_acao }}" class="pp-adm-acao">
+                        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
+                        <input type="hidden" name="id" value="{{ doc.id }}">
+                        {% if doc.situacao == 'enviado' %}
+                            <input type="text" name="motivo" maxlength="500" placeholder="Motivo (obrigatório na recusa)" class="pp-adm-motivo-campo">
+                            <button type="submit" name="acao" value="aceitar" class="pp-botao is-compacto is-primario"><i class="ti ti-check" aria-hidden="true"></i><span>Aceitar</span></button>
+                            <button type="submit" name="acao" value="recusar" class="pp-botao is-compacto is-perigo"><i class="ti ti-x" aria-hidden="true"></i><span>Recusar</span></button>
+                            <button type="submit" name="acao" value="dispensar" class="pp-botao is-compacto"><span>Dispensar</span></button>
+                        {% elseif doc.situacao == 'dispensado' %}
+                            <button type="submit" name="acao" value="reabrir" class="pp-botao is-compacto"><i class="ti ti-rotate" aria-hidden="true"></i><span>Voltar a pendente</span></button>
+                        {% else %}
+                            <input type="text" name="motivo" maxlength="500" placeholder="Motivo (opcional)" class="pp-adm-motivo-campo">
+                            <button type="submit" name="acao" value="dispensar" class="pp-botao is-compacto"><span>Dispensar</span></button>
+                        {% endif %}
+                    </form>
+                {% endif %}
+            </div>
+        </li>
+    {% endfor %}
+</ul>

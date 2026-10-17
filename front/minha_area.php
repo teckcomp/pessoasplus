@@ -13,6 +13,8 @@
  * Pendencias de ciencia, normativas vigentes e comprovantes, nas duas
  * interfaces. Ferias, pesquisas e tarefas ficam para depois de 13/10 (D-74).
  *
+ * PESSOASPLUS_BUILD_BM8_1 (documentos de admissao)
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -22,6 +24,7 @@ use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Cautela;
 use GlpiPlugin\Pessoasplus\Colaborador;
 use GlpiPlugin\Pessoasplus\Conferencia;
+use GlpiPlugin\Pessoasplus\AdmissaoDoc;
 use GlpiPlugin\Pessoasplus\Comunicado;
 use GlpiPlugin\Pessoasplus\Formulario;
 use GlpiPlugin\Pessoasplus\Menu;
@@ -43,6 +46,13 @@ $dados = [
     'conferencias' => Conferencia::abertasPara($uid),
     'ficha'       => $ficha === null ? null : $ficha->paraTela(),
     'registros'   => [],
+    // BM.8-1a (D-89): documentos de admissao da propria ficha, enviados daqui (nas duas interfaces).
+    'admissao'    => $ficha === null ? [] : AdmissaoDoc::doColaborador((int) $ficha->getID()),
+    'admissao_resumo' => $ficha === null ? null : AdmissaoDoc::resumo((int) $ficha->getID()),
+    'url_admissao_envio' => Pagina::url('/plugins/pessoasplus/front/admissao_envio.php'),
+    'admissao_limite_mb' => (int) (AdmissaoDoc::LIMITE_BYTES / 1024 / 1024),
+    'admissao_extensoes' => '.' . implode(',.', AdmissaoDoc::EXTENSOES),
+    'css_admissao' => Pagina::url('/plugins/pessoasplus/admissao.css') . '?v=bm8-1',
     'url_ficha'   => $ficha === null || Session::getCurrentInterface() === 'helpdesk' ? '' : Pagina::url(Colaborador::getFormURLWithID((int) $ficha->getID(), false)),
 ];
 

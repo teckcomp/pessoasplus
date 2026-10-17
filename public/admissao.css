@@ -1,0 +1,36 @@
+/* Pessoas+ - documentos de admissao (BM.8-1a). Prefixo pp-adm-. */
+.pp-casca .pp-adm-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pp-casca .pp-adm-item { display: flex; gap: 12px; padding: 12px 14px; border: 1px solid var(--pp-borda); border-radius: 10px; background: var(--pp-superficie); }
+.pp-casca .pp-adm-item.is-pendente { border-left: 4px solid var(--pp-alerta); }
+.pp-casca .pp-adm-item.is-enviado { border-left: 4px solid var(--pp-info); }
+.pp-casca .pp-adm-item.is-aceito { border-left: 4px solid var(--pp-ok); }
+.pp-casca .pp-adm-item.is-recusado { border-left: 4px solid var(--pp-atraso); }
+.pp-casca .pp-adm-item.is-dispensado { border-left: 4px solid var(--pp-neutro); opacity: 0.8; }
+.pp-casca .pp-adm-icone { font-size: 1.4rem; color: var(--pp-texto-2); margin-top: 2px; }
+.pp-casca .pp-adm-corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pp-casca .pp-adm-titulo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pp-casca .pp-adm-desc, .pp-casca .pp-adm-meta { font-size: 0.85rem; color: var(--pp-texto-2); }
+.pp-casca .pp-adm-meta a { color: var(--pp-acento); font-weight: 600; }
+.pp-casca .pp-adm-hash { font-size: 0.75rem; }
+.pp-casca .pp-adm-motivo { font-size: 0.9rem; padding: 8px 10px; background: var(--pp-atraso-fundo); color: var(--pp-atraso); border-radius: 8px; }
+.pp-casca .pp-adm-envio, .pp-casca .pp-adm-acao { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pp-casca .pp-adm-envio input[type=file] { font-size: 0.85rem; max-width: 100%; }
+.pp-casca .pp-adm-motivo-campo { flex: 1 1 220px; min-height: 36px; padding: 0 10px; border: 1px solid var(--pp-borda); border-radius: 8px; font-size: 0.9rem; }
+.pp-casca .pp-adm-resumo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.pp-casca .pp-adm-tabela td { vertical-align: top; }
+.pp-casca .pp-adm-tabela .is-estreita { width: 1%; white-space: nowrap; }
+.pp-casca .pp-adm-tabela tr.is-inativo { opacity: 0.6; }
+.pp-casca .pp-adm-num { width: 64px; min-height: 36px; padding: 0 8px; border: 1px solid var(--pp-borda); border-radius: 8px; }
+.pp-casca .pp-adm-nome, .pp-casca .pp-adm-desc-campo { width: 100%; min-height: 36px; padding: 0 10px; border: 1px solid var(--pp-borda); border-radius: 8px; font-size: 0.9rem; }
+.pp-casca input.pp-adm-desc-campo { margin-top: 6px; font-size: 0.82rem; }
+.pp-casca .pp-adm-vinculos { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.85rem; }
+.pp-casca .pp-adm-vinculos label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.pp-casca .pp-adm-acoes { white-space: nowrap; }
+.pp-casca .pp-adm-acoes .pp-botao + .pp-botao { margin-left: 6px; }
+.pp-casca .pp-cartao-acoes { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+.pp-casca .pp-adm-lixeira { background: var(--pp-atraso-fundo); border: 1px solid var(--pp-atraso); color: var(--pp-atraso); border-radius: 10px; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.pp-casca .pp-adm-lixeira .pp-botao { margin-left: auto; }
+.pp-casca .pp-adm-avulso { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--pp-borda); }
+.pp-casca .pp-adm-avulso label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.pp-casca .pp-adm-avulso select, .pp-casca .pp-adm-avulso input[type=text] { min-height: 36px; padding: 0 10px; border: 1px solid var(--pp-borda); border-radius: 8px; min-width: 320px; }
+.pp-casca .pp-adm-avulso .pp-dica { flex-basis: 100%; }

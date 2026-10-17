@@ -10,6 +10,8 @@
  * gere (D-36); colaborador sem nenhum dos dois cai na propria pasta.
  * Filtros por GET (busca, setor, situacao, vinculo): o link funciona sem JS.
  *
+ * PESSOASPLUS_BUILD_BM8_1 (lixeira; atalho para documentos de admissao)
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -57,6 +59,9 @@ $dados = [
     'url_nova'  => Pagina::url(Colaborador::getFormURL(false)),
     'escopo'    => Fichario::escopo(),
     'filtrado'  => $filtros['busca'] !== '' || $filtros['setor'] > 0 || $filtros['situacao'] !== '' || $filtros['vinculo'] !== '',
+    'lixeira'   => $filtros['lixeira'],
+    'na_lixeira' => Fichario::naLixeira(),
+    'url_tipos_admissao' => Pagina::url('/plugins/pessoasplus/front/admissao_tipos.php'),
     'cartao_css' => Pagina::url('/plugins/pessoasplus/fichario_cartao.css') . '?v=bm1-4',
 ];
 

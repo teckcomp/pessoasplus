@@ -4,6 +4,7 @@
  * Pessoas+ - aviso ao entrar e lembretes durante a sessao (D-49).
  *
  * PESSOASPLUS_BUILD_BM4_17 (D-97: pesquisas pendentes no aviso ao entrar)
+ * PESSOASPLUS_BUILD_BM8_1 (documentos de admissao pendentes no aviso)
  * PESSOASPLUS_BUILD_BP1
  * PESSOASPLUS_BUILD_BP2D
  * PESSOASPLUS_BUILD_BP3B
@@ -94,6 +95,13 @@ final class Aviso
             $restam = $fim !== '' ? (int) floor((strtotime($fim) - strtotime(date('Y-m-d', $agora))) / 86400) : -1;
             $urgente = $restam >= 0 && $restam <= 2;
             $itens[] = ['id' => 0, 'titulo' => $q['titulo'], 'detalhe' => 'Pesquisa · ' . $q['modo_rotulo'] . ' · ' . $q['periodo'] . ($q['modo'] === 'anonimo' ? ' · respostas não ficam ligadas a você' : ''), 'selo' => $urgente ? ($restam === 0 ? 'Último dia' : 'Encerra em ' . $restam . ($restam === 1 ? ' dia' : ' dias')) : 'Responder', 'tom' => $urgente ? 'alerta' : 'info'];
+        }
+        // BM.8-1a (D-89): documentos de admissao pendentes ou recusados da propria ficha.
+        $adm = \GlpiPlugin\Pessoasplus\AdmissaoDoc::doUsuario($uid);
+        $pend = array_filter($adm, static fn ($d) => $d['situacao'] === 'pendente');
+        if ($pend !== []) {
+            $n = count($pend);
+            $itens[] = ['id' => 0, 'titulo' => 'Documentos de admissão', 'detalhe' => $n . ($n === 1 ? ' documento para enviar' : ' documentos para enviar') . ' pela Minha área', 'selo' => 'Enviar', 'tom' => 'alerta'];
         }
         $total = count($itens);
         $conteudo = [

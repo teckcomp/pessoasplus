@@ -5,6 +5,8 @@
  *
  * PESSOASPLUS_BUILD_BM1
  *
+ * PESSOASPLUS_BUILD_BM8_1 (pendencias de admissao ao criar e ao mudar o vinculo; purga apaga os arquivos)
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -271,6 +273,8 @@ final class Colaborador extends CommonDBTM
             'situacao' => $this->fields['situacao'],
             'users_id' => (int) $this->fields['users_id'],
         ]);
+        // BM.8-1a (D-89): toda ficha nova recebe as pendencias de documento do seu vinculo.
+        AdmissaoDoc::gerarPendencias($this);
     }
 
     public function post_updateItem($history = true)
@@ -292,11 +296,27 @@ final class Colaborador extends CommonDBTM
             ? 'ficha_vinculada'
             : 'ficha_alterada';
         Evento::registrar('fichario', $acao, $this, (int) $this->getID(), ['campos' => $mudancas]);
+        // BM.8-1a: vinculo novo pode exigir documentos novos; so acrescenta o que falta.
+        if (isset($mudancas['vinculo'])) {
+            AdmissaoDoc::gerarPendencias($this);
+        }
     }
 
     public function post_deleteItem()
     {
         Evento::registrar('fichario', 'ficha_excluida', $this, (int) $this->getID(), ['nome' => $this->fields['nome']]);
+    }
+
+    /** BM.8-1c (T-97): purga definitiva apaga os arquivos de admissao (D-99); a trilha de eventos fica. */
+    public function post_purgeItem()
+    {
+        $n = AdmissaoDoc::purgarDaFicha((int) $this->getID());
+        Evento::registrar('fichario', 'ficha_purgada', null, (int) $this->getID(), ['nome' => $this->fields['nome'], 'arquivos_admissao' => $n]);
+    }
+
+    public function post_restoreItem()
+    {
+        Evento::registrar('fichario', 'ficha_restaurada', $this, (int) $this->getID(), ['nome' => $this->fields['nome']]);
     }
 
     // ----------------------------------------------------------------- consultas

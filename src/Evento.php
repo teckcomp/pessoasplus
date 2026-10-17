@@ -45,6 +45,14 @@ final class Evento extends CommonDBTM
         'ficha_alterada'     => 'Ficha alterada',
         'ficha_vinculada'    => 'Ficha ligada a um usuário do GLPI',
         'ficha_excluida'     => 'Ficha excluída',
+        'ficha_restaurada'   => 'Ficha restaurada da lixeira', // BM.8-1c
+        'ficha_purgada'      => 'Ficha excluída definitivamente', // BM.8-1c
+        'admissao_pendencias' => 'Documentos de admissão: pendências geradas', // BM.8-1a
+        'admissao_enviado'   => 'Documento de admissão enviado',
+        'admissao_aceito'    => 'Documento de admissão aceito',
+        'admissao_recusado'  => 'Documento de admissão recusado',
+        'admissao_dispensado' => 'Documento de admissão dispensado',
+        'admissao_pendente'  => 'Documento de admissão reaberto',
         'publico_criado'     => 'Público criado',
         'publico_alterado'   => 'Público alterado',
         'publico_excluido'   => 'Público excluído',

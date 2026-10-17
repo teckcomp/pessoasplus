@@ -1,0 +1,59 @@
+{# Pessoas+ - documentos de admissao por vinculo (BM.8-1a, D-89). Usa pp.dados (front/admissao_tipos.php). PESSOASPLUS_BUILD_BM8_1 #}
+{% extends '@pessoasplus/casca/base.html.twig' %}
+
+{% block acoes %}
+    <a class="pp-botao" href="{{ pp.dados.url_fichario }}"><i class="ti ti-arrow-left" aria-hidden="true"></i><span>Fichário</span></a>
+{% endblock %}
+
+{% block conteudo %}
+    {% set d = pp.dados %}
+    {% set csrf = csrf_token() %}
+    <link rel="stylesheet" href="{{ d.css_admissao }}">
+    <p class="pp-nota">Cada ficha nova recebe uma pendência por documento ativo do seu vínculo; mudar o vínculo acrescenta o que faltar. Desativar um documento não apaga pendências já geradas. Nada de saúde aqui (ASO, atestado, laudo): esses dados não entram no plugin (D-66).</p>
+
+    <div class="pp-cartao">
+        <div class="pp-tabela-rolagem">
+            <table class="pp-tabela pp-adm-tabela">
+                <thead><tr><th scope="col" class="is-estreita">Ordem</th><th scope="col">Documento</th><th scope="col">Vínculos</th><th scope="col" class="is-estreita">Obrigatório</th><th scope="col" class="is-estreita">Ativo</th>{% if d.gerencia %}<th scope="col" class="is-estreita">Ações</th>{% endif %}</tr></thead>
+                <tbody>
+                {% for t in d.tipos %}
+                    <tr{% if not t.ativo %} class="is-inativo"{% endif %}>
+                        {% if d.gerencia %}
+                        <form method="post" action="{{ d.url_aqui }}" id="pp-tipo-{{ t.id }}"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}"><input type="hidden" name="id" value="{{ t.id }}"></form>
+                        <td><input form="pp-tipo-{{ t.id }}" type="number" name="ordem" value="{{ t.ordem }}" min="0" class="pp-adm-num"></td>
+                        <td><input form="pp-tipo-{{ t.id }}" type="text" name="nome" value="{{ t.nome }}" maxlength="150" required class="pp-adm-nome"><input form="pp-tipo-{{ t.id }}" type="text" name="descricao" value="{{ t.descricao }}" maxlength="500" placeholder="Orientação curta para quem envia" class="pp-adm-desc-campo"></td>
+                        <td>
+                            <div class="pp-adm-vinculos">
+                                <label><input form="pp-tipo-{{ t.id }}" type="checkbox" name="vinculos[]" value="*"{% if t.vinculos == '*' %} checked{% endif %}> Todos</label>
+                                {% for v in d.vinculos %}<label><input form="pp-tipo-{{ t.id }}" type="checkbox" name="vinculos[]" value="{{ v.chave }}"{% if v.chave in t.vinculos_lista %} checked{% endif %}> {{ v.rotulo }}</label>{% endfor %}
+                            </div>
+                        </td>
+                        <td><input form="pp-tipo-{{ t.id }}" type="hidden" name="obrigatorio" value="0"><input form="pp-tipo-{{ t.id }}" type="checkbox" name="obrigatorio" value="1"{% if t.obrigatorio %} checked{% endif %}></td>
+                        <td><input form="pp-tipo-{{ t.id }}" type="hidden" name="is_active" value="0"><input form="pp-tipo-{{ t.id }}" type="checkbox" name="is_active" value="1"{% if t.ativo %} checked{% endif %}></td>
+                        <td class="pp-adm-acoes"><button form="pp-tipo-{{ t.id }}" type="submit" name="update" value="1" class="pp-botao is-compacto is-primario" title="Salvar"><i class="ti ti-device-floppy" aria-hidden="true"></i></button><button form="pp-tipo-{{ t.id }}" type="submit" name="purge" value="1" class="pp-botao is-compacto is-perigo" title="Excluir" data-pp-confirmar="Excluir o documento '{{ t.nome }}'? Só é possível quando nenhuma ficha o usa."><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+                        {% else %}
+                        <td>{{ t.ordem }}</td>
+                        <td><strong>{{ t.nome }}</strong>{% if t.descricao != '' %}<br><small>{{ t.descricao }}</small>{% endif %}</td>
+                        <td>{{ t.vinculos_rotulo }}</td>
+                        <td>{{ t.obrigatorio ? 'Sim' : 'Não' }}</td>
+                        <td>{{ t.ativo ? 'Sim' : 'Não' }}</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                {% if d.gerencia %}
+                    <tr class="pp-adm-nova">
+                        <form method="post" action="{{ d.url_aqui }}" id="pp-tipo-novo"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}"></form>
+                        <td><input form="pp-tipo-novo" type="number" name="ordem" value="{{ d.tipos|length + 1 }}" min="0" class="pp-adm-num"></td>
+                        <td><input form="pp-tipo-novo" type="text" name="nome" placeholder="Novo documento" maxlength="150" required class="pp-adm-nome"><input form="pp-tipo-novo" type="text" name="descricao" placeholder="Orientação curta para quem envia" maxlength="500" class="pp-adm-desc-campo"></td>
+                        <td><div class="pp-adm-vinculos"><label><input form="pp-tipo-novo" type="checkbox" name="vinculos[]" value="*" checked> Todos</label>{% for v in d.vinculos %}<label><input form="pp-tipo-novo" type="checkbox" name="vinculos[]" value="{{ v.chave }}"> {{ v.rotulo }}</label>{% endfor %}</div></td>
+                        <td><input form="pp-tipo-novo" type="hidden" name="obrigatorio" value="0"><input form="pp-tipo-novo" type="checkbox" name="obrigatorio" value="1" checked></td>
+                        <td><input form="pp-tipo-novo" type="hidden" name="is_active" value="0"><input form="pp-tipo-novo" type="checkbox" name="is_active" value="1" checked></td>
+                        <td class="pp-adm-acoes"><button form="pp-tipo-novo" type="submit" name="add" value="1" class="pp-botao is-compacto is-primario"><i class="ti ti-plus" aria-hidden="true"></i><span>Incluir</span></button></td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% if d.gerencia %}<p class="pp-nota">Marcar "Todos" ignora os demais vínculos. Cada linha salva separadamente.</p>{% endif %}
+    </div>
+{% endblock %}

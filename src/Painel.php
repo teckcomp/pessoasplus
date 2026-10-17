@@ -10,6 +10,8 @@
  * (Permissoes::filtrarPainel) e 'url' para abrir o que o item descreve.
  * Nada de notificacao ativa: o painel e o lugar que o RH abre e ve tudo.
  *
+ * PESSOASPLUS_BUILD_BM8_1 (indicador e alertas de documentos de admissao)
+ *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
  */
@@ -50,6 +52,13 @@ final class Painel
             $pre[] = $c;
         }
         $afastados = countElementsInTable(Colaborador::getTable(), ['is_deleted' => 0, 'situacao' => 'afastado']);
+        // BM.8-1a (D-89): documentos de admissao aguardando conferencia do RH.
+        $aguardando = AdmissaoDoc::aguardandoConferencia();
+        $totalAguardando = array_sum(array_map(static fn ($a) => (int) $a['total'], $aguardando));
+        $ind[] = self::indicador('Documentos de admissão', (string) $totalAguardando, $totalAguardando === 0 ? 'nenhum aguardando conferência' : 'aguardando conferência em ' . count($aguardando) . (count($aguardando) === 1 ? ' ficha' : ' fichas'), 'ti ti-file-search', $totalAguardando > 0 ? 'alerta' : 'ok', 'fichario', $base . 'fichario.php');
+        foreach ($aguardando as $a) {
+            $alertas[] = self::alerta('alerta', 'Admissão · ' . $a['nome'], (int) $a['total'] . ((int) $a['total'] === 1 ? ' documento enviado aguarda conferência' : ' documentos enviados aguardam conferência'), 'fichario', 'desde ' . self::data(substr((string) $a['desde'], 0, 10)), $base . 'colaborador.form.php?id=' . (int) $a['ficha'] . '&aba=documentos');
+        }
         $ind[] = self::indicador('Colaboradores ativos', (string) $ativos, (count($pre) > 0 ? count($pre) . (count($pre) === 1 ? ' pré-cadastro' : ' pré-cadastros') : 'nenhum pré-cadastro') . ($afastados > 0 ? ' · ' . $afastados . ' afastado' . ($afastados > 1 ? 's' : '') : ''), 'ti ti-users', 'neutro', 'fichario', $base . 'fichario.php');
         foreach ($pre as $c) {
             $di = (string) ($c['data_inicio'] ?? '');

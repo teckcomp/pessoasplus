@@ -3,6 +3,8 @@
 /**
  * Pessoas+ - pasta do colaborador (BM.1): capa, Dados, Documentos e Historico.
  *
+ * PESSOASPLUS_BUILD_BM8_1 (admissao na aba Documentos; lixeira: restaurar/purgar, T-97; D-100 sem Document nativo)
+ *
  * PESSOASPLUS_BUILD_BM1
  * PESSOASPLUS_BUILD_BM1_2
  * PESSOASPLUS_BUILD_BM1_3 (D-84: foto da capa pela pasta; foto_cheia, url_foto, foto.css/js)
@@ -18,6 +20,7 @@
  */
 
 use Glpi\Application\View\TemplateRenderer;
+use GlpiPlugin\Pessoasplus\AdmissaoDoc;
 use GlpiPlugin\Pessoasplus\Cargo;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Cautela;
@@ -53,9 +56,21 @@ if (isset($_POST['add'])) {
 } elseif (isset($_POST['delete'])) {
     $colaborador->check((int) $_POST['id'], DELETE);
     if ($colaborador->delete($_POST)) {
-        Session::addMessageAfterRedirect('Ficha excluída.', false, INFO);
+        Session::addMessageAfterRedirect('Ficha enviada à lixeira. Pode ser restaurada ou excluída definitivamente pelo Fichário › Lixeira.', false, INFO);
     }
     Html::redirect($urlLista);
+} elseif (isset($_POST['restore'])) { // BM.8-1c (T-97)
+    $colaborador->check((int) $_POST['id'], DELETE);
+    if ($colaborador->restore($_POST)) {
+        Session::addMessageAfterRedirect('Ficha restaurada.', false, INFO);
+    }
+    Html::redirect(Pagina::url(Colaborador::getFormURLWithID((int) $_POST['id'], false)));
+} elseif (isset($_POST['purge'])) { // BM.8-1c (T-97): purga definitiva; vinculos do core e arquivos de admissao caem junto
+    $colaborador->check((int) $_POST['id'], PURGE);
+    if ($colaborador->delete($_POST, true)) {
+        Session::addMessageAfterRedirect('Ficha excluída definitivamente. A trilha de eventos fica.', false, INFO);
+    }
+    Html::redirect($urlLista . '?lixeira=1');
 }
 
 $id       = (int) ($_GET['id'] ?? 0);
@@ -87,7 +102,8 @@ if ($nova) {
     }
     $aba = 'dados';
 } else {
-    if (!$colaborador->getFromDB($id) || (int) $colaborador->fields['is_deleted'] === 1) {
+    // BM.8-1c: ficha na lixeira abre so para quem gerencia, com faixa e acoes de restaurar/purgar.
+    if (!$colaborador->getFromDB($id) || ((int) $colaborador->fields['is_deleted'] === 1 && !$gerencia)) {
         Session::addMessageAfterRedirect('Ficha não encontrada.', false, WARNING);
         Html::redirect($urlLista);
     }
@@ -108,16 +124,22 @@ if ((int) $ficha['users_id'] > 0) {
     }
 }
 
-$documentosHtml = '';
-$podeDocumentos = false;
+// BM.8-1a (D-89/D-99): documentos de admissao em tabela e pasta proprias, acima dos nativos.
+$admissao = null;
 if (!$nova && $aba === 'documentos') {
-    $podeDocumentos = Document::canView();
-    if ($podeDocumentos) {
-        ob_start();
-        Document_Item::showForItem($colaborador);
-        $documentosHtml = (string) ob_get_clean();
-    }
+    $admissao = [
+        'docs'      => AdmissaoDoc::doColaborador($id),
+        'resumo'    => AdmissaoDoc::resumo($id),
+        'gerencia'  => $gerencia,
+        'url_envio' => Pagina::url('/plugins/pessoasplus/front/admissao_envio.php'),
+        'url_acao'  => Pagina::url('/plugins/pessoasplus/front/admissao.php'),
+        'url_tipos' => Pagina::url('/plugins/pessoasplus/front/admissao_tipos.php'),
+        'limite_mb' => (int) (AdmissaoDoc::LIMITE_BYTES / 1024 / 1024),
+        'extensoes' => '.' . implode(',.', AdmissaoDoc::EXTENSOES),
+        'css'       => Pagina::url('/plugins/pessoasplus/admissao.css') . '?v=bm8-1',
+    ];
 }
+// D-100 (17/10/2026): documentos nativos do GLPI saem da pasta; todo documento do RH usa a pasta propria.
 
 $situacoes = [];
 foreach (Colaborador::SITUACOES as $chave => $par) {
@@ -152,8 +174,9 @@ $dados = [
     'grupos'          => $opcoes['grupos'],
     'usuarios'        => $opcoes['usuarios'],
     'gestores_json'   => json_encode($opcoes['gestores_por_grupo'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
-    'documentos_html' => $documentosHtml,
-    'pode_documentos' => $podeDocumentos,
+    'admissao'        => $admissao,
+    'na_lixeira'      => !$nova && (int) $colaborador->fields['is_deleted'] === 1,
+    'css_admissao'    => Pagina::url('/plugins/pessoasplus/admissao.css') . '?v=bm8-1',
     'eventos'         => $nova ? [] : Evento::doColaborador($id),
     // BM.6-1: aba Cautela: ativos do GLPI no nome da pessoa (V-13), itens em posse e termos.
     'cautela'         => $nova || $aba !== 'cautela' ? null : [
