@@ -4,6 +4,8 @@
  * Pessoas+ - motor de formularios (E7, D-58) e Ouvidoria (D-56, D-31, D-64), BM.4.
  *
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM4_9 (D-92: ranking completo das alternativas; previa do formulario)
+ * PESSOASPLUS_BUILD_BM4_11 (D-92, desenho B: visao geral da campanha por dia e por setor)
  * PESSOASPLUS_BUILD_BM4_5
  * PESSOASPLUS_BUILD_BM5
  *
@@ -15,6 +17,7 @@ namespace GlpiPlugin\Pessoasplus;
 
 use CommonDBTM;
 use DBmysql;
+use Group;
 use Session;
 
 /**
@@ -778,7 +781,7 @@ final class Formulario extends CommonDBTM
      * @param array<int, array<string, mixed>> $resultado  saida de resultado()
      * @param array{total: int, responderam: int}|null $cobranca
      *
-     * @return array{kpis: array<int, array{icone: string, valor: string, rotulo: string, detalhe: string, tom: string}>, top5: array<int, array{rotulo: string, total: int, percentual: int, pergunta: string}>}
+     * @return array{kpis: array<int, array{icone: string, valor: string, rotulo: string, detalhe: string, tom: string}>, top5: array<int, array{rotulo: string, total: int, percentual: int, pergunta: string}>, ranking: array<int, array{rotulo: string, total: int, percentual: int, pergunta: string}>}
      */
     public static function indicadores(array $resultado, ?array $cobranca, int $totalRespostas): array
     {
@@ -805,7 +808,9 @@ final class Formulario extends CommonDBTM
             }
         }
         usort($opcoes, static fn ($a, $b) => ($b['total'] <=> $a['total']) ?: strcmp($a['rotulo'], $b['rotulo']));
-        $top5 = array_values(array_filter(array_slice($opcoes, 0, 5), static fn ($o) => $o['total'] > 0));
+        // BM.4-9 (D-92): ranking completo (todas as alternativas com ao menos uma marcacao); o top 5 e a cabeca dele.
+        $ranking = array_values(array_filter($opcoes, static fn ($o) => $o['total'] > 0));
+        $top5 = array_slice($ranking, 0, 5);
 
         $kpis = [];
         $kpis[] = ['icone' => 'ti ti-inbox', 'valor' => (string) $totalRespostas, 'rotulo' => $totalRespostas === 1 ? 'Resposta' : 'Respostas', 'detalhe' => 'recebidas na campanha', 'tom' => 'info'];
@@ -829,7 +834,191 @@ final class Formulario extends CommonDBTM
             $kpis[] = ['icone' => 'ti ti-list-check', 'valor' => (string) $perguntas, 'rotulo' => $perguntas === 1 ? 'Pergunta' : 'Perguntas', 'detalhe' => 'na campanha', 'tom' => 'neutro'];
         }
 
-        return ['kpis' => array_slice($kpis, 0, 5), 'top5' => $top5];
+        return ['kpis' => array_slice($kpis, 0, 5), 'top5' => $top5, 'ranking' => $ranking];
+    }
+
+    /**
+     * Visao geral da campanha (BM.4-11, D-92, desenho B): indicadores da
+     * campanha inteira, respostas por dia e adesao por setor.
+     *
+     * Anonimato (D-31): "por dia" vem da coluna data das respostas, que no
+     * modo anonimo guarda so o dia; "por setor" vem da PARTICIPACAO (quem
+     * respondeu ou nao), nunca da resposta, igual a cobranca().
+     *
+     * @param array{total: int, responderam: int, faltam: array<int, string>}|null $cobranca  saida de cobranca(); null sem publico
+     * @param array<string, mixed> $tela  saida de paraTela()
+     *
+     * @return array{kpis: array<int, array<string, string>>, por_dia: array<int, array{rotulo: string, total: int}>, por_dia_semana: bool, por_setor: array<int, array{setor: string, responderam: int, total: int, percentual: int}>}
+     */
+    public function visaoGeral(?array $cobranca, array $tela, int $totalRespostas, string $hoje): array
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $formId = (int) $this->getID();
+
+        // --- respostas por dia
+        $porData = [];
+        $primeira = null;
+        $ultima = null;
+        foreach ($DB->request(['SELECT' => ['data'], 'FROM' => Resposta::getTable(), 'WHERE' => ['plugin_pessoasplus_formularios_id' => $formId]]) as $r) {
+            $d = substr((string) $r['data'], 0, 10);
+            if ($d === '' || $d === '0000-00-00') {
+                continue;
+            }
+            $porData[$d] = ($porData[$d] ?? 0) + 1;
+            $primeira = $primeira === null || $d < $primeira ? $d : $primeira;
+            $ultima = $ultima === null || $d > $ultima ? $d : $ultima;
+        }
+        $inicio = (string) ($tela['inicio'] ?? '');
+        $fim    = (string) ($tela['fim'] ?? '');
+        $de  = $inicio !== '' ? $inicio : ($primeira ?? $hoje);
+        $ate = ($fim !== '' && $fim < $hoje) ? $fim : $hoje;
+        if ($primeira !== null && $primeira < $de) {
+            $de = $primeira;
+        }
+        if ($ultima !== null && $ultima > $ate) {
+            $ate = $ultima;
+        }
+        if ($ate < $de) {
+            $ate = $de;
+        }
+        $porDia = [];
+        $semana = false;
+        $dias = (int) ((strtotime($ate) - strtotime($de)) / 86400) + 1;
+        if ($dias <= 31) {
+            for ($t = strtotime($de); $t <= strtotime($ate); $t += 86400) {
+                $d = date('Y-m-d', $t);
+                $porDia[] = ['rotulo' => date('d/m', $t), 'total' => (int) ($porData[$d] ?? 0)];
+            }
+        } else {
+            // Mais de um mes: agrupa por semana (segunda-feira como rotulo).
+            $semana = true;
+            $segunda = strtotime('monday this week', strtotime($de));
+            $fimT = strtotime($ate);
+            for ($t = $segunda; $t <= $fimT; $t += 7 * 86400) {
+                $soma = 0;
+                for ($k = 0; $k < 7; $k++) {
+                    $soma += (int) ($porData[date('Y-m-d', $t + $k * 86400)] ?? 0);
+                }
+                $porDia[] = ['rotulo' => date('d/m', $t), 'total' => $soma];
+            }
+        }
+
+        // --- adesao por setor (participacao x publico)
+        $porSetor = [];
+        if ($cobranca !== null && $cobranca['total'] > 0) {
+            $publico = Publico::resolverRegras($this->regrasDoPublico());
+            $ja = [];
+            foreach ($DB->request(['SELECT' => ['users_id'], 'FROM' => Participacao::getTable(), 'WHERE' => ['plugin_pessoasplus_formularios_id' => $formId]]) as $p) {
+                $ja[(int) $p['users_id']] = true;
+            }
+            $setorDe = [];
+            if ($publico !== []) {
+                foreach ($DB->request(['SELECT' => ['users_id', 'groups_id'], 'FROM' => Colaborador::getTable(), 'WHERE' => ['users_id' => $publico, 'is_deleted' => 0]]) as $c) {
+                    $setorDe[(int) $c['users_id']] = (int) $c['groups_id'];
+                }
+            }
+            $nomes = [];
+            $cont = [];
+            foreach ($publico as $uid) {
+                $gid = $setorDe[$uid] ?? 0;
+                if (!isset($nomes[$gid])) {
+                    $nome = 'Sem setor definido';
+                    if ($gid > 0) {
+                        $g = new Group();
+                        if ($g->getFromDB($gid)) {
+                            $nome = (string) $g->fields['completename'];
+                        }
+                    }
+                    $nomes[$gid] = $nome;
+                    $cont[$gid] = ['responderam' => 0, 'total' => 0];
+                }
+                $cont[$gid]['total']++;
+                if (isset($ja[$uid])) {
+                    $cont[$gid]['responderam']++;
+                }
+            }
+            foreach ($cont as $gid => $c) {
+                $porSetor[] = ['setor' => $nomes[$gid], 'responderam' => $c['responderam'], 'total' => $c['total'], 'percentual' => $c['total'] > 0 ? (int) round($c['responderam'] * 100 / $c['total']) : 0];
+            }
+            usort($porSetor, static fn ($a, $b) => ($b['total'] <=> $a['total']) ?: strcmp($a['setor'], $b['setor']));
+        }
+
+        // --- indicadores da campanha (desenho B)
+        $kpis = [];
+        $kpis[] = ['icone' => 'ti ti-inbox', 'valor' => (string) $totalRespostas, 'rotulo' => $totalRespostas === 1 ? 'Resposta' : 'Respostas', 'detalhe' => $cobranca !== null && $cobranca['total'] > 0 ? 'de ' . $cobranca['total'] . ' no público' : 'recebidas na campanha', 'tom' => 'info'];
+        if ($cobranca !== null && $cobranca['total'] > 0) {
+            $faltam = count($cobranca['faltam']);
+            $kpis[] = ['icone' => 'ti ti-user-exclamation', 'valor' => (string) $faltam, 'rotulo' => $faltam === 1 ? 'Falta responder' : 'Faltam responder', 'detalhe' => $faltam === 0 ? 'todo o público respondeu' : 'ver em Resumo › Quem ainda não respondeu', 'tom' => $faltam === 0 ? 'ok' : 'alerta'];
+        } else {
+            $kpis[] = ['icone' => 'ti ti-user-exclamation', 'valor' => '—', 'rotulo' => 'Faltam responder', 'detalhe' => 'público não definido', 'tom' => 'neutro'];
+        }
+        $estado = (string) ($tela['estado'] ?? '');
+        if ($estado === 'aberto' && $fim !== '') {
+            $rest = max(0, (int) round((strtotime($fim) - strtotime($hoje)) / 86400));
+            $kpis[] = ['icone' => 'ti ti-calendar-event', 'valor' => (string) $rest, 'rotulo' => $rest === 1 ? 'Dia restante' : 'Dias restantes', 'detalhe' => (string) ($tela['periodo'] ?? ''), 'tom' => $rest <= 2 ? 'alerta' : 'info'];
+        } elseif ($estado === 'aberto') {
+            $kpis[] = ['icone' => 'ti ti-calendar-event', 'valor' => '∞', 'rotulo' => 'Sem data de fim', 'detalhe' => 'aberta até encerrar', 'tom' => 'info'];
+        } else {
+            $kpis[] = ['icone' => 'ti ti-calendar-event', 'valor' => (string) ($tela['estado_rotulo'] ?? $estado), 'rotulo' => 'Situação', 'detalhe' => (string) ($tela['periodo'] ?? ''), 'tom' => (string) ($tela['estado_tom'] ?? 'neutro')];
+        }
+        $modo = (string) ($tela['modo'] ?? '');
+        $kpis[] = ['icone' => $modo === 'identificado' ? 'ti ti-user' : 'ti ti-incognito', 'valor' => (string) (self::MODOS[$modo] ?? $modo), 'rotulo' => 'Modo', 'detalhe' => $modo === 'identificado' ? 'resposta ligada ao usuário' : ($modo === 'anonimo' ? 'só o dia é gravado (D-31)' : 'quem responde escolhe'), 'tom' => 'neutro'];
+
+        return ['kpis' => $kpis, 'por_dia' => $porDia, 'por_dia_semana' => $semana, 'por_setor' => $porSetor];
+    }
+
+    /**
+     * Previa do formulario (BM.4-9, D-92): normaliza as perguntas vindas do
+     * editor (perguntas_json, ainda nao salvas) no mesmo formato de perguntas(),
+     * com as mesmas regras de salvarPerguntas(), sem gravar nada. O id e a
+     * posicao (1..n): serve so para o name dos campos da previa.
+     *
+     * @param array<int, mixed> $perguntas
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function previaPerguntas(array $perguntas): array
+    {
+        $saida = [];
+        foreach ($perguntas as $p) {
+            if (!is_array($p)) {
+                continue;
+            }
+            $tipo = (string) ($p['tipo'] ?? '');
+            $enunciado = mb_substr(trim((string) ($p['enunciado'] ?? '')), 0, 500);
+            if (!isset(self::TIPOS_PERGUNTA[$tipo]) || $enunciado === '') {
+                continue;
+            }
+            $opcoes = [];
+            if ($tipo === 'unica' || $tipo === 'multipla') {
+                $lista = is_array($p['opcoes'] ?? null) ? $p['opcoes'] : preg_split('/\r?\n/', (string) ($p['opcoes'] ?? ''));
+                foreach ($lista as $o) {
+                    $o = mb_substr(trim((string) $o), 0, 200);
+                    if ($o !== '') {
+                        $opcoes[] = $o;
+                    }
+                }
+                if (count($opcoes) < 2) {
+                    continue;
+                }
+            }
+            $escalaMax = in_array((int) ($p['escala_max'] ?? 5), [5, 10], true) ? (int) ($p['escala_max'] ?? 5) : 5;
+            $saida[] = [
+                'id'          => count($saida) + 1,
+                'tipo'        => $tipo,
+                'tipo_rotulo' => self::TIPOS_PERGUNTA[$tipo],
+                'enunciado'   => $enunciado,
+                'removida'    => false,
+                'opcoes'      => $opcoes,
+                'obrigatoria' => !empty($p['obrigatoria']),
+                'escala_max'  => $escalaMax,
+                'escala'      => range(1, $escalaMax),
+            ];
+        }
+
+        return $saida;
     }
 
     /**

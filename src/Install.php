@@ -14,6 +14,7 @@
  * PESSOASPLUS_BUILD_BM6
  * PESSOASPLUS_BUILD_BM6_2
  * PESSOASPLUS_BUILD_BM6_3
+ * PESSOASPLUS_BUILD_BM7_2
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -44,6 +45,14 @@ final class Install
      *
      * @var string[]
      */
+    /** BM.7-2: classes CommonDBTM do plugin, para o mapa tabela <-> classe do core (setup.php). */
+    public const CLASSES_COM_TABELA = [
+        Anexo::class, Cautela::class, CautelaItem::class, Ciencia::class, Colaborador::class,
+        Comunicado::class, Conferencia::class, Destinatario::class, Evento::class, Formulario::class,
+        Participacao::class, Pergunta::class, Publicacao::class, Publico::class, PublicoRegra::class,
+        Resposta::class, RespostaItem::class, Versao::class,
+    ];
+
     public const TABELAS = [
         'glpi_plugin_pessoasplus_empregadores',
         'glpi_plugin_pessoasplus_cargos',

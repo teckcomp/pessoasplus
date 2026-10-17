@@ -1,0 +1,36 @@
+/* Pessoas+ - resultado de pesquisa em abas e visao geral (BM.4-9, BM.4-11, D-92 desenho B). Arquivo proprio: nao sobrescreve pessoasplus.css. PESSOASPLUS_BUILD_BM4_9 PESSOASPLUS_BUILD_BM4_11 */
+
+/* Abas Resumo | Por pergunta | Geral | Respostas (mesmo desenho das abas de Chegadas) */
+.pp-casca .pp-res-abas { display: flex; gap: 4px; border-bottom: 1px solid var(--pp-borda); margin: -6px 0 16px; flex-wrap: wrap; }
+.pp-casca .pp-aba {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 14px; margin-bottom: -1px;
+    border: 1px solid transparent; border-radius: 8px 8px 0 0;
+    background: transparent; color: var(--pp-texto-2); font: inherit; font-weight: 500; cursor: pointer;
+}
+.pp-casca .pp-aba:hover { color: var(--pp-texto); background: var(--pp-fundo); }
+.pp-casca .pp-aba.is-ativa { color: var(--pp-acento-escuro); background: var(--pp-superficie); border-color: var(--pp-borda) var(--pp-borda) var(--pp-superficie); font-weight: 600; }
+.pp-casca .pp-aba-contagem { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: var(--pp-acento-claro); color: var(--pp-acento-escuro); font-size: .78rem; font-weight: 700; text-align: center; }
+.pp-casca .pp-aba-painel[hidden] { display: none; }
+
+/* Geral: indicadores da campanha em 4 colunas, dois cartoes lado a lado */
+.pp-casca .pp-geral-indicadores { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pp-casca .pp-geral-duas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.pp-casca .pp-graf-area.is-colunas { padding: 4px 0 0; }
+.pp-casca .pp-setores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pp-casca .pp-setores li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 72px; gap: 12px; align-items: center; }
+.pp-casca .pp-setores-nome { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-casca .pp-setores .pp-progresso.is-largo { margin-top: 0; max-width: none; }
+.pp-casca .pp-setores-valor { text-align: right; font-weight: 700; }
+.pp-casca .pp-setores-valor small { font-weight: 400; color: var(--pp-texto-2); }
+.pp-casca .pp-nota.pp-sub { margin-top: 12px; }
+
+/* Ranking completo: so o 1o lugar fica com o circulo escuro (corrige a posicao 6 do bm4-9) */
+.pp-casca .pp-ranking-lista li:first-child .pp-top5-pos { background: var(--pp-acento); color: #ffffff; }
+.pp-casca .pp-ranking-lista li:nth-child(n+6) .pp-top5-pos { background: var(--pp-fundo); color: var(--pp-texto-2); font-weight: 600; }
+
+@media (max-width: 991px) {
+    .pp-casca .pp-geral-duas { grid-template-columns: minmax(0, 1fr); }
+    .pp-casca .pp-geral-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) { .pp-casca .pp-setores li { grid-template-columns: minmax(0, 1fr) 72px; } .pp-casca .pp-setores .pp-progresso { display: none; } }

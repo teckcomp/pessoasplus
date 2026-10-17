@@ -4,6 +4,7 @@
  * Pessoas+ - novo formulario / editar (BM.4). Perguntas em perguntas_json.
  *
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM4_9 (D-92: previa "como vai aparecer" antes de abrir)
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -130,6 +131,9 @@ $dados = [
     'url_form'   => $urlForm,
     'url_lista'  => $urlLista,
     'url_previa' => Pagina::url('/plugins/pessoasplus/ajax/publico_previa.php'),
+    'url_previa_form' => Pagina::url('/plugins/pessoasplus/ajax/formulario_previa.php'),
+    'previa_css' => Pagina::url('/plugins/pessoasplus/formulario_previa.css') . '?v=bm4-9',
+    'previa_js'  => Pagina::url('/plugins/pessoasplus/formulario_previa.js') . '?v=bm4-9',
 ];
 
 $pp = Pagina::contexto('pesquisas', $nova ? 'Novo formulário' : (string) $f['titulo'], $dados['ouvidoria'] ? 'Porta da Ouvidoria: perguntas e modo' : 'Perguntas, modo, período e quem responde', $dados);

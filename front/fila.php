@@ -4,6 +4,8 @@
  * Pessoas+ - fila de um formulario / porta da Ouvidoria (BM.4), area do RH.
  *
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM4_9
+ * PESSOASPLUS_BUILD_BM4_11 (D-92 desenho B: abas Resumo | Por pergunta | Geral; CSV do ranking)
  * PESSOASPLUS_BUILD_BM4_5
  * PESSOASPLUS_BUILD_BM5
  *
@@ -17,6 +19,7 @@
 use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Formulario;
+use GlpiPlugin\Pessoasplus\Grafico;
 use GlpiPlugin\Pessoasplus\Permissoes;
 
 Pagina::somenteInterfacePadrao();
@@ -69,7 +72,27 @@ if (!$restricao['textos_liberados']) {
     }
     unset($q);
 }
-$indicadores = $ehPesquisa ? Formulario::indicadores($resultado, $cobranca, (int) $resumo['total']) : ['kpis' => [], 'top5' => []];
+$indicadores = $ehPesquisa ? Formulario::indicadores($resultado, $cobranca, (int) $resumo['total']) : ['kpis' => [], 'top5' => [], 'ranking' => []];
+// BM.4-11 (D-92, desenho B): visao geral da campanha; CSV do ranking completo.
+$geral = $ehPesquisa && !$restricao['bloqueado'] ? $form->visaoGeral($cobranca, $tela, (int) $resumo['total'], $hoje) : ['kpis' => [], 'por_dia' => [], 'por_dia_semana' => false, 'por_setor' => []];
+$geral['grafico_dia'] = Grafico::colunas($geral['por_dia'], $geral['por_dia_semana'] ? 'Respostas por semana' : 'Respostas por dia');
+if ($ehPesquisa && ($_GET['csv'] ?? '') === 'ranking') {
+    $saida = fopen('php://temp', 'w+');
+    fwrite($saida, "\xEF\xBB\xBF"); // BOM para o Excel em pt-BR
+    fputcsv($saida, ['Posição', 'Alternativa', 'Pergunta', 'Marcações', 'Percentual'], ';');
+    foreach ($indicadores['ranking'] as $i => $r) {
+        fputcsv($saida, [$i + 1, $r['rotulo'], $r['pergunta'], $r['total'], $r['percentual'] . '%'], ';');
+    }
+    rewind($saida);
+    $csv = (string) stream_get_contents($saida);
+    fclose($saida);
+    // Script legado devolvendo Response (T-73): sem header() nem exit.
+    return new \Symfony\Component\HttpFoundation\Response($csv, 200, [
+        'Content-Type'        => 'text/csv; charset=UTF-8',
+        'Content-Disposition' => 'attachment; filename="ranking-' . $id . '.csv"',
+        'Cache-Control'       => 'no-store',
+    ]);
+}
 // Respostas individuais: Ouvidoria sempre; pesquisa identificada sempre; pesquisa anonima so encerrada (regra 5).
 $mostraIndividuais = !$ehPesquisa || $restricao['textos_liberados'] || !$restricao['anonimo'];
 $individuais = $mostraIndividuais ? $form->fila($situacao) : [];
@@ -84,6 +107,11 @@ $dados = $tela + [
     'minimo_anonimo' => Formulario::MINIMO_ANONIMO,
     'indicadores' => $indicadores['kpis'],
     'top5'      => $indicadores['top5'],
+    'ranking'   => $indicadores['ranking'], // BM.4-9 (D-92)
+    'geral'     => $geral, // BM.4-11 (D-92, desenho B)
+    'url_csv'   => $urlAqui . '?id=' . $id . '&csv=ranking',
+    'resultado_css' => Pagina::url('/plugins/pessoasplus/resultado.css') . '?v=bm4-11',
+    'resultado_js'  => Pagina::url('/plugins/pessoasplus/resultado.js') . '?v=bm4-11',
     'resumo'    => $resumo,
     'filtro'    => isset(Formulario::SITUACOES_RESPOSTA[$situacao]) ? $situacao : '',
     'situacoes' => $situacoes,

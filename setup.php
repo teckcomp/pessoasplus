@@ -13,6 +13,7 @@
  * PESSOASPLUS_BUILD_BM2
  * PESSOASPLUS_BUILD_BM3
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM7_2
  *
  * @copyright 2026 Teckcomp
  * @license   GPL-2.0-or-later
@@ -47,6 +48,21 @@ function plugin_init_pessoasplus(): void
 {
     /** @var array $PLUGIN_HOOKS */
     global $PLUGIN_HOOKS;
+    /** @var array $CFG_GLPI */
+    global $CFG_GLPI;
+
+    // BM.7-2 (T-98): mapa tabela <-> classe para o core. getItemTypeForTable()
+    // consulta $CFG_GLPI['glpiitemtypetables'] antes de adivinhar a classe pelo
+    // nome da tabela (DbUtils.php:287). Sem isto, relation.constant.php (linha
+    // 1755: Document_Item => Document::getItemtypesThatCanHave()) monta uma
+    // relacao com origem em glpi_plugin_pessoasplus_colaboradores/_publicacoes,
+    // o core tenta resolver "Colaboradore"/"Publicacoe" e dispara um aviso a
+    // cada exclusao de item do GLPI (inventario inclusive), enchendo o log.
+    foreach (Install::CLASSES_COM_TABELA as $classe) {
+        $tabela = $classe::getTable();
+        $CFG_GLPI['glpitablesitemtype'][$classe] = $tabela;
+        $CFG_GLPI['glpiitemtypetables'][$tabela] = $classe;
+    }
 
     // Entrada no menu "Ferramentas" da interface padrao.
     // Html::generateMenuSession() chama Menu::getMenuContent() para montar o item.

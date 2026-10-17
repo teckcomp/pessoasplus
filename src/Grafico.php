@@ -4,6 +4,7 @@
  * Pessoas+ - graficos em SVG desenhados pelo plugin (BM.5).
  *
  * PESSOASPLUS_BUILD_BM5
+ * PESSOASPLUS_BUILD_BM4_11 (colunas por dia)
  *
  * Sem biblioteca: o SVG sai pronto do servidor (imprime, nao depende do
  * bundle do core). Entrada: lista de fatias [rotulo, total, percentual].
@@ -143,6 +144,48 @@ final class Grafico
             $svg .= '<rect x="' . $x0 . '" y="' . ($y + 5) . '" width="' . $larg . '" height="18" rx="4" fill="' . self::cor((int) $i) . '"><title>' . htmlspecialchars((string) $f['rotulo'], ENT_QUOTES) . ': ' . (int) $f['total'] . ' (' . (int) $f['percentual'] . '%)</title></rect>';
             $svg .= '<text x="' . ($x0 + $w + 8) . '" y="' . ($y + 18) . '" font-size="13" font-weight="700" fill="#1a1f24">' . (int) $f['total'] . '</text>';
             $svg .= '<text x="' . ($x0 + $w + 34) . '" y="' . ($y + 18) . '" font-size="11" fill="#58626f">' . (int) $f['percentual'] . '%</text>';
+        }
+
+        return $svg . '</svg>';
+    }
+
+    /**
+     * Colunas verticais (BM.4-11): respostas por dia ou por semana.
+     *
+     * @param array<int, array{rotulo: string, total: int}> $pontos
+     */
+    public static function colunas(array $pontos, string $rotuloEixo = ''): string
+    {
+        $n = count($pontos);
+        if ($n === 0) {
+            return '';
+        }
+        $larg = 600;
+        $alt  = 170;
+        $base = 140;
+        $max  = 0;
+        foreach ($pontos as $p) {
+            $max = max($max, (int) $p['total']);
+        }
+        $x0   = 28;
+        $w    = $larg - $x0 - 8;
+        $passo = $w / $n;
+        $col  = max(4, min(34, (int) round($passo * 0.62)));
+        $cada = $n > 16 ? (int) ceil($n / 16) : 1; // rotulos do eixo sem amontoar
+        $svg  = '<svg class="pp-graf pp-graf-colunas" viewBox="0 0 ' . $larg . ' ' . $alt . '" width="100%" height="' . $alt . '" role="img" aria-label="' . htmlspecialchars($rotuloEixo !== '' ? $rotuloEixo : 'Respostas por dia', ENT_QUOTES) . '" preserveAspectRatio="none">';
+        $svg .= '<line x1="' . $x0 . '" y1="' . $base . '" x2="' . ($x0 + $w) . '" y2="' . $base . '" stroke="#d5dbe1" stroke-width="1"/>';
+        foreach ($pontos as $i => $p) {
+            $t   = (int) $p['total'];
+            $h   = $max > 0 ? (int) round(($base - 24) * $t / $max) : 0;
+            $x   = (int) round($x0 + $i * $passo + ($passo - $col) / 2);
+            $rot = htmlspecialchars((string) $p['rotulo'], ENT_QUOTES);
+            $svg .= '<rect x="' . $x . '" y="' . ($base - max(2, $h)) . '" width="' . $col . '" height="' . max(2, $h) . '" rx="3" fill="' . ($t > 0 ? '#1d9e75' : '#e6ebef') . '"><title>' . $rot . ': ' . $t . '</title></rect>';
+            if ($t > 0) {
+                $svg .= '<text x="' . ($x + $col / 2) . '" y="' . ($base - max(2, $h) - 5) . '" text-anchor="middle" font-size="11" font-weight="700" fill="#1a1f24">' . $t . '</text>';
+            }
+            if ($i % $cada === 0 || $i === $n - 1) {
+                $svg .= '<text x="' . ($x + $col / 2) . '" y="' . ($base + 16) . '" text-anchor="middle" font-size="11" fill="#58626f">' . $rot . '</text>';
+            }
         }
 
         return $svg . '</svg>';

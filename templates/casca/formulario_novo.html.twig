@@ -1,4 +1,5 @@
-{# Pessoas+ - novo formulario / editar; porta da Ouvidoria edita so perguntas, modo e descricao. PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 #}
+{# Pessoas+ - novo formulario / editar; porta da Ouvidoria edita so perguntas, modo e descricao. PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 PESSOASPLUS_BUILD_BM4_9 #}
+{# BM.4-9 (D-92): botao "Como vai aparecer" abre uma janela com o formulario renderizado por _perguntas.html.twig (ajax/formulario_previa.php), sem gravar. CSS/JS proprios em formulario_previa.{css,js}. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -11,7 +12,8 @@
     {% set f = d.f %}
     {% set csrf = csrf_token() %}
     {% set edita = d.gerencia %}
-    <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-formulario data-pp-url-previa="{{ d.url_previa }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ edita ? '1' : '0' }}">
+    <link rel="stylesheet" href="{{ d.previa_css }}">
+    <form class="pp-novo" method="post" action="{{ d.url_form }}" data-pp-publico data-pp-formulario data-pp-url-previa="{{ d.url_previa }}" data-pp-url-previa-form="{{ d.url_previa_form }}" data-pp-porta="{{ f.porta }}" data-pp-csrf="{{ csrf }}" data-pp-gerencia="{{ edita ? '1' : '0' }}">
         <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
         {% if not d.nova %}<input type="hidden" name="id" value="{{ d.id }}">{% endif %}
         <input type="hidden" name="regras_json" value="{{ d.regras_json|e('html_attr') }}" data-pp-regras-campo>
@@ -98,10 +100,22 @@
                         <button type="submit" name="update" value="1" class="pp-botao is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Salvar</span></button>
                         <button type="submit" name="encerrar" value="1" class="pp-botao is-perigo" data-pp-confirmar="Encerrar? Ninguém mais responde; as respostas ficam."><i class="ti ti-player-stop" aria-hidden="true"></i><span>Encerrar</span></button>
                     {% endif %}
+                    <button type="button" class="pp-botao" data-pp-previa-form title="Mostra o formulário como quem responde vai ver, com o que está na tela agora"><i class="ti ti-eye" aria-hidden="true"></i><span>Como vai aparecer</span></button>
                     <a class="pp-botao" href="{{ d.url_lista }}">Cancelar</a>
                     {% if not d.nova %}<span class="pp-selo pp-tom-{{ d.tela.estado_tom }}">{{ d.tela.estado_rotulo }}</span>{% endif %}
                 </div>
             {% endif %}
         </div>
     </form>
+    {% if edita %}
+        <dialog class="pp-previa-form-janela" data-pp-previa-form-janela aria-labelledby="pp-previa-form-titulo">
+            <div class="pp-previa-form-cabecalho">
+                <h2 id="pp-previa-form-titulo"><i class="ti ti-eye" aria-hidden="true"></i> Como vai aparecer</h2>
+                <span class="pp-sub">prévia com o que está na tela agora; nada foi salvo</span>
+                <button type="button" class="pp-previa-form-fechar" data-pp-previa-form-fechar aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button>
+            </div>
+            <div class="pp-previa-form-conteudo" data-pp-previa-form-conteudo></div>
+        </dialog>
+        <script src="{{ d.previa_js }}" defer></script>
+    {% endif %}
 {% endblock %}
