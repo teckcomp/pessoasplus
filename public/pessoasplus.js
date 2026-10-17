@@ -2602,3 +2602,15 @@
         tudo();
     }
 })();
+
+/* bm4-18: "Veja seus direitos" abre o bloco (se estiver recolhido) e rola ate ele. */
+(function () {
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest ? e.target.closest('[data-pp-abrir-direitos]') : null;
+        if (!a) { return; }
+        var d = document.getElementById('pp-direitos');
+        if (!d) { return; }
+        d.open = true;
+        d.querySelectorAll('details').forEach(function (x) { x.open = true; }); // Base legal abre junto
+    });
+})();

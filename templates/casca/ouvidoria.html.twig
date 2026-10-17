@@ -1,3 +1,4 @@
+{# PESSOASPLUS_BUILD_BM4_18 (Base legal aberta) #}
 {# Pessoas+ - Ouvidoria, real, com o layout da proposta (quadro 3 do canvas). PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_6 PESSOASPLUS_BUILD_BM4_13 PESSOASPLUS_BUILD_BM4_14 #}
 {# BM.4-13 (D-96): consulta logada so para protocolo identificado; bloco "Protocolos anonimos" leva a pagina fora do GLPI. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -54,7 +55,7 @@
                 <div class="pp-ouv-leis">
                     {% for l in o.leis %}<article class="pp-ouv-lei"><strong>{{ l.titulo }}</strong><span>{{ l.texto }}</span><small>{{ l.fonte }}</small></article>{% endfor %}
                 </div>
-                {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'escolha', ouvidoria: true}) }}
+                {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'escolha', ouvidoria: true, leis_abertas: true}) }}
                 {% if o.politica_url != '' %}<p class="pp-nota">Nossa política interna: <a class="pp-link-forte" href="{{ o.politica_url }}" target="_blank" rel="noopener">Política da Ouvidoria e garantia de não retaliação</a>.</p>{% endif %}
             </section>
 

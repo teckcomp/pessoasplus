@@ -1,4 +1,4 @@
-{# PESSOASPLUS_BUILD_BM4_17 (D-97) #}
+{# PESSOASPLUS_BUILD_BM4_17 (D-97) PESSOASPLUS_BUILD_BM4_18 #}
 {# PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 #}
 {# Pessoas+ - Minha area do colaborador, real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP1 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_7 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -46,7 +46,7 @@
                     {% for p in d.pesquisas %}
                         <li>
                             <i class="ti {{ p.modo == 'anonimo' ? 'ti-lock' : 'ti-clipboard-check' }} pp-lista-icone" aria-hidden="true"></i>
-                            <div class="pp-lista-texto"><strong>{{ p.titulo }}</strong><span>{{ p.modo_rotulo }} · {{ p.periodo }}</span>{% if p.modo != 'identificado' %}<em class="pp-nota">{{ p.modo == 'anonimo' ? 'Suas respostas não ficam ligadas ao seu usuário.' : 'Você escolhe entre identificado e anônimo ao responder.' }}</em>{% endif %}</div>
+                            <div class="pp-lista-texto"><strong>{{ p.titulo }}</strong><span>{{ p.modo_rotulo }} · {{ p.periodo }}</span>{% if p.modo != 'identificado' %}<em class="pp-nota">{{ p.modo == 'anonimo' ? 'Suas respostas não ficam ligadas ao seu usuário.' : 'Você escolhe entre identificado e anônimo ao responder.' }} <a class="pp-direitos-link" href="#pp-direitos" data-pp-abrir-direitos><i class="ti ti-shield-check" aria-hidden="true"></i> Veja seus direitos</a></em>{% endif %}</div>
                             <span class="pp-selo pp-tom-info">Aberta</span>
                             {# BM.4-17 (D-97): anonima com pagina publica abre fora do GLPI, em nova aba, com bilhete #}
                             <a class="pp-botao is-compacto is-primario" href="{{ p.url_responder }}"{% if p.responde_fora %} target="_blank" rel="noopener"{% endif %}>Responder{% if p.responde_fora %} <i class="ti ti-external-link" aria-hidden="true"></i>{% endif %}</a>
@@ -61,7 +61,8 @@
                     {% endfor %}
                 </ul>
                 {% set tem_anonima = false %}{% for p in d.pesquisas %}{% if p.modo != 'identificado' %}{% set tem_anonima = true %}{% endif %}{% endfor %}
-                {% if tem_anonima %}<details class="pp-anon-detalhe"><summary><i class="ti ti-shield-lock" aria-hidden="true"></i> Seu anonimato: o que o sistema garante</summary>{{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'anonimo', ouvidoria: false}) }}</details>{% endif %}
+                {# bm4-18: aberto por padrao e com ancora; o link "Veja seus direitos" de cada pesquisa aponta para ca #}
+                {% if tem_anonima %}<details class="pp-anon-detalhe" id="pp-direitos" open><summary><i class="ti ti-shield-lock" aria-hidden="true"></i> Seus direitos ao responder: o que o sistema garante <small>(clique para recolher)</small></summary>{{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'anonimo', ouvidoria: false, leis_abertas: true}) }}</details>{% endif %}
             </section>
 
             <section class="pp-cartao">

@@ -1,3 +1,4 @@
+{# PESSOASPLUS_BUILD_BM4_18 (leis_abertas: abre a Base legal junto) #}
 {# Pessoas+ - bloco "Seu anonimato": conforto + garantias tecnicas + base legal (BM.4-2). Recebe "modo" (anonimo|escolha|identificado) e "ouvidoria". #}
 <section class="pp-anon" aria-labelledby="pp-anon-titulo">
     <h3 id="pp-anon-titulo"><i class="ti ti-shield-lock" aria-hidden="true"></i> Seu anonimato</h3>
@@ -11,7 +12,7 @@
             <li><i class="ti ti-check" aria-hidden="true"></i> {{ ouvidoria ? 'O acompanhamento é só pelo protocolo e pelo código, que ficam com você.' : 'Fica registrado apenas que você respondeu, para o RH saber quem ainda falta, nunca o que respondeu.' }}</li>
         </ul>
     {% endif %}
-    <details class="pp-anon-leis">
+    <details class="pp-anon-leis"{% if leis_abertas is defined and leis_abertas %} open{% endif %}>
         <summary>Base legal <span class="pp-selo pp-tom-alerta">a validar com o jurídico</span></summary>
         <ul>
             <li><strong>Lei 14.457/2022, art. 23:</strong> empresas com CIPA devem manter canal para receber e acompanhar denúncias de assédio sexual e outras formas de violência, com <strong>anonimato garantido</strong> a quem denuncia.</li>

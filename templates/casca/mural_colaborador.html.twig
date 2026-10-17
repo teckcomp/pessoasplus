@@ -1,4 +1,4 @@
-{# PESSOASPLUS_BUILD_BM4_17 (D-97: Responder de anonima abre fora do GLPI) #}
+{# PESSOASPLUS_BUILD_BM4_17 (D-97: Responder de anonima abre fora do GLPI) PESSOASPLUS_BUILD_BM4_18 #}
 {# Pessoas+ - Mural do colaborador (quadro), real, no layout da casca aprovada. PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4_7 #}
 {# Lugares da D-59. Comentarios/curtidas (B3.3) e celebracoes (D-41) ficam para depois de 13/10: a peca aparece, sem dado ficticio. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -115,7 +115,7 @@
                             <div class="pp-lista-texto">
                                 <strong><i class="ti {{ q.modo == 'anonimo' ? 'ti-lock' : 'ti-clipboard-check' }}" aria-hidden="true"></i> {{ q.titulo }}</strong>
                                 <span>{{ q.modo_rotulo }} · {{ q.periodo }}</span>
-                                {% if q.modo != 'identificado' %}<em class="pp-nota">Suas respostas não ficam ligadas ao seu usuário.</em>{% endif %}
+                                {% if q.modo != 'identificado' %}<em class="pp-nota">Suas respostas não ficam ligadas ao seu usuário. <a class="pp-direitos-link" href="{{ m.url_minha_area }}#pp-direitos"><i class="ti ti-shield-check" aria-hidden="true"></i> Veja seus direitos</a></em>{% endif %}
                             </div>
                             <div class="pp-mural-pesquisa-acao"><span class="pp-selo pp-tom-info">Aberta</span><a class="pp-botao is-compacto is-primario" href="{{ q.url_responder }}"{% if q.responde_fora %} target="_blank" rel="noopener"{% endif %}>Responder{% if q.responde_fora %} <i class="ti ti-external-link" aria-hidden="true"></i>{% endif %}</a></div>
                         </li>

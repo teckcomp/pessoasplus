@@ -21,7 +21,7 @@
             <p><a class="pp-botao" href="{{ d.url_protocolo }}">Acompanhar pelo protocolo</a></p>
         {% else %}
             {% if d.erro != '' %}<div class="pp-alerta pp-tom-atraso" role="alert"><i class="ti ti-alert-circle" aria-hidden="true"></i><div class="pp-alerta-texto">{{ d.erro }}</div></div>{% endif %}
-            {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'anonimo', ouvidoria: d.ouvidoria}) }}
+            {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: 'anonimo', ouvidoria: d.ouvidoria, leis_abertas: true}) }}
             {% if d.somente_bilhete %}<div class="pp-alerta pp-tom-info" data-pp-aviso-bilhete hidden><i class="ti ti-login" aria-hidden="true"></i><div class="pp-alerta-texto">Esta pesquisa é respondida pelo botão <strong>Responder</strong>, dentro do Pessoas+ (Minha área ou Mural). O botão abre esta mesma página já com o seu acesso.</div></div>{% endif %}
             <form method="post" action="{{ d.url_aqui }}" class="pp-novo-form" data-pp-publica{% if d.somente_bilhete %} data-pp-somente-bilhete="1"{% endif %}>
                 <input type="hidden" name="_glpi_csrf_token" value="{{ d.csrf }}">

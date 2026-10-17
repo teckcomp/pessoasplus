@@ -1,3 +1,4 @@
+{# PESSOASPLUS_BUILD_BM4_18 (Base legal aberta) #}
 {# Pessoas+ - responder formulario logado (BM.4). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
@@ -46,7 +47,7 @@
                 <h2>{{ d.modo_rotulo }}</h2>
                 <p class="pp-sub">{{ d.periodo }}</p>
             {% endif %}
-            {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: d.modo, ouvidoria: d.ouvidoria}) }}
+            {{ include('@pessoasplus/casca/_anonimato.html.twig', {modo: d.modo, ouvidoria: d.ouvidoria, leis_abertas: true}) }}
         </aside>
     </div>
 {% endblock %}
