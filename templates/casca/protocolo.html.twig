@@ -1,4 +1,4 @@
-{# Pessoas+ - consulta de protocolo sem login (BM.4). PESSOASPLUS_BUILD_BM4 #}
+{# Pessoas+ - consulta de protocolo sem login (BM.4); complemento pelo remetente (BM.4-12, D-93). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_12 PESSOASPLUS_BUILD_BM4_14 #}
 {% set d = pp.dados %}
 {{ include('@pessoasplus/casca/_standalone_topo.html.twig', {titulo: 'Acompanhar um envio', subtitulo: 'Ouvidoria'}) }}
     <main class="pp-publica-corpo">
@@ -9,7 +9,18 @@
             <label class="pp-campo"><span>Código de acompanhamento</span><input type="text" name="codigo" maxlength="12" spellcheck="false" required></label>
             <button type="submit" name="consultar" value="1" class="pp-botao is-primario"><i class="ti ti-search" aria-hidden="true"></i><span>Consultar</span></button>
         </form>
+        {% if d.aviso != '' %}<div class="pp-alerta pp-tom-{{ d.aviso_erro ? 'atraso' : 'ok' }}" role="alert"><i class="ti {{ d.aviso_erro ? 'ti-alert-circle' : 'ti-circle-check' }}" aria-hidden="true"></i><div class="pp-alerta-texto">{{ d.aviso }}</div></div>{% endif %}
         {{ include('@pessoasplus/casca/_protocolo_resultado.html.twig', {resultado: d.resultado, consultou: d.consultou}) }}
+        {% if d.resultado is null %}{{ include('@pessoasplus/casca/_guarde_protocolo.html.twig', {modo: 'completo'}) }}{% endif %}
+        {% if d.resultado is not null and d.resultado.aceita_complemento %}
+            <form class="pp-ouv-complemento" method="post" action="{{ d.url_aqui }}" autocomplete="off">
+                <input type="hidden" name="_glpi_csrf_token" value="{{ d.csrf }}">
+                <input type="hidden" name="protocolo" value="{{ d.protocolo_digitado }}">
+                <input type="hidden" name="codigo" value="{{ d.codigo_digitado }}">
+                <label class="pp-campo"><span>Acrescentar ao relato <small class="pp-sub">entra sem usuário nem hora, só o dia, e o RH vê junto com o original</small></span><textarea name="texto" rows="4" maxlength="2000" required></textarea></label>
+                <button type="submit" name="complementar" value="1" class="pp-botao is-primario"><i class="ti ti-send" aria-hidden="true"></i><span>Enviar complemento</span></button>
+            </form>
+        {% endif %}
     </main>
 </div>
 </body>

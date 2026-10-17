@@ -1,4 +1,5 @@
-{# Pessoas+ - Ouvidoria, real, com o layout da proposta (quadro 3 do canvas). PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_6 #}
+{# Pessoas+ - Ouvidoria, real, com o layout da proposta (quadro 3 do canvas). PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_6 PESSOASPLUS_BUILD_BM4_13 PESSOASPLUS_BUILD_BM4_14 #}
+{# BM.4-13 (D-96): consulta logada so para protocolo identificado; bloco "Protocolos anonimos" leva a pagina fora do GLPI. #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
 
 {% block acoes %}
@@ -25,17 +26,27 @@
                 <ol class="pp-ouv-passos">{% for s in o.passos %}<li><strong>{{ s.titulo }}</strong> {{ s.texto }}</li>{% endfor %}</ol>
             </section>
 
+            <div class="pp-ouv-duas">
             <section class="pp-cartao" data-pp-ouvidoria>
-                <header class="pp-cartao-cabecalho"><h2>Acompanhar um protocolo</h2></header>
+                <header class="pp-cartao-cabecalho"><h2>Acompanhar um protocolo identificado</h2></header>
                 <form class="pp-ouv-consulta" method="post" action="{{ o.url_aqui }}" autocomplete="off">
                     <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
                     <label class="pp-campo"><span>Número do protocolo</span><input type="text" name="protocolo" maxlength="20" placeholder="OUV-2026-0000" spellcheck="false" required></label>
                     <label class="pp-campo"><span>Código de acompanhamento</span><input type="text" name="codigo" maxlength="12" placeholder="8 caracteres" spellcheck="false" required></label>
                     <button type="submit" name="consultar" value="1" class="pp-botao is-primario"><i class="ti ti-search" aria-hidden="true"></i><span>Consultar</span></button>
                 </form>
-                <p class="pp-nota">A consulta não vai pela URL e não mostra quem enviou. Envios identificados também ficam na sua Minha área.</p>
+                <p class="pp-nota">A consulta não vai pela URL. Envios identificados também ficam na sua Minha área.</p>
+                {% if o.anonimo_fora %}<div class="pp-ouv-resultado is-erro" role="status"><i class="ti ti-incognito" aria-hidden="true"></i> Este protocolo é anônimo. Para manter a separação, ele só se consulta pela página fora do GLPI: <a href="{{ o.url_canal_protocolo }}" target="_blank" rel="noopener">abrir a consulta anônima</a>.</div>{% endif %}
                 {{ include('@pessoasplus/casca/_protocolo_resultado.html.twig', {resultado: o.resultado, consultou: o.consultou}) }}
             </section>
+            <section class="pp-cartao pp-ouv-anonimo">
+                <header class="pp-cartao-cabecalho"><h2><i class="ti ti-incognito" aria-hidden="true"></i> Protocolos anônimos</h2></header>
+                <p>Consulta e complemento <strong>fora do GLPI</strong>: página sem login{% if o.canal_curto %}, em endereço próprio{% endif %}, que não registra quem consulta. Só protocolo e código.</p>
+                <a class="pp-botao is-primario" href="{{ o.url_canal_protocolo }}" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i><span>Consultar fora do GLPI</span></a>
+                <p class="pp-sub">Abre em outra aba.</p>
+                {{ include('@pessoasplus/casca/_guarde_protocolo.html.twig', {modo: 'curto'}) }}
+            </section>
+            </div>
 
             <section class="pp-cartao">
                 <header class="pp-cartao-cabecalho"><h2>Seu respaldo na lei</h2><span class="pp-selo pp-tom-alerta">texto a validar com o jurídico</span></header>
@@ -62,6 +73,7 @@
                     <img class="pp-ouv-qr-imagem" src="{{ o.qr_url }}" alt="QR da página pública de relato de conduta">
                     <p>Aponte a câmera para abrir o <strong>formulário de relato</strong>. O mesmo QR pode ficar impresso nos murais físicos e no banheiro.</p>
                     {% if o.cartaz_url != '' %}<a class="pp-botao" href="{{ o.cartaz_url }}" target="_blank" rel="noopener"><i class="ti ti-printer" aria-hidden="true"></i><span>Cartaz para impressão</span></a>{% endif %}
+                    <a class="pp-botao" href="{{ o.url_canal_protocolo }}" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i><span>Consultar protocolo anônimo</span></a>
                 </section>
             {% endif %}
             <section class="pp-cartao">

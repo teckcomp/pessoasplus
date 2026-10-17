@@ -1,13 +1,19 @@
-{# Pessoas+ - resultado da consulta de protocolo (BM.4). Recebe "resultado" e "consultou". PESSOASPLUS_BUILD_BM4 #}
+{# Pessoas+ - resultado da consulta de protocolo (BM.4). Recebe "resultado" e "consultou". PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_12 PESSOASPLUS_BUILD_BM4_13 #}
 {% if consultou %}
     {% if resultado is null %}
         <div class="pp-ouv-resultado is-erro" role="status"><i class="ti ti-alert-circle" aria-hidden="true"></i> Protocolo ou código não conferem. Verifique e tente de novo.</div>
     {% else %}
         <div class="pp-ouv-resultado" role="status">
             <div class="pp-ouv-resultado-topo"><strong>{{ resultado.protocolo }}</strong> · {{ resultado.porta }} · {{ resultado.modo }} <span class="pp-selo pp-tom-{{ resultado.tom }}">{{ resultado.situacao }}</span> <span class="pp-sub">atualizado em {{ resultado.atualizado }}</span></div>
-            {% if resultado.resposta != '' %}<p><strong>Resposta:</strong> {{ resultado.resposta }}</p>{% endif %}
+            {# BM.4-13 (D-95): conversa em ordem; o pedido de complemento aberto fica em destaque no fim. #}
+            {% if resultado.conversa|length > 0 %}
+                <ol class="pp-conversa">
+                    {% for e in resultado.conversa %}<li class="pp-conversa-item is-{{ e.de }}"><span class="pp-conversa-de">{{ e.de == 'rh' ? 'RH' : 'Você' }} <small class="pp-sub">{{ e.quando }}</small></span><p>{{ e.texto }}</p></li>{% endfor %}
+                </ol>
+            {% endif %}
             {% if resultado.complemento != '' %}<p class="pp-alerta pp-tom-alerta"><strong>Pedido de complemento:</strong> {{ resultado.complemento }}</p>{% endif %}
-            {% if resultado.resposta == '' and resultado.complemento == '' %}<p class="pp-sub">Ainda sem resposta. Consulte de novo em alguns dias.</p>{% endif %}
+            {% if resultado.conversa|length == 0 and resultado.complemento == '' %}<p class="pp-sub">Ainda sem resposta. Consulte de novo em alguns dias.</p>{% endif %}
+            {% if not resultado.aceita_complemento and resultado.situacao == 'Encerrado' %}<p class="pp-sub">Protocolo encerrado: não aceita mais complementos.</p>{% endif %}
         </div>
     {% endif %}
 {% endif %}

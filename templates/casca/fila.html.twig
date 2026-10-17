@@ -1,4 +1,4 @@
-{# Pessoas+ - fila de respostas / Ouvidoria por porta (RH). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM4_9 PESSOASPLUS_BUILD_BM4_11 #}
+{# Pessoas+ - fila de respostas / Ouvidoria por porta (RH). PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_5 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM4_9 PESSOASPLUS_BUILD_BM4_11 PESSOASPLUS_BUILD_BM4_12 PESSOASPLUS_BUILD_BM4_13 #}
 {# BM.4-11 (D-92, desenho B): pesquisa em abas Resumo | Por pergunta | Geral | Respostas; Ouvidoria segue sem abas. CSS/JS proprios em resultado.{css,js}. #}
 {# BM.5: KPIs, top 5, grafico por pergunta (barras/pizza/donut em SVG do plugin), regras de anonimato (minimo 5, texto so apos encerrar). #}
 {% extends '@pessoasplus/casca/base.html.twig' %}
@@ -179,6 +179,11 @@
                 <span class="pp-sub"><i class="ti {{ r.anonimo ? 'ti-incognito' : 'ti-user' }}" aria-hidden="true"></i> {{ r.quem }} · {{ r.origem }} · {{ r.data }}</span>
             </header>
             <dl class="pp-fila-itens">{% for i in r.itens %}<div><dt>{{ i.pergunta }}</dt><dd>{{ i.valor != '' ? i.valor : '—' }}</dd></div>{% endfor %}</dl>
+            {% if r.conversa|length > 0 %}
+                <ol class="pp-conversa">
+                    {% for e in r.conversa %}<li class="pp-conversa-item is-{{ e.de }}"><span class="pp-conversa-de"><i class="ti {{ e.de == 'rh' ? 'ti-message-2' : 'ti-message-plus' }}" aria-hidden="true"></i> {{ e.de == 'rh' ? 'Resposta do RH' : 'Complemento do remetente' }} <small class="pp-sub">{{ e.quando }}</small></span><p>{{ e.texto }}</p></li>{% endfor %}
+                </ol>
+            {% endif %}
             {% if d.gerencia and d.tipo == 'ouvidoria' %}
                 <form method="post" action="{{ d.url_aqui }}" class="pp-fila-tratar">
                     <input type="hidden" name="_glpi_csrf_token" value="{{ csrf }}">
@@ -186,7 +191,7 @@
                     <input type="hidden" name="resposta_id" value="{{ r.id }}">
                     <div class="pp-linha-campos">
                         <label class="pp-campo is-curto"><span>Situação</span><select name="situacao">{% for s in d.situacoes %}<option value="{{ s.chave }}"{% if s.chave == r.situacao %} selected{% endif %}>{{ s.rotulo }}</option>{% endfor %}</select></label>
-                        <label class="pp-campo"><span>Resposta a quem enviou <small class="pp-sub">visível pelo protocolo</small></span><textarea name="resposta_rh" rows="2" maxlength="5000">{{ r.resposta_rh }}</textarea></label>
+                        <label class="pp-campo"><span>Nova resposta a quem enviou <small class="pp-sub">visível pelo protocolo; entra na conversa com data e hora</small></span><textarea name="resposta_rh" rows="2" maxlength="5000"></textarea></label>
                         <label class="pp-campo"><span>Pedido de complemento</span><textarea name="complemento" rows="2" maxlength="2000">{{ r.complemento }}</textarea></label>
                     </div>
                     <button type="submit" name="tratar" value="1" class="pp-botao is-compacto is-primario"><i class="ti ti-device-floppy" aria-hidden="true"></i><span>Registrar tratamento</span></button>

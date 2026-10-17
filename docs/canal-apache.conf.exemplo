@@ -1,0 +1,34 @@
+# Pessoas+ — endereço curto das páginas anônimas (BM.4-10, D-91)
+#
+# Faz https://SEU-DOMINIO/canal/<token> e /canal/protocolo entregarem as páginas
+# públicas do plugin sem mostrar "plugins/pessoasplus" nem "glpi" na barra do
+# navegador. É um proxy de loopback: o Apache pede a página real a si mesmo e
+# devolve o conteúdo no endereço curto. O GLPI 11 monta a rota pelo REQUEST_URI
+# original, por isso uma reescrita interna ([PT]) não serve (T-96).
+#
+# Requisitos: a2enmod proxy proxy_http rewrite headers   (e ssl se o alvo for https)
+# Coloque dentro do <VirtualHost> que atende o GLPI (o de HTTPS, em produção).
+# Depois: apachectl configtest && systemctl reload apache2
+# No plugin: Formulários e Ouvidoria › Configurar › "Endereço curto" = https://SEU-DOMINIO/canal
+
+RewriteEngine On
+ProxyPreserveHost On
+ProxyRequests Off
+
+# ALVO = como este próprio Apache atende o GLPI, visto de dentro do servidor.
+#   HTTP puro (ex.: homologação na porta 2077):  http://127.0.0.1:2077
+#   HTTPS (produção): https://127.0.0.1:443 com as três linhas SSLProxy abaixo,
+#   porque o certificado é do domínio e não de 127.0.0.1.
+#SSLProxyEngine On
+#SSLProxyCheckPeerName Off
+#SSLProxyVerify none
+
+RewriteRule ^/canal/protocolo/?$        http://127.0.0.1:80/plugins/pessoasplus/front/protocolo.php?canal=1 [P,L]
+RewriteRule ^/canal/([0-9a-f]{32})/?$   http://127.0.0.1:80/plugins/pessoasplus/front/responder_publico.php?t=$1&canal=1 [P,L]
+# Qualquer outro /canal/... não existe.
+RewriteRule ^/canal(/.*)?$ - [R=404,L]
+
+# O access.log deste vhost continua gravando o IP de quem acessa /canal/.
+# Para não registrá-lo (ponto a validar com o jurídico junto com a D-31):
+#SetEnvIf Request_URI "^/canal/" nolog
+#CustomLog ${APACHE_LOG_DIR}/access.log combined env=!nolog

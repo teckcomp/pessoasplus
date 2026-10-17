@@ -4,6 +4,7 @@
  * Pessoas+ - resposta pela pagina publica, sem login (BM.4, T-45).
  *
  * PESSOASPLUS_BUILD_BM4
+ * PESSOASPLUS_BUILD_BM4_10
  * PESSOASPLUS_BUILD_BM4_2
  *
  * GET ?t=<token>. Estrategia no_check registrada no setup.php (T-82).
@@ -21,6 +22,7 @@ use GlpiPlugin\Pessoasplus\Casca\Identidade;
 use GlpiPlugin\Pessoasplus\Casca\Navegacao;
 use GlpiPlugin\Pessoasplus\Casca\Pagina;
 use GlpiPlugin\Pessoasplus\Formulario;
+use GlpiPlugin\Pessoasplus\OuvidoriaConfig;
 
 global $CFG_GLPI;
 
@@ -44,7 +46,7 @@ if ($ok && $aberto && isset($_POST['enviar'])) {
             $altcha->removeChallenge($solucao);
         }
     }
-    if ($erro === '' && !$form->registrarEnvioPublico((string) ($_SERVER['REMOTE_ADDR'] ?? ''))) {
+    if ($erro === '' && !$form->registrarEnvioPublico(OuvidoriaConfig::enderecoRemoto())) { // BM.4-10: atras do proxy, X-Forwarded-For
         $erro = 'Limite de envios por hoje atingido para este endereço. Tente amanhã ou use a Ouvidoria logado.';
     }
     if ($erro === '') {
@@ -68,8 +70,9 @@ $dados = [
     'recibo'    => $recibo,
     'desafio'   => $desafio,
     'token'     => $token,
-    'url_aqui'  => Pagina::url('/plugins/pessoasplus/front/responder_publico.php'),
-    'url_protocolo' => Pagina::url('/plugins/pessoasplus/front/protocolo.php'),
+    // BM.4-10 (D-91): chegou pelo endereco curto -> o formulario e os links ficam no endereco curto.
+    'url_aqui'  => OuvidoriaConfig::pelaCanal() ? OuvidoriaConfig::urlAnonima('responder', $token) : Pagina::url('/plugins/pessoasplus/front/responder_publico.php'),
+    'url_protocolo' => OuvidoriaConfig::pelaCanal() ? OuvidoriaConfig::urlAnonima('protocolo') : Pagina::url('/plugins/pessoasplus/front/protocolo.php'),
     'url_altcha_js' => Pagina::url('/lib/altcha.js'),
     'url_altcha_desafio' => Pagina::url('/Altcha/Challenge'),
     'csrf'      => Session::getNewCSRFToken(),

@@ -4,6 +4,7 @@
  * Pessoas+ - contatos, informativos e textos legais da Ouvidoria (BM.4-6).
  *
  * PESSOASPLUS_BUILD_BM4_6
+ * PESSOASPLUS_BUILD_BM4_10 (D-91: endereco curto das paginas anonimas)
  *
  * Guardado em glpi_configs (contexto plugin:pessoasplus), editavel pelo RH
  * em front/ouvidoria_config.php sem esperar o modulo Configuracao.
@@ -28,6 +29,8 @@ final class OuvidoriaConfig
         'ouv_responsavel'  => ['Responsável pela Ouvidoria', '[nome]', 'texto'],
         'ouv_externos'     => ['Canais externos', '[Ministério Público do Trabalho, sindicato], se a empresa decidir listar.', 'texto'],
         'ouv_politica_url' => ['Endereço da política interna (Codex+)', '', 'url'],
+        // BM.4-10 (D-91): base do endereco curto das paginas anonimas, servida por proxy do Apache (vhost). Vazio = desligado.
+        'ouv_canal_url'    => ['Endereço curto das páginas anônimas (ex.: https://empresa.com.br/canal; exige o trecho do vhost, D-91)', '', 'url'],
         'ouv_informativos' => ['Informativos (rótulo | endereço, um por linha)', "Política da Ouvidoria e garantia de não retaliação | \nCódigo de conduta | \nPerguntas frequentes sobre o canal anônimo | ", 'linhas'],
     ];
 
@@ -67,6 +70,66 @@ final class OuvidoriaConfig
             $valores[$chave] = mb_substr($v, 0, 2000);
         }
         Config::setConfigurationValues(self::CONTEXTO, $valores);
+    }
+
+    /**
+     * Base do endereco curto (BM.4-10, D-91), sem barra final; '' quando desligado.
+     * Caminho relativo ("/canal") vira absoluto com a url_base do GLPI, porque o QR precisa de endereco completo.
+     */
+    public static function canalBase(): string
+    {
+        global $CFG_GLPI;
+
+        $v = trim((string) (Config::getConfigurationValues(self::CONTEXTO, ['ouv_canal_url'])['ouv_canal_url'] ?? ''));
+        if ($v === '' || !preg_match('#^(https?://|/)#i', $v)) {
+            return '';
+        }
+        if (str_starts_with($v, '/')) {
+            $v = rtrim((string) ($CFG_GLPI['url_base'] ?? ''), '/') . $v;
+        }
+
+        return rtrim($v, '/');
+    }
+
+    /**
+     * A requisicao atual chegou pelo endereco curto? O proxy do vhost acrescenta canal=1 a query (D-91).
+     * Nao da privilegio nenhum: so muda os enderecos que a pagina gera.
+     */
+    public static function pelaCanal(): bool
+    {
+        return (string) ($_GET['canal'] ?? '') === '1' && self::canalBase() !== '';
+    }
+
+    /**
+     * Endereco de uma pagina anonima: curto quando configurado, senao o real.
+     * $alvo: 'responder' (exige token) ou 'protocolo'.
+     */
+    public static function urlAnonima(string $alvo, string $token = ''): string
+    {
+        $base = self::canalBase();
+        if ($alvo === 'protocolo') {
+            return $base !== '' ? $base . '/protocolo' : \Html::getPrefixedUrl('/plugins/pessoasplus/front/protocolo.php');
+        }
+
+        return $base !== '' ? $base . '/' . $token : \Html::getPrefixedUrl('/plugins/pessoasplus/front/responder_publico.php') . '?t=' . $token;
+    }
+
+    /**
+     * Endereco de quem envia, para o limite diario da pagina publica (D-05).
+     * Atras do proxy de loopback (D-91) o REMOTE_ADDR e 127.0.0.1 para todo mundo:
+     * nesse caso, e so nesse, vale o primeiro X-Forwarded-For, que o mod_proxy preenche.
+     */
+    public static function enderecoRemoto(): string
+    {
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        if (in_array($ip, ['127.0.0.1', '::1'], true) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $primeiro = trim(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+            if (filter_var($primeiro, FILTER_VALIDATE_IP) !== false) {
+                return $primeiro;
+            }
+        }
+
+        return $ip;
     }
 
     /**

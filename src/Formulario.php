@@ -6,6 +6,10 @@
  * PESSOASPLUS_BUILD_BM4
  * PESSOASPLUS_BUILD_BM4_9 (D-92: ranking completo das alternativas; previa do formulario)
  * PESSOASPLUS_BUILD_BM4_11 (D-92, desenho B: visao geral da campanha por dia e por setor)
+ * PESSOASPLUS_BUILD_BM4_10 (D-91: urlPublica pelo endereco curto)
+ * PESSOASPLUS_BUILD_BM4_12 (D-93: complemento pelo remetente via protocolo; D-94: transicoes de situacao)
+ * PESSOASPLUS_BUILD_BM4_13 (D-95: respostas do RH como lista datada; conversa nos dois lados)
+ * PESSOASPLUS_BUILD_BM4_15 (correcao: Ouvidoria nao grava participacao; segundo envio da mesma pessoa estourava a chave unica)
  * PESSOASPLUS_BUILD_BM4_5
  * PESSOASPLUS_BUILD_BM5
  *
@@ -449,6 +453,12 @@ final class Formulario extends CommonDBTM
             return '';
         }
 
+        // BM.4-10 (D-91): endereco curto quando configurado (QR, cartaz e links passam a usa-lo).
+        $base = OuvidoriaConfig::canalBase();
+        if ($base !== '') {
+            return $base . '/' . $this->fields['token'];
+        }
+
         return rtrim((string) ($CFG_GLPI['url_base'] ?? ''), '/') . '/plugins/pessoasplus/front/responder_publico.php?t=' . $this->fields['token'];
     }
 
@@ -531,8 +541,10 @@ final class Formulario extends CommonDBTM
         foreach ($itens as $pid => $valor) {
             $DB->insert(RespostaItem::getTable(), ['plugin_pessoasplus_respostas_id' => $respostaId, 'plugin_pessoasplus_perguntas_id' => $pid, 'valor' => $valor]);
         }
-        if ($uid > 0) {
-            // Participacao sem ligacao com a resposta: "ja respondeu", nada mais.
+        // Participacao sem ligacao com a resposta: "ja respondeu", nada mais. So em pesquisa:
+        // a Ouvidoria aceita varios envios da mesma pessoa e a chave unica (formulario, usuario)
+        // estourava no segundo envio (BM.4-15, correcao). Se ja houver linha, nao insere.
+        if ($uid > 0 && !$this->ehOuvidoria() && countElementsInTable(Participacao::getTable(), ['plugin_pessoasplus_formularios_id' => (int) $this->getID(), 'users_id' => $uid]) === 0) {
             $DB->insert(Participacao::getTable(), ['plugin_pessoasplus_formularios_id' => (int) $this->getID(), 'users_id' => $uid, 'data' => $hoje]);
         }
         // Trilha: so para resposta identificada (D-31).
@@ -599,7 +611,146 @@ final class Formulario extends CommonDBTM
             'atualizado'  => $r->fields['data_resposta'] ? date('d/m/Y', strtotime((string) $r->fields['data_resposta'])) : date('d/m/Y', strtotime((string) $r->fields['data'])),
             'resposta'    => (string) ($r->fields['resposta_rh'] ?? ''),
             'complemento' => (string) ($r->fields['pedido_complemento'] ?? ''),
+            // BM.4-12 (D-93): o que o remetente ja acrescentou e se ainda pode acrescentar.
+            'complementos' => self::complementosDe((int) $r->getID()),
+            // BM.4-13 (D-95): a conversa inteira, em ordem (respostas do RH e complementos do remetente).
+            'conversa'    => self::conversaDe($r),
+            'aceita_complemento' => (string) $r->fields['situacao'] !== 'encerrado' && count(self::complementosDe((int) $r->getID())) < self::MAXIMO_COMPLEMENTOS,
         ];
+    }
+
+    /** Complementos por resposta (D-93): limite para a trilha nao virar bate-papo. */
+    public const MAXIMO_COMPLEMENTOS = 10;
+
+    /**
+     * Complementos do remetente (BM.4-12, D-93). Ficam em respostas_itens com
+     * perguntas_id = 0, valor = JSON {dia, texto}: sem usuario, sem hora, so o dia (D-31).
+     *
+     * @return array<int, array{dia: string, texto: string}>
+     */
+    public static function complementosDe(int $respostaId): array
+    {
+        return array_values(array_filter(self::entradasDe($respostaId), static fn ($e) => $e['de'] === 'remetente'));
+    }
+
+    /**
+     * Entradas da conversa gravadas em respostas_itens com perguntas_id = 0 (BM.4-13, D-95).
+     * Remetente: {dia, texto} (so o dia, D-31). RH: {de: 'rh', quando, texto}.
+     *
+     * @return array<int, array{de: string, dia: string, quando: string, texto: string}>
+     */
+    public static function entradasDe(int $respostaId): array
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $saida = [];
+        foreach ($DB->request(['FROM' => RespostaItem::getTable(), 'WHERE' => ['plugin_pessoasplus_respostas_id' => $respostaId, 'plugin_pessoasplus_perguntas_id' => 0], 'ORDER' => 'id']) as $i) {
+            $j = json_decode((string) $i['valor'], true);
+            if (!is_array($j) || !isset($j['texto'])) {
+                continue;
+            }
+            $de = (string) ($j['de'] ?? 'remetente');
+            $quando = $de === 'rh' ? (string) ($j['quando'] ?? $j['dia'] ?? '') : (string) ($j['dia'] ?? '');
+            $saida[] = [
+                'de'     => $de === 'rh' ? 'rh' : 'remetente',
+                'dia'    => $quando !== '' ? date('d/m/Y', strtotime($quando)) : '',
+                'quando' => $quando !== '' ? ($de === 'rh' ? date('d/m/Y H:i', strtotime($quando)) : date('d/m/Y', strtotime($quando))) : '',
+                'texto'  => (string) $j['texto'],
+                'ordem'  => [$quando !== '' ? substr($quando, 0, 10) : '0000-00-00', (int) $i['id']],
+            ];
+        }
+        // Ordem: pelo dia e, no mesmo dia, pela gravacao (o remetente so tem o dia, D-31; a migracao da resposta antiga grava depois mas e de antes).
+        usort($saida, static fn ($a, $b) => ($a['ordem'][0] <=> $b['ordem'][0]) ?: ($a['ordem'][1] <=> $b['ordem'][1]));
+        foreach ($saida as &$e) {
+            unset($e['ordem']);
+        }
+        unset($e);
+
+        return $saida;
+    }
+
+    private static function respostaObj(int $id): Resposta
+    {
+        $r = new Resposta();
+        $r->getFromDB($id);
+
+        return $r;
+    }
+
+    /**
+     * Conversa de um protocolo (BM.4-13, D-95): entradas em ordem cronologica de gravacao.
+     * Compatibilidade: resposta_rh gravada antes do BM.4-13 (campo unico) entra como
+     * primeira resposta do RH quando nenhuma resposta do RH esta nos itens.
+     *
+     * @return array<int, array{de: string, dia: string, quando: string, texto: string}>
+     */
+    public static function conversaDe(Resposta $r): array
+    {
+        $entradas = self::entradasDe((int) $r->getID());
+        $temRh = false;
+        foreach ($entradas as $e) {
+            if ($e['de'] === 'rh') {
+                $temRh = true;
+                break;
+            }
+        }
+        $antiga = trim((string) ($r->fields['resposta_rh'] ?? ''));
+        if (!$temRh && $antiga !== '') {
+            $q = (string) ($r->fields['data_resposta'] ?? '');
+            array_unshift($entradas, ['de' => 'rh', 'dia' => $q !== '' ? date('d/m/Y', strtotime($q)) : '', 'quando' => $q !== '' ? date('d/m/Y H:i', strtotime($q)) : '', 'texto' => $antiga]);
+        }
+
+        return $entradas;
+    }
+
+    /**
+     * Remetente acrescenta ao relato pelo protocolo + codigo (BM.4-12, D-93).
+     * Mesma prova de posse da consulta; grava item com perguntas_id = 0 e so o dia.
+     * D-94: se o RH estava aguardando complemento, a situacao volta a "em analise".
+     * Devolve ['ok' => true] ou ['erro' => mensagem].
+     *
+     * @return array{ok?: bool, erro?: string}
+     */
+    public static function complementar(string $protocolo, string $codigo, string $texto): array
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $protocolo = strtoupper(trim($protocolo));
+        $codigo    = strtoupper(trim($codigo));
+        $texto     = mb_substr(trim($texto), 0, 2000);
+        if ($texto === '') {
+            return ['erro' => 'Escreva o complemento antes de enviar.'];
+        }
+        if (!preg_match('/^(OUV|PSQ)-\d{4}-[A-Z0-9]{4,6}$/', $protocolo) || $codigo === '') {
+            return ['erro' => 'Protocolo ou código não conferem.'];
+        }
+        $r = new Resposta();
+        if (!$r->getFromDBByCrit(['protocolo' => $protocolo]) || !hash_equals((string) $r->fields['codigo_hash'], hash('sha256', $protocolo . '|' . $codigo))) {
+            return ['erro' => 'Protocolo ou código não conferem.'];
+        }
+        if ((string) $r->fields['situacao'] === 'encerrado') {
+            return ['erro' => 'Este protocolo está encerrado e não aceita mais complementos. Se precisar, abra um novo relato.'];
+        }
+        if (count(self::complementosDe((int) $r->getID())) >= self::MAXIMO_COMPLEMENTOS) {
+            return ['erro' => 'Limite de complementos atingido para este protocolo.'];
+        }
+        $DB->insert(RespostaItem::getTable(), [
+            'plugin_pessoasplus_respostas_id' => (int) $r->getID(),
+            'plugin_pessoasplus_perguntas_id' => 0,
+            'valor' => json_encode(['dia' => date('Y-m-d'), 'texto' => $texto], JSON_UNESCAPED_UNICODE),
+        ]);
+        $f = new self();
+        $f->getFromDB((int) $r->fields['plugin_pessoasplus_formularios_id']);
+        $atualiza = ['pedido_complemento' => ''];
+        if ((string) $r->fields['situacao'] === 'complemento') {
+            $atualiza['situacao'] = 'em_analise';
+        }
+        $DB->update(Resposta::getTable(), $atualiza, ['id' => (int) $r->getID()]);
+        Evento::registrar('pesquisas', 'ouvidoria_complementada', $f, 0, ['protocolo' => $protocolo]);
+
+        return ['ok' => true];
     }
 
     // ----------------------------------------------------------------- fila e tratamento (RH)
@@ -625,7 +776,7 @@ final class Formulario extends CommonDBTM
         $saida = [];
         foreach ($DB->request(['FROM' => Resposta::getTable(), 'WHERE' => $where, 'ORDER' => ['data DESC', 'id DESC']]) as $r) {
             $itens = [];
-            foreach ($DB->request(['FROM' => RespostaItem::getTable(), 'WHERE' => ['plugin_pessoasplus_respostas_id' => (int) $r['id']], 'ORDER' => 'id']) as $i) {
+            foreach ($DB->request(['FROM' => RespostaItem::getTable(), 'WHERE' => ['plugin_pessoasplus_respostas_id' => (int) $r['id'], 'plugin_pessoasplus_perguntas_id' => ['>', 0]], 'ORDER' => 'id']) as $i) {
                 $itens[] = ['pergunta' => $perguntas[(int) $i['plugin_pessoasplus_perguntas_id']] ?? '?', 'valor' => (string) $i['valor']];
             }
             $sit = self::SITUACOES_RESPOSTA[$r['situacao']] ?? [$r['situacao'], 'neutro'];
@@ -642,6 +793,8 @@ final class Formulario extends CommonDBTM
                 'itens'       => $itens,
                 'resposta_rh' => (string) ($r['resposta_rh'] ?? ''),
                 'complemento' => (string) ($r['pedido_complemento'] ?? ''),
+                'complementos' => self::complementosDe((int) $r['id']), // BM.4-12 (D-93)
+                'conversa'    => self::conversaDe(self::respostaObj((int) $r['id'])), // BM.4-13 (D-95)
             ];
         }
 
@@ -1022,6 +1175,28 @@ final class Formulario extends CommonDBTM
     }
 
     /**
+     * Transicoes automaticas da situacao (BM.4-12, D-94). Valem so quando o RH
+     * deixou a situacao como estava; se ele escolheu outra no select, a escolha manda.
+     * - pedido de complemento novo (preenchido e diferente do gravado), vindo de recebido/em analise -> aguardando complemento
+     * - resposta nova (preenchida e diferente da gravada), vindo de recebido/em analise/aguardando -> respondido
+     * - encerrado so a mao, e nao sai dele sozinho
+     */
+    public static function proximaSituacao(string $anterior, string $escolhida, string $respostaAntes, string $respostaDepois, string $pedidoAntes, string $pedidoDepois): string
+    {
+        if ($escolhida !== $anterior || $anterior === 'encerrado') {
+            return $escolhida;
+        }
+        if ($pedidoDepois !== '' && $pedidoDepois !== $pedidoAntes && in_array($anterior, ['recebido', 'em_analise'], true)) {
+            return 'complemento';
+        }
+        if ($respostaDepois !== '' && $respostaDepois !== $respostaAntes && in_array($anterior, ['recebido', 'em_analise', 'complemento'], true)) {
+            return 'respondido';
+        }
+
+        return $anterior;
+    }
+
+    /**
      * Resumo por situacao, para os chips.
      *
      * @return array<string, int>
@@ -1055,10 +1230,32 @@ final class Formulario extends CommonDBTM
             return false;
         }
         $agora = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+        $respostaRh  = mb_substr(trim($respostaRh), 0, 5000);
+        $complemento = mb_substr(trim($complemento), 0, 2000);
+        // BM.4-13 (D-95): o campo do tratamento e "nova resposta": vazio nao apaga a anterior; preenchido vira entrada datada da conversa.
+        $anteriorRh = (string) ($r->fields['resposta_rh'] ?? '');
+        if ($respostaRh === '') {
+            $respostaRh = $anteriorRh;
+        } elseif ($respostaRh !== $anteriorRh) {
+            // Primeira resposta nova de um protocolo tratado antes do BM.4-13: a antiga (campo unico) vira entrada antes, para a conversa nao perder nada.
+            if ($anteriorRh !== '' && array_filter(self::entradasDe($respostaId), static fn ($e) => $e['de'] === 'rh') === []) {
+                $DB->insert(RespostaItem::getTable(), [
+                    'plugin_pessoasplus_respostas_id' => $respostaId,
+                    'plugin_pessoasplus_perguntas_id' => 0,
+                    'valor' => json_encode(['de' => 'rh', 'quando' => (string) ($r->fields['data_resposta'] ?? $agora), 'texto' => $anteriorRh], JSON_UNESCAPED_UNICODE),
+                ]);
+            }
+            $DB->insert(RespostaItem::getTable(), [
+                'plugin_pessoasplus_respostas_id' => $respostaId,
+                'plugin_pessoasplus_perguntas_id' => 0,
+                'valor' => json_encode(['de' => 'rh', 'quando' => $agora, 'texto' => $respostaRh], JSON_UNESCAPED_UNICODE),
+            ]);
+        }
+        $situacao    = self::proximaSituacao((string) $r->fields['situacao'], $situacao, $anteriorRh, $respostaRh, (string) ($r->fields['pedido_complemento'] ?? ''), $complemento);
         $DB->update(Resposta::getTable(), [
             'situacao'           => $situacao,
-            'resposta_rh'        => mb_substr(trim($respostaRh), 0, 5000),
-            'pedido_complemento' => mb_substr(trim($complemento), 0, 2000),
+            'resposta_rh'        => $respostaRh,
+            'pedido_complemento' => $complemento,
             'data_resposta'      => $agora,
             'users_id_rh'        => (int) (Session::getLoginUserID() ?: 0),
         ], ['id' => $respostaId]);

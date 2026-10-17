@@ -10,6 +10,7 @@
  * PESSOASPLUS_BUILD_BM4_8
  * PESSOASPLUS_BUILD_BM6
  * PESSOASPLUS_BUILD_BM6_2
+ * PESSOASPLUS_BUILD_BM4_12
  */
 
 namespace GlpiPlugin\Pessoasplus;
@@ -65,6 +66,7 @@ final class Evento extends CommonDBTM
         'formulario_respondido'  => 'Formulário respondido',
         'ouvidoria_enviada'      => 'Envio à Ouvidoria (identificado)',
         'ouvidoria_tratada'      => 'Ouvidoria: tratamento registrado',
+        'ouvidoria_complementada' => 'Ouvidoria: complemento do remetente', // BM.4-12 (D-93)
         // BM.4-8: pendencia do BM.1-3 (foto da capa pela pasta, D-84).
         'foto_alterada'          => 'Foto alterada',
         'foto_removida'          => 'Foto removida',

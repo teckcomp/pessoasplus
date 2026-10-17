@@ -1,4 +1,4 @@
-/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 PESSOASPLUS_BUILD_BM6_3
+/* Pessoas+ - comportamento da casca. PESSOASPLUS_BUILD_BP0 PESSOASPLUS_BUILD_BP2A PESSOASPLUS_BUILD_BP2B PESSOASPLUS_BUILD_BP2C PESSOASPLUS_BUILD_BP3A PESSOASPLUS_BUILD_BP3B PESSOASPLUS_BUILD_BP3C PESSOASPLUS_BUILD_BP3D PESSOASPLUS_BUILD_BP3E PESSOASPLUS_BUILD_BP4B PESSOASPLUS_BUILD_BP4B_2 PESSOASPLUS_BUILD_BP4B_3 PESSOASPLUS_BUILD_BM1 PESSOASPLUS_BUILD_BM1_2 PESSOASPLUS_BUILD_BM2 PESSOASPLUS_BUILD_BM2_2 PESSOASPLUS_BUILD_BM3 PESSOASPLUS_BUILD_BM4 PESSOASPLUS_BUILD_BM4_2 PESSOASPLUS_BUILD_BM4_3 PESSOASPLUS_BUILD_BM4_4 PESSOASPLUS_BUILD_BM4_8 PESSOASPLUS_BUILD_BM5 PESSOASPLUS_BUILD_BM6 PESSOASPLUS_BUILD_BM6_2 PESSOASPLUS_BUILD_BM6_3 PESSOASPLUS_BUILD_BM4_13
  * Sem variavel global (T-30). Botoes com data-pp-demo mostram um aviso
  * de que a acao chega num bloco futuro, em vez de nao fazer nada.
  */
@@ -1727,6 +1727,40 @@
     }
 
 
+    /* BM.4-13 (D-96): botoes "copiar" do recibo (protocolo e codigo). Sem clipboard (HTTP, navegador antigo) seleciona o texto para copiar a mao. */
+    function iniciarCopiar() {
+        document.querySelectorAll('[data-pp-copiar]').forEach(function (b) {
+            if (!primeiraVez(b)) {
+                return;
+            }
+            b.addEventListener('click', function () {
+                var texto = b.getAttribute('data-pp-copiar') || '';
+                var feito = function () {
+                    b.classList.add('is-copiado');
+                    var i = b.querySelector('.ti');
+                    if (i) { i.className = 'ti ti-check'; }
+                    setTimeout(function () { b.classList.remove('is-copiado'); if (i) { i.className = 'ti ti-copy'; } }, 1500);
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(texto).then(feito, function () { selecionar(); });
+                } else {
+                    selecionar();
+                }
+                function selecionar() {
+                    var code = b.parentNode ? b.parentNode.querySelector('code') : null;
+                    if (code && window.getSelection) {
+                        var r = document.createRange();
+                        r.selectNodeContents(code);
+                        var sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(r);
+                        try { document.execCommand('copy'); feito(); } catch (e) { /* fica selecionado para copiar a mao */ }
+                    }
+                }
+            });
+        });
+    }
+
     /* BM.4: editor de perguntas do formulario. */
     function iniciarPerguntas() {
         document.querySelectorAll('.pp-casca [data-pp-perguntas]').forEach(function (raiz) {
@@ -2559,6 +2593,7 @@
         iniciarLinks();
         iniciarPublicacaoReal();
         iniciarPerguntas();
+        iniciarCopiar();
     }
 
     if (document.readyState === 'loading') {

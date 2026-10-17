@@ -1,0 +1,14 @@
+{# Pessoas+ - orientacao "guarde o protocolo e o codigo" (BM.4-14, D-96). Recebe "modo": 'completo' (recibo e pagina de consulta) ou 'curto' (bloco da Ouvidoria logada). PESSOASPLUS_BUILD_BM4_14 #}
+<div class="pp-guarde{% if modo == 'curto' %} is-curto{% endif %}" role="note">
+    <div class="pp-guarde-titulo"><i class="ti ti-key" aria-hidden="true"></i> Guarde o protocolo e o código</div>
+    {% if modo == 'curto' %}
+        <p>Os dois são a sua chave: só com eles você vê a situação, lê a resposta do RH e acrescenta informações. <strong>Não há como recuperá-los</strong> — se perder, perde o acompanhamento; o relato continua com o RH, mas você só poderá abrir um novo.</p>
+    {% else %}
+        <ul>
+            <li><strong>Para que servem.</strong> Com protocolo e código você consulta a situação, lê as respostas do RH e acrescenta informações ao relato, quantas vezes quiser.</li>
+            <li><strong>Não há recuperação.</strong> O código é guardado de um jeito que ninguém consegue ler de volta — nem o RH, nem o administrador do sistema. É isso que garante que o envio não é ligado a você. Se perder os dois, o acompanhamento se perde junto: o relato continua com o RH, mas você só poderá abrir um novo.</li>
+            <li><strong>Como guardar.</strong> Copie os dois para um lugar que só você acessa: bloco de notas do celular, gerenciador de senhas ou uma foto da tela que fique com você. Evite deixar em computador compartilhado.</li>
+            <li><strong>Como usar.</strong> Abra a página de consulta (fora do GLPI, sem login), digite protocolo e código e consulte. Ninguém avisa quando há resposta: volte a consultar de tempos em tempos.</li>
+        </ul>
+    {% endif %}
+</div>
